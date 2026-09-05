@@ -40,6 +40,78 @@ const UI = {
     })
   },
 
+  EXPAND_ICON:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  COLLAPSE_ICON:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+
+  // Maximize a panel in place — never reparents the element (this codebase's
+  // pages re-render containers via wholesale innerHTML swaps, which would
+  // orphan a moved node and strand the overlay). Instead it toggles a class
+  // that makes the panel position:fixed over most of the viewport, behind a
+  // backdrop, leaving it exactly where it lives in the DOM so its own
+  // content reflows naturally at the larger size (a viewBox SVG gauge, a
+  // table, etc. — whatever the panel's CSS already does when it's resized).
+  //
+  // Pass `onRestore` if the caller needs to know when the panel leaves the
+  // maximized state via a path other than its own toggle call — Escape or
+  // clicking the backdrop both restore directly, bypassing whatever button
+  // triggered toggleMaximize in the first place.
+  toggleMaximize(panelEl, opts) {
+    if (panelEl.classList.contains('panel-maximized')) {
+      UI._restoreMaximized(panelEl)
+      return false
+    }
+    UI._enterMaximized(panelEl, opts || {})
+    return true
+  },
+
+  _enterMaximized(panelEl, opts) {
+    let backdrop = document.getElementById('maximize-backdrop')
+    if (!backdrop) {
+      backdrop = document.createElement('div')
+      backdrop.id = 'maximize-backdrop'
+      backdrop.className = 'maximize-backdrop'
+      document.body.appendChild(backdrop)
+    }
+    backdrop.classList.add('open')
+    backdrop.onclick = function () { UI._restoreMaximized(panelEl) }
+    panelEl._maximizeOnRestore = opts.onRestore || null
+    panelEl.classList.add('panel-maximized')
+
+    function onKey(event) {
+      if (event.key === 'Escape') UI._restoreMaximized(panelEl)
+    }
+    panelEl._maximizeKeyHandler = onKey
+    document.addEventListener('keydown', onKey)
+  },
+
+  _restoreMaximized(panelEl) {
+    panelEl.classList.remove('panel-maximized')
+    const backdrop = document.getElementById('maximize-backdrop')
+    if (backdrop) backdrop.classList.remove('open')
+    if (panelEl._maximizeKeyHandler) {
+      document.removeEventListener('keydown', panelEl._maximizeKeyHandler)
+      panelEl._maximizeKeyHandler = null
+    }
+    const onRestore = panelEl._maximizeOnRestore
+    panelEl._maximizeOnRestore = null
+    if (onRestore) onRestore()
+  },
+
+  // Wires a maximize/restore toggle onto `btn` for `panelEl`, swapping the
+  // button's icon and label to match state. Safe to call every render — it
+  // always (re)binds to the current DOM nodes.
+  wireMaximizeButton(btn, panelEl, opts) {
+    if (!btn || !panelEl) return
+    btn.addEventListener('click', function (event) {
+      event.stopPropagation()
+      const nowMaximized = UI.toggleMaximize(panelEl, opts)
+      btn.innerHTML = nowMaximized ? UI.COLLAPSE_ICON : UI.EXPAND_ICON
+      btn.setAttribute('aria-label', nowMaximized ? 'Restore' : 'Expand')
+    })
+  },
+
   confirm({ title = 'Confirm delete', message, confirmLabel = 'Delete', danger = true, onConfirm }) {
     let root = document.getElementById('confirm-dialog-root')
     if (!root) {

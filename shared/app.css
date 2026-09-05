@@ -586,6 +586,109 @@ img {
   z-index: 200;
 }
 
+/* --------------------------------------------------------- maximize panel
+   Generic "maximize in place" used by device detail panels and dashboard
+   widget cards (see UI.toggleMaximize in ui.js). The panel is never moved
+   in the DOM — it's just lifted onto a fixed position over a backdrop, so
+   any nested modal it still contains keeps working normally. */
+
+.maximize-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 25, 23, 0.55);
+  z-index: 90;
+}
+.maximize-backdrop.open {
+  display: block;
+}
+
+.panel-maximized {
+  position: fixed !important;
+  top: 4vh !important;
+  left: 4vw !important;
+  right: 4vw !important;
+  bottom: 4vh !important;
+  width: auto;
+  height: auto;
+  max-width: none !important;
+  z-index: 91;
+  overflow: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Widget cards get a fixed, generous modal-sized box rather than "grow to
+   near-fullscreen". Many widgets (gauges, metric cards) have a fixed
+   intrinsic size and just center themselves instead of stretching to fill
+   whatever box they're given, so a bigger card alone wouldn't make them
+   bigger — refreshWidgetBody instead freezes the widget+fields wrapper at
+   its natural size and scales that whole block up as one rigid unit, which
+   is why the body centers it here rather than trying to stretch it. */
+.widget-card.panel-maximized {
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(92vw, 1400px) !important;
+  height: min(88vh, 900px) !important;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+}
+
+/* Maximized, a widget card should read as a large modal — lavender header
+   with the title and a single close control, not the full tile chrome
+   (drag handle, field/settings/remove icons) blown up alongside it. */
+.widget-card.panel-maximized .widget-card-header {
+  padding: 1rem 1.25rem;
+  background: #f5f3ff !important;
+  border-bottom: 1px solid #e7e5e4;
+}
+.widget-card.panel-maximized .widget-card-title {
+  font-size: 1.05rem;
+  color: #1c1917 !important;
+}
+.widget-card.panel-maximized [data-action="toggle-fields"],
+.widget-card.panel-maximized [data-action="open-settings"],
+.widget-card.panel-maximized [data-action="remove"] {
+  display: none;
+}
+/* The drag/resize handles are siblings of .widget-card (children of
+   .grid-item), not descendants of it — :has() reaches across to hide them
+   too, so the original grid slot doesn't show orphaned floating controls
+   once its card has been lifted out via position:fixed. */
+.grid-item:has(.widget-card.panel-maximized) .widget-drag-handle,
+.grid-item:has(.widget-card.panel-maximized) .widget-resize-handle {
+  display: none;
+}
+
+/* refreshWidgetBody always wraps a widget's rendered content + its fields
+   layer in this element. Normally it just fills the body like the content
+   used to on its own; while maximized, JS freezes its width/height to the
+   widget's natural (pre-maximize) size and applies transform:scale(factor)
+   — centered here by the maximized body's flex centering — so the widget
+   and its absolutely-positioned custom fields blow up together as one
+   rigid unit and stay aligned with each other at any scale. */
+.widget-scale-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.widget-card.panel-maximized .widget-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.widget-card.panel-maximized [data-action="maximize"] {
+  width: auto;
+  height: auto;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #57534e;
+}
+.widget-card.panel-maximized [data-action="maximize"]:hover {
+  color: #1c1917;
+}
+
 .row-menu-item {
   display: flex;
   align-items: center;

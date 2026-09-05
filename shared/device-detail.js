@@ -210,6 +210,16 @@ function showToast(message) {
   UI.toast(message)
 }
 
+// Wires every panel's Expand button (identified by aria-label, same markup
+// used everywhere) to maximize its own closest .device-panel. Call this once
+// after any tab body is rendered — safe to call repeatedly since it rebinds
+// against the freshly-rendered DOM each time.
+function wireMaximizeButtons(container) {
+  container.querySelectorAll('.device-panel [aria-label="Expand"]').forEach((btn) => {
+    UI.wireMaximizeButton(btn, btn.closest('.device-panel'))
+  })
+}
+
 /* ============================================================ Overview */
 
 const SERIES_COLORS = ['#7c3aed', '#0f766e', '#b45309', '#7c3aed', '#be123c', '#15803d']
@@ -286,6 +296,12 @@ function resetOverviewState() {
 
 function renderOverviewTab(container) {
   if (!ov.visibleMetrics) resetOverviewState()
+  // This whole tab body gets rebuilt by things like the metadata search
+  // toggle or an inline field edit — capture which panel (if any) is
+  // currently maximized so it can be reapplied below instead of silently
+  // dropping back to normal size.
+  const previouslyMaximized = container.querySelector('.device-panel.panel-maximized')
+  const maximizedPanelId = previouslyMaximized ? previouslyMaximized.id : null
   const now = Date.now()
   const query = ov.search.trim().toLowerCase()
   const visibleMetadata = device.metadata.filter((f) => f.key.toLowerCase().includes(query))
@@ -339,8 +355,11 @@ function renderOverviewTab(container) {
         </div>
       </div>
 
-      <div class="device-panel">
-        <h2 class="device-panel-title">${CHART_SVG}Device statistics</h2>
+      <div class="device-panel" id="device-stats-panel">
+        <div class="device-panel-title-row">
+          <h2 class="device-panel-title">${CHART_SVG}Device statistics</h2>
+          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div>
+        </div>
         <div class="stat-total-row">
           <span class="stat-label">Data sent total</span>
           <span class="stat-value">${total.toLocaleString()} <small>Bytes</small></span>
@@ -359,6 +378,16 @@ function renderOverviewTab(container) {
   wireMetadataPanelEvents(container)
   wireTokenPanelEvents(container)
   wireTelemetryPanelEvents(container)
+  wireMaximizeButtons(container)
+
+  if (maximizedPanelId) {
+    const panelEl = document.getElementById(maximizedPanelId)
+    if (panelEl) {
+      UI.toggleMaximize(panelEl)
+      const btn = panelEl.querySelector('[aria-label="Expand"]')
+      if (btn) { btn.innerHTML = UI.COLLAPSE_ICON; btn.setAttribute('aria-label', 'Restore') }
+    }
+  }
 }
 
 function wireMetadataPanelEvents(container) {
@@ -660,7 +689,10 @@ function renderAlertsTab(container) {
     <div class="device-panel">
       <div class="detail-toolbar">
         <h2 class="device-panel-title" style="margin:0;">Alerts</h2>
-        <div class="detail-toolbar-actions"><button type="button" class="icon-button" aria-label="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+        <div class="detail-toolbar-actions">
+          <button type="button" class="icon-button" aria-label="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button>
+        </div>
       </div>
       ${device.alerts.length === 0 ? '<div class="empty-table-note"><p>No data.</p></div>' : `
       <div class="devices-table-scroll">
@@ -721,6 +753,7 @@ function renderAlertsTab(container) {
       renderAlertsTab(container)
     })
   })
+  wireMaximizeButtons(container)
 }
 
 function jsonCellHtml(value, key) {
@@ -753,7 +786,10 @@ function renderCommandsTab(container) {
   container.innerHTML = `
     <div class="commands-grid">
       <div class="device-panel">
-        <h2 class="device-panel-title">Command execution</h2>
+        <div class="device-panel-title-row">
+          <h2 class="device-panel-title">Command execution</h2>
+          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div>
+        </div>
         <form id="command-form">
           <div class="radio-field-group">
             <span class="radio-field-label">Configuration</span>
@@ -787,7 +823,10 @@ function renderCommandsTab(container) {
       </div>
 
       <div class="device-panel">
-        <h2 class="device-panel-title">Commands history</h2>
+        <div class="device-panel-title-row">
+          <h2 class="device-panel-title">Commands history</h2>
+          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div>
+        </div>
         <div class="detail-toolbar">
           <div class="table-search-wrap"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg><input type="text" id="commands-search" placeholder="Search" /></div>
           <label class="group-by-select">Group by<select><option value=""></option></select></label>
@@ -829,6 +868,7 @@ function renderCommandsTab(container) {
   document.getElementById('commands-search').addEventListener('input', function (e) { cmd.search = e.target.value; renderCommandsHistory() })
 
   renderCommandsHistory()
+  wireMaximizeButtons(container)
 }
 
 function renderCommandsHistory() {
@@ -985,6 +1025,8 @@ function renderRelationsTab(container) {
       }
     })
   }
+
+  wireMaximizeButtons(container)
 }
 
 /* ============================================================ Data publish */

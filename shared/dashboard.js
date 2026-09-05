@@ -1250,6 +1250,7 @@ function widgetCardHtml(config) {
       <div class="widget-card-header" style="${headerBg}">
         <span class="widget-card-title" style="${headerColor}${headerSize}${headerWeight}">${escapeHtml(config.title)}</span>
         <div class="widget-card-actions">
+          <button type="button" class="widget-card-icon-button" data-action="maximize" aria-label="Expand">${UI.EXPAND_ICON}</button>
           <button type="button" class="widget-card-icon-button" data-action="toggle-fields" aria-label="Edit field positions" title="Drag fields to reposition">${MOVE_SVG}</button>
           <button type="button" class="widget-card-icon-button" data-action="open-settings" aria-label="Widget settings">${GEAR_SVG}</button>
           <button type="button" class="widget-card-icon-button danger" data-action="remove" aria-label="Remove widget">${TRASH_SVG}</button>
@@ -1265,7 +1266,7 @@ function renderFieldsLayerHtml(config, editMode) {
   let html = `<div class="custom-fields-layer${editMode ? ' custom-fields-layer-active' : ''}" data-fields-layer="${config.id}">`
   if (fields.length === 0 && editMode) html += '<div class="custom-fields-empty-hint">No fields yet — add one below, then drag it into place.</div>'
   fields.forEach((field) => {
-    const style = `left:${field.x}px;top:${field.y}px;${field.color ? `color:${field.color};` : ''}${field.fontSize ? `font-size:${field.fontSize}px;` : ''}${field.fontWeight ? `font-weight:${field.fontWeight};` : ''}`
+    const style = `left:${field.x}%;top:${field.y}%;${field.color ? `color:${field.color};` : ''}${field.fontSize ? `font-size:${field.fontSize}px;` : ''}${field.fontWeight ? `font-weight:${field.fontWeight};` : ''}`
     html += `<div class="custom-field${editMode ? ' custom-field-editable' : ''}" style="${style}" data-field-id="${field.id}">${fieldReadingHtml(field)}${editMode ? '<button type="button" class="custom-field-remove" data-remove-field aria-label="Remove field">×</button>' : ''}</div>`
   })
   if (editMode) html += '<button type="button" class="custom-field-add" data-add-field>+ Add field</button>'
@@ -1284,7 +1285,41 @@ function fieldReadingHtml(field) {
 
 const fieldsEditMode = {}
 
+// Widgets get a bespoke maximize treatment rather than the generic
+// UI.wireMaximizeButton: maximized, the card should read as a large modal
+// (lavender header, single × close, other icons hidden) rather than a
+// scaled-up widget tile still showing its full icon row — see the CSS under
+// .widget-card.panel-maximized. The content itself is handled by
+// widgetNaturalContentSize + refreshWidgetBody's wrap-and-scale above.
+function wireWidgetMaximizeButton(btn, cardEl, config) {
+  function applyIcon(isMaximized) {
+    btn.innerHTML = isMaximized ? '&times;' : UI.EXPAND_ICON
+    btn.setAttribute('aria-label', isMaximized ? 'Close' : 'Expand')
+  }
+  function onRestore() {
+    delete widgetNaturalContentSize[config.id]
+    applyIcon(false)
+    refreshWidgetBody(config.id)
+  }
+  btn.addEventListener('click', function (event) {
+    event.stopPropagation()
+    if (!cardEl.classList.contains('panel-maximized')) {
+      const wrapEl = cardEl.querySelector('[data-widget-scale-wrap]')
+      widgetNaturalContentSize[config.id] = { w: wrapEl.offsetWidth, h: wrapEl.offsetHeight }
+      UI.toggleMaximize(cardEl, { onRestore: onRestore })
+      applyIcon(true)
+      refreshWidgetBody(config.id)
+    } else {
+      // Restoring via the button also runs through _restoreMaximized, which
+      // invokes the onRestore hook registered above — don't call it twice.
+      UI.toggleMaximize(cardEl)
+    }
+  })
+  applyIcon(cardEl.classList.contains('panel-maximized'))
+}
+
 function wireWidgetCardEvents(cardEl, config) {
+  wireWidgetMaximizeButton(cardEl.querySelector('[data-action="maximize"]'), cardEl, config)
   cardEl.querySelector('[data-action="open-settings"]').addEventListener('click', function () { openWidgetSettings(config.id) })
   cardEl.querySelector('[data-action="remove"]').addEventListener('click', function () {
     UI.confirm({
@@ -1308,18 +1343,23 @@ function wireFieldsLayerEvents(layerEl, config) {
       if (event.target.closest('[data-remove-field]')) return
       event.preventDefault()
       event.stopPropagation()
+      // getBoundingClientRect (not offsetWidth/Height) on purpose: while
+      // maximized this layer sits inside a transform:scale()'d wrapper, and
+      // getBoundingClientRect reports the visually-scaled size, so a pixel
+      // of mouse movement maps to the same fraction of the layer regardless
+      // of the current scale — dragging feels the same at any size.
       const bounds = layerEl.getBoundingClientRect()
       const field = (config.fields || []).find((f) => f.id === fieldId)
       if (!field) return
       const startX = event.clientX, startY = event.clientY, startFX = field.x, startFY = field.y
 
       function handleMove(moveEvent) {
-        const dx = moveEvent.clientX - startX
-        const dy = moveEvent.clientY - startY
-        const nextX = Math.max(0, Math.min(bounds.width - 24, startFX + dx))
-        const nextY = Math.max(0, Math.min(bounds.height - 20, startFY + dy))
-        fieldEl.style.left = nextX + 'px'
-        fieldEl.style.top = nextY + 'px'
+        const dxPct = ((moveEvent.clientX - startX) / bounds.width) * 100
+        const dyPct = ((moveEvent.clientY - startY) / bounds.height) * 100
+        const nextX = Math.max(0, Math.min(94, startFX + dxPct))
+        const nextY = Math.max(0, Math.min(92, startFY + dyPct))
+        fieldEl.style.left = nextX + '%'
+        fieldEl.style.top = nextY + '%'
         fieldEl.__pending = { x: nextX, y: nextY }
       }
       function handleUp() {
@@ -1343,17 +1383,97 @@ function wireFieldsLayerEvents(layerEl, config) {
   const addBtn = layerEl.querySelector('[data-add-field]')
   if (addBtn) {
     addBtn.addEventListener('click', function () {
-      const fields = config.fields || []
-      updateWidgetFields(config.id, fields.concat([createField(fields.length)]))
+      openAddFieldModal(config)
     })
   }
 }
 
 let fieldIdCounter = 0
+// x/y are 0-100 — percent of the widget's own content box, not pixels — so
+// a field's position stays meaningful whether that box is a small grid tile
+// or a maximized panel several times its size. See wireFieldsLayerEvents'
+// drag handler and the widget-scale-wrap mechanism in refreshWidgetBody.
 function createField(index) {
   fieldIdCounter += 1
-  return { id: 'field-' + Date.now() + '-' + fieldIdCounter, deviceId: '', metricKey: 'value', label: '', color: '#1e293b', fontSize: 14, fontWeight: 'normal', x: 12 + (index % 4) * 20, y: 12 + (index % 4) * 20 }
+  return { id: 'field-' + Date.now() + '-' + fieldIdCounter, deviceId: '', metricKey: 'value', label: '', color: '#1e293b', fontSize: 14, fontWeight: 'normal', x: 5 + (index % 4) * 20, y: 5 + (index % 4) * 20 }
 }
+
+// Appended to document.body (same pattern as UI.confirm/UI.toast) rather
+// than nested inside the widget's .custom-fields-layer: that layer is
+// pointer-events:none so its children can click through to the widget
+// behind them, which would make a modal nested inside it purely visual.
+// Being a body-level sibling also means it renders at normal size even
+// when opened from a widget that's currently maximized+scaled.
+function openAddFieldModal(config) {
+  let root = document.getElementById('add-field-modal-root')
+  if (!root) {
+    root = document.createElement('div')
+    root.id = 'add-field-modal-root'
+    document.body.appendChild(root)
+  }
+  const devices = getDevices()
+  function metricsFor(deviceId) {
+    const device = devices.find((d) => d.id === deviceId)
+    return device && device.metrics && device.metrics.length ? device.metrics : DEFAULT_METRICS
+  }
+
+  root.innerHTML = `
+    <div class="modal-overlay open" id="add-field-modal-overlay">
+      <div class="modal-card" style="max-width:420px">
+        <div class="modal-header">
+          <h2>Add field</h2>
+          <button type="button" class="modal-close" id="add-field-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="add-field-form">
+            <div class="modal-field"><label for="af-title">Title</label><input id="af-title" type="text" placeholder="Label" /></div>
+            <div class="modal-field"><label for="af-device">Device</label><select id="af-device"><option value="">No device</option>${devices.map((d) => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('')}</select></div>
+            <div class="modal-field"><label for="af-metric">Value (metric)</label><select id="af-metric">${metricsFor('').map((m) => `<option value="${m.key}">${escapeHtml(m.label)}</option>`).join('')}</select></div>
+            <div class="modal-field-row">
+              <label class="field-editor-color">Color<input type="color" id="af-color" value="#1e293b" /></label>
+              <div class="modal-field"><label for="af-size">Size</label><input id="af-size" type="number" min="8" max="72" value="14" /></div>
+              <div class="modal-field"><label for="af-weight">Weight</label><select id="af-weight"><option value="normal">Normal</option><option value="600">Semibold</option><option value="700">Bold</option></select></div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="modal-button secondary" id="add-field-cancel">Cancel</button>
+          <button type="submit" form="add-field-form" class="modal-button primary">Add field</button>
+        </div>
+      </div>
+    </div>`
+
+  function close() { root.innerHTML = '' }
+  document.getElementById('add-field-close').addEventListener('click', close)
+  document.getElementById('add-field-cancel').addEventListener('click', close)
+  document.getElementById('af-device').addEventListener('change', function (event) {
+    document.getElementById('af-metric').innerHTML = metricsFor(event.target.value).map((m) => `<option value="${m.key}">${escapeHtml(m.label)}</option>`).join('')
+  })
+  document.getElementById('add-field-form').addEventListener('submit', function (event) {
+    event.preventDefault()
+    const fields = config.fields || []
+    const field = createField(fields.length)
+    field.label = document.getElementById('af-title').value.trim()
+    field.deviceId = document.getElementById('af-device').value
+    field.metricKey = document.getElementById('af-metric').value
+    field.color = document.getElementById('af-color').value
+    field.fontSize = Number(document.getElementById('af-size').value) || field.fontSize
+    field.fontWeight = document.getElementById('af-weight').value
+    updateWidgetFields(config.id, fields.concat([field]))
+    close()
+  })
+}
+
+// Natural (pre-maximize) content-box size per widget id — the same width/
+// height the widget renders at normally — captured by wireWidgetMaximizeButton
+// right before the card is enlarged. Many widgets (gauges, metric cards)
+// have a fixed intrinsic size and just center themselves rather than
+// stretching to fill whatever box they're given, so simply handing them a
+// huge container doesn't make them bigger. Instead refreshWidgetBody wraps
+// the widget + its fields layer together, freezes that wrapper at this
+// natural size, and scales the whole rigid block up with a single CSS
+// transform — content and fields blow up together, so nothing drifts.
+const widgetNaturalContentSize = {}
 
 function refreshWidgetBody(id) {
   const config = widgets.find((w) => w.id === id)
@@ -1362,9 +1482,23 @@ function refreshWidgetBody(id) {
   if (!bodyEl) return
   const liveConfig = Object.assign({}, config, { dataSource: effectiveDataSource(config) })
   const result = renderWidgetContent(liveConfig)
-  bodyEl.innerHTML = result.html + renderFieldsLayerHtml(config, Boolean(fieldsEditMode[id]))
-  if (result.mount) result.mount(bodyEl, liveConfig)
-  const layerEl = bodyEl.querySelector('[data-fields-layer]')
+  bodyEl.innerHTML = `<div class="widget-scale-wrap" data-widget-scale-wrap="${id}">${result.html}${renderFieldsLayerHtml(config, Boolean(fieldsEditMode[id]))}</div>`
+  const wrapEl = bodyEl.querySelector('[data-widget-scale-wrap]')
+
+  // Freeze the wrap to its natural size (if maximized) BEFORE mount() below
+  // measures it — mount (ApexCharts) sizes its chart to whatever rect the
+  // wrap reports, so it needs to see the small natural rect it'll actually
+  // render into, not the wrap's un-frozen 100%-of-the-big-body default.
+  const natural = widgetNaturalContentSize[id]
+  if (natural && natural.w > 0 && natural.h > 0) {
+    const factor = Math.min(bodyEl.clientWidth / natural.w, bodyEl.clientHeight / natural.h, 4)
+    wrapEl.style.width = natural.w + 'px'
+    wrapEl.style.height = natural.h + 'px'
+    wrapEl.style.transform = 'scale(' + factor + ')'
+  }
+
+  if (result.mount) result.mount(wrapEl, liveConfig)
+  const layerEl = wrapEl.querySelector('[data-fields-layer]')
   if (layerEl) wireFieldsLayerEvents(layerEl, config)
   lastRefresh[id] = Date.now()
 }
@@ -1447,6 +1581,13 @@ function attachGridItemHandlers(el, config) {
 
 function renderCanvas() {
   const canvas = document.getElementById('dashboard-canvas')
+  // renderCanvas rebuilds every widget card's DOM from scratch (moving/resizing/
+  // editing fields on ANY widget calls this), which would otherwise silently
+  // drop maximize state — capture which widget is maximized (however it got
+  // that way: the button, Escape, or the backdrop) and reapply it below.
+  const previouslyMaximized = canvas.querySelector('.widget-card.panel-maximized')
+  const maximizedId = previouslyMaximized ? previouslyMaximized.getAttribute('data-widget-card') : null
+
   if (widgets.length === 0) {
     canvas.innerHTML = '<div class="dashboard-canvas-empty">Drag a widget here, or use the + button to add one from the library.</div>'
     return
@@ -1477,6 +1618,20 @@ function renderCanvas() {
     attachGridItemHandlers(el, config)
     const cardEl = el.querySelector('[data-widget-card]')
     wireWidgetCardEvents(cardEl, config)
+    if (config.id === maximizedId) {
+      // Reapply the class before refreshWidgetBody(config.id) below so it
+      // measures the already-enlarged body when it computes the scale
+      // factor (widgetNaturalContentSize[id] itself survives this rebuild
+      // untouched, since it's keyed by id in a module-level object).
+      UI.toggleMaximize(cardEl, { onRestore: function () {
+        delete widgetNaturalContentSize[config.id]
+        const restoreBtn = cardEl.querySelector('[data-action="maximize"]')
+        if (restoreBtn) { restoreBtn.innerHTML = UI.EXPAND_ICON; restoreBtn.setAttribute('aria-label', 'Expand') }
+        refreshWidgetBody(config.id)
+      } })
+      const btn = cardEl.querySelector('[data-action="maximize"]')
+      if (btn) { btn.innerHTML = '&times;'; btn.setAttribute('aria-label', 'Close') }
+    }
     refreshWidgetBody(config.id)
   })
 }
