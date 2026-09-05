@@ -106,8 +106,14 @@
 
     const PERMISSION_MODULES = [
       { key: 'dashboard', label: 'Dashboard', iconFamily: 'dashboard', fields: [
-        { key: 'widgetFields', label: 'Custom widget fields' },
+        { key: 'widgetTitle', label: 'Widget title' },
+        { key: 'widgetStyle', label: 'Widget style' },
+        { key: 'widgetDevice', label: 'Widget device' },
+        { key: 'widgetMetric', label: 'Widget metric' },
+        { key: 'timeRange', label: 'Time range' },
+        { key: 'widgetSize', label: 'Widget width & height' },
         { key: 'headerStyle', label: 'Widget header style' },
+        { key: 'widgetFields', label: 'Custom widget fields' },
       ] },
       { key: 'devices', label: 'Devices', iconFamily: 'device', fields: [
         { key: 'deviceProfile', label: 'Device profile' },
@@ -120,8 +126,21 @@
         { key: 'name', label: 'Profile name' },
         { key: 'description', label: 'Description' },
       ] },
-      { key: 'credentials', label: 'Credentials', iconFamily: 'device', fields: [] },
-      { key: 'softwareOta', label: 'Software OTA', iconFamily: 'device', fields: [] },
+      { key: 'credentials', label: 'Credentials', iconFamily: 'device', fields: [
+        { key: 'username', label: 'Username' },
+        { key: 'password', label: 'Password' },
+        { key: 'tlsName', label: 'TLS certificate name' },
+        { key: 'tlsCert', label: 'TLS certificate (PEM)' },
+      ] },
+      { key: 'softwareOta', label: 'Software OTA', iconFamily: 'device', fields: [
+        { key: 'versionNumber', label: 'Version number' },
+        { key: 'firmwareFile', label: 'Firmware file' },
+        { key: 'description', label: 'Description' },
+        { key: 'upgradableFrom', label: 'Upgradable from' },
+        { key: 'downloadLink', label: 'Download link' },
+        { key: 'checksum', label: 'Checksum' },
+        { key: 'rolloutConfig', label: 'Rollout configuration' },
+      ] },
       { key: 'users', label: 'Users', iconFamily: 'users', fields: [
         { key: 'name', label: 'Full name' },
         { key: 'email', label: 'Email address' },
@@ -132,7 +151,10 @@
         { key: 'name', label: 'Group name' },
         { key: 'description', label: 'Description' },
       ] },
-      { key: 'rolesPermissions', label: 'Roles & permissions', iconFamily: 'users', fields: [] },
+      { key: 'rolesPermissions', label: 'Roles & permissions', iconFamily: 'users', fields: [
+        { key: 'name', label: 'Role name' },
+        { key: 'description', label: 'Description' },
+      ] },
       { key: 'assets', label: 'Assets', iconFamily: 'asset', fields: [
         { key: 'name', label: 'Asset name' },
         { key: 'location', label: 'Location' },
@@ -152,8 +174,12 @@
       { key: 'ruleEngines', label: 'Rule engine', iconFamily: 'ruleEngine', fields: [
         { key: 'name', label: 'Name' },
         { key: 'description', label: 'Description' },
-        { key: 'trigger', label: 'Trigger condition' },
-        { key: 'action', label: 'Action' },
+        { key: 'triggerType', label: 'Trigger type' },
+        { key: 'conditionMetric', label: 'Condition metric' },
+        { key: 'conditionOperator', label: 'Condition operator' },
+        { key: 'conditionValue', label: 'Condition value' },
+        { key: 'actionType', label: 'Action type' },
+        { key: 'actionDetail', label: 'Action detail' },
       ] },
       { key: 'ruleEngineReports', label: 'Reports', iconFamily: 'ruleEngine', fields: [] },
     ]
