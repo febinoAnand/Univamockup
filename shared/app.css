@@ -154,13 +154,10 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 0.85rem;
-  background: var(--surface-alt);
-  border-radius: 14px;
 }
 
 .sidebar-brand-icon img {
-  height: 28px;
+  height: 50px;
   width: auto;
   object-fit: contain;
 }
