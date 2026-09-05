@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <title>Asset groups — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Asset groups</h1>
+            <p class="page-subtitle">Categories that organize related assets together</p>
+          </div>
+          <div class="page-header-actions">
+            <button type="button" class="solid-action-button" id="add-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              Add asset group
+            </button>
+          </div>
+        </div>
+
+        <div class="table-search-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="search" placeholder="Search groups" />
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr>
+              <th><button type="button" class="th-sort-button" data-sort="name">Name<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="name"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+              <th>Assets</th>
+              <th><button type="button" class="th-sort-button" data-sort="createdDate">Created Date<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="createdDate"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+              <th class="data-table-menu-col"></th>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="group-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Add asset group</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('group-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="group-form">
+          <div class="modal-field"><label for="group-name">Group name*</label><input id="group-name" type="text" required /></div>
+          <div class="modal-field"><label for="group-description">Description</label><textarea id="group-description" rows="3"></textarea></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('group-modal')">Cancel</button>
+        <button type="submit" form="group-form" class="modal-button primary" id="save-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mount({
+      active: 'asset-groups',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'Asset management', href: 'assets.html' },
+        { label: 'Asset groups' },
+      ],
+    })
+
+    let editingId = null
+    let sort = { key: null, direction: 'asc' }
+
+    function compareValues(a, b, direction) {
+      const result = String(a).localeCompare(String(b))
+      return direction === 'asc' ? result : -result
+    }
+
+    document.querySelectorAll('[data-sort]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-sort')
+        sort = sort.key === key ? { key, direction: sort.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' }
+        render()
+      })
+    })
+
+    function assetCountByGroup() {
+      const counts = {}
+      Store.get().assets.forEach((asset) => asset.groupNames.forEach((n) => { counts[n] = (counts[n] ?? 0) + 1 }))
+      return counts
+    }
+
+    function render() {
+      const data = Store.get()
+      const term = document.getElementById('search').value.trim().toLowerCase()
+      let groups = term ? data.assetGroups.filter((g) => g.name.toLowerCase().includes(term)) : data.assetGroups
+      if (sort.key) groups = [...groups].sort((a, b) => compareValues(a[sort.key], b[sort.key], sort.direction))
+      const counts = assetCountByGroup()
+
+      document.querySelectorAll('[data-sort-icon]').forEach((icon) => {
+        const key = icon.getAttribute('data-sort-icon')
+        icon.classList.toggle('flipped', sort.key === key && sort.direction === 'desc')
+      })
+
+      const tbody = document.getElementById('tbody')
+      if (groups.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-table-note">No asset groups match your search.</td></tr>'
+        return
+      }
+      tbody.innerHTML = groups
+        .map(
+          (g) => `
+        <tr>
+          <td><div class="group-name-cell">${g.name}${g.description ? `<p class="group-description">${g.description}</p>` : ''}</div></td>
+          <td>${counts[g.name] ?? 0}</td>
+          <td>${g.createdDate}</td>
+          <td class="data-table-menu-col">
+            <div class="row-menu">
+              <button type="button" class="row-menu-button" data-menu-toggle>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="row-menu-dropdown">
+                <button type="button" class="row-menu-item" data-edit="${g.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Edit
+                </button>
+                <button type="button" class="row-menu-item danger" data-delete="${g.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>`,
+        )
+        .join('')
+      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
+      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => handleRemove(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const menu = btn.closest('.row-menu')
+          const wasOpen = menu.classList.contains('open')
+          UI.closeRowMenus()
+          if (!wasOpen) UI.openRowMenu(btn)
+        }),
+      )
+    }
+    document.addEventListener('click', () => UI.closeRowMenus())
+
+    function openAdd() {
+      editingId = null
+      document.getElementById('modal-title').textContent = 'Add asset group'
+      document.getElementById('save-btn').textContent = 'Create'
+      document.getElementById('group-name').value = ''
+      document.getElementById('group-description').value = ''
+      UI.openModal('group-modal')
+    }
+
+    function openEdit(id) {
+      const g = Store.get().assetGroups.find((x) => x.id === id)
+      if (!g) return
+      editingId = id
+      document.getElementById('modal-title').textContent = 'Edit asset group'
+      document.getElementById('save-btn').textContent = 'Save changes'
+      document.getElementById('group-name').value = g.name
+      document.getElementById('group-description').value = g.description || ''
+      UI.openModal('group-modal')
+    }
+
+    function handleRemove(id) {
+      const g = Store.get().assetGroups.find((x) => x.id === id)
+      if (!g) return
+      const counts = assetCountByGroup()
+      if (counts[g.name]) {
+        UI.toast(`Move assets out of "${g.name}" before deleting it.`)
+        return
+      }
+      UI.confirm({
+        message: `Delete <strong>${g.name}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeAssetGroup(id)
+          render()
+          UI.toast(`"${g.name}" group deleted successfully!`)
+        },
+      })
+    }
+
+    document.getElementById('add-btn').addEventListener('click', openAdd)
+    document.getElementById('search').addEventListener('input', render)
+
+    document.getElementById('group-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const name = document.getElementById('group-name').value.trim()
+      if (!name) return
+      const description = document.getElementById('group-description').value.trim()
+      if (editingId) {
+        Store.updateAssetGroup(editingId, { name, description })
+        UI.toast(`"${name}" group updated successfully!`)
+      } else {
+        Store.addAssetGroup({ name, description })
+        UI.toast(`"${name}" group created successfully!`)
+      }
+      UI.closeModal('group-modal')
+      render()
+    })
+
+    render()
+  </script>
+</body>
+</html>

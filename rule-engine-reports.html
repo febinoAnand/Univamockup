@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/rule-engine.css" />
+  <title>Rule engine reports — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Rule engine reports</h1>
+            <p class="page-subtitle">History of rule engine executions triggered by device activity</p>
+          </div>
+        </div>
+
+        <div class="table-search-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="search" placeholder="Search by rule engine name" />
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>Rule engine</th><th>Triggered at</th><th>Trigger</th><th>Condition</th><th>Action</th><th>Outcome</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script>
+    Layout.mount({
+      active: 'rule-engine-reports',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'Rule engines', href: 'rule-engines.html' },
+        { label: 'Reports' },
+      ],
+    })
+
+    function render() {
+      const data = Store.get()
+      const term = document.getElementById('search').value.trim().toLowerCase()
+      const rows = term ? data.ruleEngineExecutions.filter((e) => e.ruleEngineName.toLowerCase().includes(term)) : data.ruleEngineExecutions
+      const tbody = document.getElementById('tbody')
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-table-note">No executions match your search.</td></tr>'
+        return
+      }
+      tbody.innerHTML = rows
+        .map(
+          (e) => `
+        <tr>
+          <td>${e.ruleEngineName}</td>
+          <td>${e.triggeredAt}</td>
+          <td><span class="rule-summary-pill">${e.triggerType}</span></td>
+          <td>${e.condition}</td>
+          <td>${e.actionType}</td>
+          <td><span class="outcome-pill outcome-${e.outcome}">${e.outcome}</span></td>
+        </tr>`,
+        )
+        .join('')
+    }
+
+    document.getElementById('search').addEventListener('input', render)
+    render()
+  </script>
+</body>
+</html>

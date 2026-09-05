@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/devices.css" />
+  <title>Devices — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content" style="padding:0;">
+        <div id="devices-root"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="device-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="device-modal-title">Add device</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('device-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="device-form">
+          <p class="modal-intro" id="modal-intro">To add a new device, you need to select a device profile and set up an initial authentication token.</p>
+
+          <div class="modal-field" style="margin-bottom:1rem;">
+            <label for="device-profile">
+              Device profile
+              <span class="help-icon" title="The device profile this device will use"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+            </label>
+            <select id="device-profile"></select>
+            <p class="modal-field-hint hidden" id="device-profile-hint">A device's profile can't be changed after it's created.</p>
+          </div>
+
+          <div id="add-mode-fields">
+            <div class="section">
+              <button type="button" class="section-header" id="details-section-toggle">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon expanded"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="section-title">Device details</span>
+                <span class="help-icon" title="Identify and authenticate this device"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+              </button>
+              <div class="section-body" id="details-section-body">
+                <div class="modal-field">
+                  <label for="endpointToken">
+                    Device token
+                    <span class="help-icon" title="A token generated to authenticate this device"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+                  </label>
+                  <input id="endpointToken" type="text" />
+                </div>
+                <div class="modal-field">
+                  <label for="device-name">Device name</label>
+                  <input id="device-name" type="text" />
+                </div>
+
+                <div class="section section-plain">
+                  <button type="button" class="section-header" id="metadata-section-toggle">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon" id="metadata-caret"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="section-title">Metadata attributes</span>
+                    <span class="help-icon" title="Custom key-value data for this device"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+                  </button>
+                  <div class="section-body hidden" id="metadata-section-body">
+                    <div class="metadata-fields" id="metadata-fields"></div>
+                    <button type="button" class="metadata-add" id="metadata-add-btn">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="edit-mode-fields" class="hidden">
+            <div class="modal-field">
+              <label for="device-name-edit">Device name</label>
+              <input id="device-name-edit" type="text" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('device-modal')">Cancel</button>
+        <button type="submit" form="device-form" class="modal-button primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mount({
+      active: 'devices',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'Device management', href: 'devices.html' },
+        { label: 'Devices' },
+      ],
+    })
+
+    const DEVICE_LIMIT = 5
+    let selectedApplication = ''
+    let editingDeviceId = null
+    let metadataRows = [{ id: 1, key: '', value: '' }]
+    let metadataNextId = 2
+
+    // DevicesPage.jsx keeps its own local `toast` state (no auto-dismiss timer) rather than
+    // using the shared Toast component, so it's reproduced here instead of calling UI.toast().
+    function showLocalToast(message) {
+      document.getElementById('local-toast')?.remove()
+      const div = document.createElement('div')
+      div.className = 'toast-success'
+      div.id = 'local-toast'
+      div.innerHTML = `
+        <span class="toast-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>${message}</span>
+        <button type="button" class="toast-close" aria-label="Dismiss"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg></button>`
+      document.body.appendChild(div)
+      div.querySelector('.toast-close').addEventListener('click', () => div.remove())
+    }
+
+    function welcomeSvg() {
+      return `<svg viewBox="0 0 200 140" width="200" height="140" fill="none">
+        <path d="M30 20h140l-45 90H75L30 20Z" fill="#e7e5e4" stroke="#d6d3d1" stroke-width="1.5"/>
+        <circle cx="95" cy="45" r="16" fill="#a78bfa"/>
+        <circle cx="112" cy="42" r="19" fill="#7c3aed"/>
+        <rect x="70" y="88" width="16" height="16" rx="3" fill="#a78bfa"/>
+        <rect x="92" y="88" width="16" height="16" rx="3" fill="#c4b5fd"/>
+        <rect x="114" y="88" width="16" height="16" rx="3" fill="#a78bfa"/>
+      </svg>`
+    }
+
+    function renderPage() {
+      const data = Store.get()
+      const devices = data.devices
+      const root = document.getElementById('devices-root')
+
+      if (devices.length === 0) {
+        root.innerHTML = `
+          <div class="devices-page">
+            <div class="devices-empty-state">
+              ${welcomeSvg()}
+              <h1>Welcome!</h1>
+              <p>Let's get started by adding a physical device or a simulator.</p>
+              <div class="devices-empty-actions">
+                <button type="button" class="empty-action primary" id="empty-add-device-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+                  Add device
+                </button>
+              </div>
+            </div>
+          </div>`
+        document.getElementById('empty-add-device-btn').addEventListener('click', openAddModal)
+        return
+      }
+
+      const applications = [...new Set(devices.map((d) => d.profileName))]
+      if (!applications.includes(selectedApplication)) selectedApplication = applications[0] || ''
+      const visibleDevices = devices.filter((d) => d.profileName === selectedApplication)
+
+      root.innerHTML = `
+        <div class="devices-list-page">
+          <div class="devices-toolbar">
+            <h1 class="devices-title">Devices <span class="devices-count-badge">${devices.length}</span></h1>
+            <div class="devices-toolbar-actions">
+              <label class="application-select">
+                <span>Application</span>
+                <select id="application-select">
+                  ${applications.map((a) => `<option value="${a}" ${a === selectedApplication ? 'selected' : ''}>${a}</option>`).join('')}
+                </select>
+              </label>
+              <button type="button" class="icon-button" id="copy-app-id-btn" aria-label="Copy application id">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V6a1 1 0 0 1 1-1h9" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" class="devices-action-button secondary">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V4M8 8l4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Bulk import
+              </button>
+              <button type="button" class="devices-action-button primary" id="add-device-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+                Add device
+              </button>
+            </div>
+          </div>
+
+          <p class="devices-plan-note">You're currently on Free plan with ${DEVICE_LIMIT} devices limit</p>
+
+          <div class="devices-plan-banner">
+            You're currently on Free plan with ${DEVICE_LIMIT} devices limit
+            <span class="devices-plan-divider">|</span>
+            <button type="button" class="devices-upgrade-link">Upgrade now</button>
+          </div>
+
+          <div class="devices-stats-bar">
+            Application data sent <strong>--</strong>, Total <span class="devices-stats-divider">|</span> <strong>--</strong>, 24 hours <span class="devices-stats-divider">|</span> <strong>--</strong>, last 7 days
+          </div>
+
+          <div class="devices-filter-row">
+            <select class="filter-and-select"><option>And</option></select>
+            <input type="text" class="filter-input" placeholder="Add a filter" />
+          </div>
+
+          <div class="devices-table-card">
+            <div class="devices-table-toolbar">
+              <div class="table-search-wrap">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg>
+                <input type="text" placeholder="Search" />
+              </div>
+              <label class="group-by-select">
+                Group by
+                <select><option value=""></option></select>
+              </label>
+              <button type="button" class="icon-button" aria-label="Download">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+
+            <div class="devices-table-scroll">
+              <table class="devices-table">
+                <thead>
+                  <tr>
+                    <th class="devices-table-arrow-col"></th>
+                    <th>Device Id</th>
+                    <th>Name</th>
+                    <th>State</th>
+                    <th>Created Date</th>
+                    <th>Device Profile</th>
+                    <th>Metadata Updated Date</th>
+                    <th class="data-table-menu-col"></th>
+                  </tr>
+                </thead>
+                <tbody id="devices-tbody">
+                  ${visibleDevices
+                    .map(
+                      (d) => `
+                    <tr class="clickable-row" data-open="${d.id}">
+                      <td class="devices-table-arrow-col">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l7 6-7 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </td>
+                      <td>${d.endpointId}</td>
+                      <td>${d.name}</td>
+                      <td><span class="state-pill state-${d.state}">${d.state}</span></td>
+                      <td>${d.createdDate}</td>
+                      <td>${d.profileName}</td>
+                      <td>${d.metadataUpdatedDate}</td>
+                      <td class="data-table-menu-col">
+                        <div class="row-menu">
+                          <button type="button" class="row-menu-button" data-menu-toggle>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+                          </button>
+                          <div class="row-menu-dropdown">
+                            <button type="button" class="row-menu-item" data-edit="${d.id}">
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>`,
+                    )
+                    .join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p class="devices-list-footer">© 2026 All rights reserved.</p>
+        </div>`
+
+      document.getElementById('add-device-btn').addEventListener('click', openAddModal)
+      document.getElementById('application-select').addEventListener('change', (e) => {
+        selectedApplication = e.target.value
+        renderPage()
+      })
+      document.getElementById('copy-app-id-btn').addEventListener('click', () => {
+        navigator.clipboard?.writeText(selectedApplication)
+        showLocalToast('Application ID copied successfully!')
+      })
+
+      document.querySelectorAll('[data-open]').forEach((row) => {
+        row.addEventListener('click', () => {
+          window.location.href = 'device-detail.html#' + row.getAttribute('data-open')
+        })
+      })
+      document.querySelectorAll('[data-edit]').forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          openEditModal(btn.getAttribute('data-edit'))
+        })
+      })
+      document.querySelectorAll('[data-menu-toggle]').forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const menu = btn.closest('.row-menu')
+          const wasOpen = menu.classList.contains('open')
+          UI.closeRowMenus()
+          if (!wasOpen) UI.openRowMenu(btn)
+        })
+      })
+    }
+
+    document.addEventListener('click', () => {
+      UI.closeRowMenus()
+    })
+
+    function renderMetadataRows() {
+      document.getElementById('metadata-fields').innerHTML = metadataRows
+        .map(
+          (row) => `
+        <div class="metadata-row" data-row-id="${row.id}">
+          <button type="button" class="metadata-remove" data-remove-row="${row.id}" aria-label="Remove attribute">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+          </button>
+          <div class="modal-field">
+            <label>Key*</label>
+            <input type="text" data-meta-key="${row.id}" value="${row.key}" />
+          </div>
+          <div class="modal-field">
+            <label>Value</label>
+            <input type="text" data-meta-value="${row.id}" value="${row.value}" />
+          </div>
+        </div>`,
+        )
+        .join('')
+
+      document.querySelectorAll('[data-remove-row]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          metadataRows = metadataRows.filter((r) => r.id !== Number(btn.getAttribute('data-remove-row')))
+          renderMetadataRows()
+        })
+      })
+      document.querySelectorAll('[data-meta-key]').forEach((input) => {
+        input.addEventListener('input', () => {
+          const row = metadataRows.find((r) => r.id === Number(input.getAttribute('data-meta-key')))
+          if (row) row.key = input.value
+        })
+      })
+      document.querySelectorAll('[data-meta-value]').forEach((input) => {
+        input.addEventListener('input', () => {
+          const row = metadataRows.find((r) => r.id === Number(input.getAttribute('data-meta-value')))
+          if (row) row.value = input.value
+        })
+      })
+    }
+
+    function populateProfileSelect(selectedName) {
+      const select = document.getElementById('device-profile')
+      const profiles = Store.get().deviceProfiles
+      select.innerHTML = profiles.map((p) => `<option value="${p.id}">${p.name}</option>`).join('')
+      if (selectedName) {
+        const match = profiles.find((p) => p.name === selectedName)
+        if (match) select.value = match.id
+      } else {
+        const def = profiles.find((p) => p.isDefault) || profiles[0]
+        if (def) select.value = def.id
+      }
+    }
+
+    function openAddModal() {
+      editingDeviceId = null
+      metadataRows = [{ id: 1, key: '', value: '' }]
+      metadataNextId = 2
+      document.getElementById('device-modal-title').textContent = 'Add device'
+      document.getElementById('modal-intro').classList.remove('hidden')
+      document.getElementById('device-profile').disabled = false
+      document.getElementById('device-profile-hint').classList.add('hidden')
+      document.getElementById('add-mode-fields').classList.remove('hidden')
+      document.getElementById('edit-mode-fields').classList.add('hidden')
+      document.getElementById('endpointToken').value = ''
+      document.getElementById('device-name').value = ''
+      renderMetadataRows()
+      populateProfileSelect()
+      UI.openModal('device-modal')
+    }
+
+    function openEditModal(id) {
+      const device = Store.get().devices.find((d) => d.id === id)
+      if (!device) return
+      editingDeviceId = id
+      document.getElementById('device-modal-title').textContent = 'Edit device'
+      document.getElementById('modal-intro').classList.add('hidden')
+      document.getElementById('device-profile').disabled = true
+      document.getElementById('device-profile-hint').classList.remove('hidden')
+      document.getElementById('add-mode-fields').classList.add('hidden')
+      document.getElementById('edit-mode-fields').classList.remove('hidden')
+      document.getElementById('device-name-edit').value = device.name
+      populateProfileSelect(device.profileName)
+      UI.openModal('device-modal')
+    }
+
+    document.getElementById('details-section-toggle').addEventListener('click', () => {
+      document.getElementById('details-section-body').classList.toggle('hidden')
+      document.querySelector('#details-section-toggle .caret-icon').classList.toggle('expanded')
+    })
+    document.getElementById('metadata-section-toggle').addEventListener('click', () => {
+      document.getElementById('metadata-section-body').classList.toggle('hidden')
+      document.getElementById('metadata-caret').classList.toggle('expanded')
+    })
+    document.getElementById('metadata-add-btn').addEventListener('click', () => {
+      metadataRows.push({ id: metadataNextId++, key: '', value: '' })
+      renderMetadataRows()
+    })
+
+    document.getElementById('device-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      if (editingDeviceId) {
+        const name = document.getElementById('device-name-edit').value.trim()
+        if (!name) return
+        Store.updateDevice(editingDeviceId, { name })
+        UI.closeModal('device-modal')
+        renderPage()
+        showLocalToast(`"${name}" updated successfully!`)
+        return
+      }
+      const profileId = document.getElementById('device-profile').value
+      if (!profileId) return
+      const name = document.getElementById('device-name').value.trim()
+      const record = Store.addDevice({ name, profileId, endpointToken: document.getElementById('endpointToken').value })
+      selectedApplication = record.profileName
+      UI.closeModal('device-modal')
+      renderPage()
+    })
+
+    renderPage()
+  </script>
+</body>
+</html>

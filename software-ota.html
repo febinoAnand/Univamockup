@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/software-ota.css" />
+  <title>Software OTA — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Software OTA</h1>
+            <p class="page-subtitle">Software for over-the-air (OTA) distribution to your devices</p>
+          </div>
+          <div class="page-header-actions">
+            <button type="button" class="outline-action-button" id="add-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              Add software version
+            </button>
+          </div>
+        </div>
+
+        <div class="versions-card" id="versions-card"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="version-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Add software version</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('version-modal'); dismissModalToast()" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="version-form">
+          <div class="modal-field"><label for="version-number">Semantic version number*</label><input id="version-number" type="text" placeholder="1.1.0" required /></div>
+
+          <div class="modal-field">
+            <label>Firmware file</label>
+            <div class="firmware-upload-box" id="firmware-box">
+              <p class="firmware-upload-label">Upload file, format: *</p>
+              <button type="button" class="upload-button" id="upload-btn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V4M8 8l4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Upload
+              </button>
+              <input type="file" id="firmware-input" class="firmware-file-input" />
+            </div>
+            <p class="field-error hidden" id="firmware-error">A firmware file is required</p>
+          </div>
+
+          <div class="modal-field"><label for="version-description">Description</label><input id="version-description" type="text" /></div>
+
+          <div class="modal-field">
+            <label for="upgradable-from">
+              Upgradable from
+              <span class="help-icon" title="The version endpoints must already be running to upgrade to this one"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+            </label>
+            <div class="select-with-icon">
+              <select id="upgradable-from"></select>
+              <button type="button" class="icon-button" id="copy-upgradable-btn" aria-label="Copy">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V6a1 1 0 0 1 1-1h9" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-field"><label for="download-link">Download link</label><input id="download-link" type="text" placeholder="https://example.com/downloads/fw-1_1_0.bin" /></div>
+          <div class="modal-field"><label for="checksum">Checksum</label><input id="checksum" type="text" placeholder="2136f2287235db0f5d7e2a357539bbac" /></div>
+
+          <div class="rollout-section">
+            <p class="field-label">Rollout configuration</p>
+            <p class="rollout-hint">Choose to which endpoints this software version will be applied</p>
+            <div class="radio-row">
+              <label class="radio-option"><input type="radio" name="rollout" value="none" checked /> None</label>
+              <label class="radio-option"><input type="radio" name="rollout" value="all" /> All</label>
+              <label class="radio-option"><input type="radio" name="rollout" value="filters" /> Based on filters</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('version-modal'); dismissModalToast()">Cancel</button>
+        <button type="submit" form="version-form" class="modal-button primary" id="save-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mount({
+      active: 'software-ota',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'Device management', href: 'devices.html' },
+        { label: 'Software OTA' },
+      ],
+    })
+
+    const ROLLOUT_LABELS = { none: 'None', all: 'All', filters: 'Based on filters' }
+    // Mirrors SoftwareOtaPage.jsx's plain useState([]) (no Context/provider) — this list is
+    // page-local and intentionally resets every time this page loads, unlike every other
+    // entity in this app which persists via Store.
+    let versions = []
+    let editingId = null
+    let firmwareFileName = ''
+
+    // SoftwareOtaPage.jsx and its AddSoftwareVersionModal each keep their own local `toast`
+    // state (no auto-dismiss timer, no shared Toast component) — two independent toasts, so
+    // they're reproduced as two independent elements instead of a single UI.toast() call.
+    function renderToastEl(id, message, zIndex) {
+      document.getElementById(id)?.remove()
+      const div = document.createElement('div')
+      div.className = 'toast-success'
+      div.id = id
+      if (zIndex) div.style.zIndex = zIndex
+      div.innerHTML = `
+        <span class="toast-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>${message}</span>
+        <button type="button" class="toast-close" aria-label="Dismiss"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg></button>`
+      document.body.appendChild(div)
+      div.querySelector('.toast-close').addEventListener('click', () => div.remove())
+    }
+    const showPageToast = (message) => renderToastEl('page-toast', message)
+    const showModalToast = (message) => renderToastEl('modal-toast', message, 150)
+    const dismissModalToast = () => document.getElementById('modal-toast')?.remove()
+
+    function render() {
+      const card = document.getElementById('versions-card')
+      if (versions.length === 0) {
+        card.innerHTML = `<div class="empty-table-note"><p>There is no data.</p><p><button type="button" class="text-link" id="empty-add-link">Add</button> new software to view data.</p></div>`
+        document.getElementById('empty-add-link').addEventListener('click', openAdd)
+        return
+      }
+      card.innerHTML = `
+        <div class="versions-toolbar">
+          <div class="table-search-wrap" style="max-width:320px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg>
+            <input type="text" id="version-search" placeholder="Search" />
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr><th>Version</th><th>Firmware file</th><th>Description</th><th>Rollout</th><th>Created date</th><th class="row-menu-col"></th></tr>
+            </thead>
+            <tbody id="versions-tbody"></tbody>
+          </table>
+        </div>`
+      document.getElementById('version-search').addEventListener('input', renderRows)
+      renderRows()
+    }
+
+    function renderRows() {
+      const term = (document.getElementById('version-search')?.value || '').trim().toLowerCase()
+      const rows = term
+        ? versions.filter((v) => v.version.toLowerCase().includes(term) || (v.description || '').toLowerCase().includes(term))
+        : versions
+      const tbody = document.getElementById('versions-tbody')
+      if (!tbody) return
+      tbody.innerHTML = rows
+        .map(
+          (v) => `
+        <tr>
+          <td>${v.version}</td>
+          <td>${v.firmwareFileName}</td>
+          <td>${v.description || '—'}</td>
+          <td>${ROLLOUT_LABELS[v.rollout]}</td>
+          <td>${v.createdDate}</td>
+          <td class="row-menu-col">
+            <div class="row-menu">
+              <button type="button" class="row-menu-button" data-menu-toggle>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="row-menu-dropdown">
+                <button type="button" class="row-menu-item" data-edit="${v.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Edit
+                </button>
+                <button type="button" class="row-menu-item danger" data-delete="${v.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>`,
+        )
+        .join('')
+      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
+      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const menu = btn.closest('.row-menu')
+          const wasOpen = menu.classList.contains('open')
+          UI.closeRowMenus()
+          if (!wasOpen) UI.openRowMenu(btn)
+        }),
+      )
+    }
+    document.addEventListener('click', () => UI.closeRowMenus())
+
+    function renderFirmwareBox() {
+      const box = document.getElementById('firmware-box')
+      box.classList.remove('error')
+      if (firmwareFileName) {
+        box.innerHTML = `
+          <div class="firmware-file-row">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v6h6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="firmware-file-name">${firmwareFileName}</span>
+            <button type="button" class="firmware-file-remove" id="remove-firmware-btn" aria-label="Remove file">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+            </button>
+          </div>`
+        document.getElementById('remove-firmware-btn').addEventListener('click', () => {
+          firmwareFileName = ''
+          renderFirmwareBox()
+        })
+      } else {
+        box.innerHTML = `
+          <p class="firmware-upload-label">Upload file, format: *</p>
+          <button type="button" class="upload-button" id="upload-btn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V4M8 8l4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Upload
+          </button>
+          <input type="file" id="firmware-input" class="firmware-file-input" />`
+        document.getElementById('upload-btn').addEventListener('click', () => document.getElementById('firmware-input').click())
+        document.getElementById('firmware-input').addEventListener('change', (event) => {
+          const file = event.target.files?.[0]
+          if (file) {
+            firmwareFileName = file.name
+            document.getElementById('firmware-error').classList.add('hidden')
+            renderFirmwareBox()
+          }
+        })
+      }
+    }
+
+    function populateUpgradableFrom() {
+      const select = document.getElementById('upgradable-from')
+      select.innerHTML = '<option value="" disabled selected>1.0.0</option>' + versions.map((v) => `<option value="${v.version}">${v.version}</option>`).join('')
+    }
+
+    function openAdd() {
+      editingId = null
+      firmwareFileName = ''
+      document.getElementById('modal-title').textContent = 'Add software version'
+      document.getElementById('save-btn').textContent = 'Create'
+      document.getElementById('version-number').value = ''
+      document.getElementById('version-description').value = ''
+      document.getElementById('download-link').value = ''
+      document.getElementById('checksum').value = ''
+      document.querySelector('input[name="rollout"][value="none"]').checked = true
+      document.getElementById('firmware-error').classList.add('hidden')
+      populateUpgradableFrom()
+      renderFirmwareBox()
+      UI.openModal('version-modal')
+    }
+
+    function openEdit(id) {
+      const v = versions.find((x) => x.id === id)
+      if (!v) return
+      editingId = id
+      firmwareFileName = v.firmwareFileName
+      document.getElementById('modal-title').textContent = 'Edit software version'
+      document.getElementById('save-btn').textContent = 'Save'
+      document.getElementById('version-number').value = v.version
+      document.getElementById('version-description').value = v.description || ''
+      document.getElementById('download-link').value = v.downloadLink || ''
+      document.getElementById('checksum').value = v.checksum || ''
+      populateUpgradableFrom()
+      document.getElementById('upgradable-from').value = v.upgradableFrom || ''
+      document.querySelector(`input[name="rollout"][value="${v.rollout}"]`).checked = true
+      document.getElementById('firmware-error').classList.add('hidden')
+      renderFirmwareBox()
+      UI.openModal('version-modal')
+    }
+
+    function confirmDelete(id) {
+      const v = versions.find((x) => x.id === id)
+      if (!v) return
+      UI.confirm({
+        message: `Delete version <strong>${v.version}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          versions = versions.filter((x) => x.id !== id)
+          render()
+        },
+      })
+    }
+
+    function formatTimestamp(date) {
+      const pad = (value) => String(value).padStart(2, '0')
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    }
+
+    document.getElementById('add-btn').addEventListener('click', openAdd)
+    document.getElementById('copy-upgradable-btn').addEventListener('click', () => {
+      navigator.clipboard?.writeText(document.getElementById('upgradable-from').value)
+      showModalToast('Copied successfully!')
+    })
+
+    document.getElementById('version-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const version = document.getElementById('version-number').value.trim()
+      if (!version) return
+      if (!firmwareFileName) {
+        document.getElementById('firmware-error').classList.remove('hidden')
+        return
+      }
+      const payload = {
+        version,
+        firmwareFileName,
+        description: document.getElementById('version-description').value.trim(),
+        upgradableFrom: document.getElementById('upgradable-from').value,
+        downloadLink: document.getElementById('download-link').value.trim(),
+        checksum: document.getElementById('checksum').value.trim(),
+        rollout: document.querySelector('input[name="rollout"]:checked').value,
+      }
+      if (editingId) {
+        const v = versions.find((x) => x.id === editingId)
+        if (v) Object.assign(v, payload)
+      } else {
+        versions.push({ ...payload, id: crypto.randomUUID(), createdDate: formatTimestamp(new Date()) })
+        showPageToast('Software version is successfully created!')
+      }
+      UI.closeModal('version-modal')
+      dismissModalToast()
+      render()
+    })
+
+    render()
+  </script>
+</body>
+</html>

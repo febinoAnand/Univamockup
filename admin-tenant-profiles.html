@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/admin.css" />
+  <title>Tenant profiles — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content admin-page" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Tenant profiles</h1>
+            <p class="page-subtitle">Resource limits and defaults applied to a class of tenants</p>
+          </div>
+          <div class="page-header-actions">
+            <button type="button" class="solid-action-button" id="add-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              Add tenant profile
+            </button>
+          </div>
+        </div>
+
+        <div class="table-search-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="search" placeholder="Search tenant profiles" />
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Max devices</th><th>Max assets</th><th>Max users</th><th>Max dashboards</th><th>In use</th><th>Default</th><th class="data-table-menu-col"></th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal-card" style="max-width:640px;">
+      <div class="modal-header">
+        <h2 id="modal-title">Add tenant profile</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="profile-form">
+          <div class="modal-field"><label for="p-name">Name*</label><input id="p-name" type="text" required /></div>
+          <div class="modal-field"><label for="p-description">Description</label><textarea id="p-description" rows="2"></textarea></div>
+
+          <p class="profile-config-heading">Profile configuration</p>
+
+          <fieldset class="profile-fieldset">
+            <legend class="profile-fieldset-legend">Entities <span class="range">(0 - unlimited)</span></legend>
+            <div class="profile-grid">
+              <div class="modal-field"><label for="p-max-devices">Devices maximum number*</label><input id="p-max-devices" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-dashboards">Dashboards maximum number*</label><input id="p-max-dashboards" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-assets">Assets maximum number*</label><input id="p-max-assets" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-users">Users maximum number*</label><input id="p-max-users" type="number" min="0" required /></div>
+            </div>
+            <div class="profile-advanced">
+              <button type="button" class="profile-advanced-toggle" data-toggle="entities-advanced">
+                Advanced settings
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" class="chevron-down"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="profile-advanced-body hidden" data-body="entities-advanced">
+                <div class="modal-field">
+                  <label for="p-entities-rate-limit">Rate limit</label>
+                  <input id="p-entities-rate-limit" type="text" placeholder="e.g. 1000:60,20000:3600" />
+                  <p class="field-hint-text">Format: count:seconds, comma-separated for multiple windows.</p>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="profile-fieldset">
+            <legend class="profile-fieldset-legend">Rule Engine <span class="range">(0 - unlimited)</span></legend>
+            <div class="profile-grid">
+              <div class="modal-field"><label for="p-max-rule-executions">Rule Engine executions maximum number*</label><input id="p-max-rule-executions" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-transport-messages">Transport messages maximum number*</label><input id="p-max-transport-messages" type="number" min="0" required /></div>
+            </div>
+            <div class="profile-advanced">
+              <button type="button" class="profile-advanced-toggle" data-toggle="rule-advanced">
+                Advanced settings
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" class="chevron-down"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="profile-advanced-body hidden" data-body="rule-advanced">
+                <div class="modal-field">
+                  <label for="p-rule-rate-limit">Rate limit</label>
+                  <input id="p-rule-rate-limit" type="text" placeholder="e.g. 1000:60,20000:3600" />
+                  <p class="field-hint-text">Format: count:seconds, comma-separated for multiple windows.</p>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="profile-fieldset">
+            <legend class="profile-fieldset-legend">Calculated fields <span class="range">(0 - unlimited)</span></legend>
+            <div class="profile-grid">
+              <div class="modal-field"><label for="p-max-calc-fields">Calculated fields per entity maximum number*</label><input id="p-max-calc-fields" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-data-points">Max data points number in rolling arguments*</label><input id="p-max-data-points" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-calc-args">Arguments per calculated field max number*</label><input id="p-max-calc-args" type="number" min="0" required /></div>
+            </div>
+            <div class="profile-advanced">
+              <button type="button" class="profile-advanced-toggle" data-toggle="calc-advanced">
+                Advanced settings
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" class="chevron-down"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="profile-advanced-body hidden" data-body="calc-advanced">
+                <div class="modal-field">
+                  <label for="p-calc-rate-limit">Rate limit</label>
+                  <input id="p-calc-rate-limit" type="text" placeholder="e.g. 1000:60,20000:3600" />
+                  <p class="field-hint-text">Format: count:seconds, comma-separated for multiple windows.</p>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="profile-fieldset">
+            <legend class="profile-fieldset-legend">Time-to-live <span class="range">(0 - unlimited)</span></legend>
+            <div class="profile-grid">
+              <div class="modal-field"><label for="p-max-storage-days">Data points storage days maximum number*</label><input id="p-max-storage-days" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-alarms-ttl">Alarms TTL days*</label><input id="p-alarms-ttl" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-default-storage-ttl">Storage TTL days by default*</label><input id="p-default-storage-ttl" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-rpc-ttl">RPC TTL days*</label><input id="p-rpc-ttl" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-queue-ttl">Queue stats TTL days*</label><input id="p-queue-ttl" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-rule-exceptions-ttl">Rule Engine exceptions TTL days*</label><input id="p-rule-exceptions-ttl" type="number" min="0" required /></div>
+            </div>
+          </fieldset>
+
+          <fieldset class="profile-fieldset">
+            <legend class="profile-fieldset-legend">Alarms and notifications <span class="range">(0 - unlimited)</span></legend>
+            <div class="profile-toggle-row">
+              <button type="button" class="admin-toggle-switch on" id="sms-toggle" aria-pressed="true" aria-label="SMS enabled"><span class="admin-toggle-switch-knob"></span></button>
+              SMS enabled
+            </div>
+            <div class="modal-field" id="max-sms-field"><label for="p-max-sms">SMS sent maximum number*</label><input id="p-max-sms" type="number" min="0" required /></div>
+            <div class="profile-grid">
+              <div class="modal-field"><label for="p-max-emails">Emails sent maximum number*</label><input id="p-max-emails" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-alarms">Alarms created maximum number*</label><input id="p-max-alarms" type="number" min="0" required /></div>
+            </div>
+            <div class="modal-field"><label for="p-alarms-reeval">Alarms reevaluation interval (seconds)*</label><input id="p-alarms-reeval" type="number" min="0" required /></div>
+          </fieldset>
+
+          <fieldset class="profile-fieldset">
+            <legend class="profile-fieldset-legend">Debug</legend>
+            <div class="modal-field"><label for="p-max-debug">Maximum debug duration (min)</label><input id="p-max-debug" type="number" min="0" /></div>
+          </fieldset>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('profile-modal')">Cancel</button>
+        <button type="submit" form="profile-form" class="modal-button primary" id="save-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mountAdmin({
+      active: 'tenant-profiles',
+      breadcrumbs: [{ label: 'Tenant profiles' }],
+    })
+
+    let editingId = null
+    let smsEnabled = true
+
+    document.querySelectorAll('[data-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-toggle')
+        const expanded = document.querySelector(`[data-body="${key}"]`).classList.toggle('hidden') === false
+        const chevron = btn.querySelector('svg')
+        chevron.classList.toggle('chevron-up', expanded)
+        chevron.classList.toggle('chevron-down', !expanded)
+      })
+    })
+    document.getElementById('sms-toggle').addEventListener('click', function () {
+      smsEnabled = !smsEnabled
+      this.classList.toggle('on', smsEnabled)
+      this.setAttribute('aria-pressed', String(smsEnabled))
+      document.getElementById('max-sms-field').classList.toggle('hidden', !smsEnabled)
+    })
+
+    function usageCountByProfile() {
+      const counts = {}
+      Store.get().tenants.forEach((t) => { counts[t.tenantProfileName] = (counts[t.tenantProfileName] ?? 0) + 1 })
+      return counts
+    }
+
+    function render() {
+      const data = Store.get()
+      const term = document.getElementById('search').value.trim().toLowerCase()
+      const profiles = term ? data.tenantProfiles.filter((p) => p.name.toLowerCase().includes(term)) : data.tenantProfiles
+      const counts = usageCountByProfile()
+      const tbody = document.getElementById('tbody')
+      if (profiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-table-note">No tenant profiles match your search.</td></tr>'
+        return
+      }
+      tbody.innerHTML = profiles
+        .map(
+          (p) => `
+        <tr>
+          <td><div class="group-name-cell">${p.name}${p.description ? `<p class="group-description">${p.description}</p>` : ''}</div></td>
+          <td>${p.maxDevices}</td>
+          <td>${p.maxAssets}</td>
+          <td>${p.maxUsers}</td>
+          <td>${p.maxDashboards}</td>
+          <td>${counts[p.name] ?? 0}</td>
+          <td>${p.isDefault ? '<span class="default-profile-badge">Default</span>' : ''}</td>
+          <td class="data-table-menu-col">
+            <div class="row-menu">
+              <button type="button" class="row-menu-button" data-menu-toggle>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="row-menu-dropdown">
+                <button type="button" class="row-menu-item" data-edit="${p.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Edit
+                </button>
+                <button type="button" class="row-menu-item" data-default="${p.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7L12 3Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Set default
+                </button>
+                <button type="button" class="row-menu-item danger" data-delete="${p.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>`,
+        )
+        .join('')
+      document.querySelectorAll('[data-default]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const p = Store.get().tenantProfiles.find((x) => x.id === btn.getAttribute('data-default'))
+          Store.setDefaultTenantProfile(btn.getAttribute('data-default'))
+          render()
+          UI.toast(`"${p.name}" set as default tenant profile successfully!`)
+        }),
+      )
+      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
+      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => handleRemove(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const menu = btn.closest('.row-menu')
+          const wasOpen = menu.classList.contains('open')
+          UI.closeRowMenus()
+          if (!wasOpen) UI.openRowMenu(btn)
+        }),
+      )
+    }
+    document.addEventListener('click', () => UI.closeRowMenus())
+
+    const NUMERIC_FIELDS = [
+      'max-devices', 'max-dashboards', 'max-assets', 'max-users', 'max-rule-executions', 'max-transport-messages',
+      'max-calc-fields', 'max-data-points', 'max-calc-args', 'max-storage-days', 'alarms-ttl', 'default-storage-ttl',
+      'rpc-ttl', 'queue-ttl', 'rule-exceptions-ttl', 'max-sms', 'max-emails', 'max-alarms', 'alarms-reeval', 'max-debug',
+    ]
+
+    function resetForm() {
+      document.getElementById('p-name').value = ''
+      document.getElementById('p-description').value = ''
+      NUMERIC_FIELDS.forEach((id) => (document.getElementById('p-' + id).value = 0))
+      document.getElementById('p-max-calc-fields').value = 5
+      document.getElementById('p-max-data-points').value = 1000
+      document.getElementById('p-max-calc-args').value = 10
+      document.getElementById('p-alarms-reeval').value = 60
+      document.getElementById('p-max-debug').value = 15
+      document.getElementById('p-entities-rate-limit').value = ''
+      document.getElementById('p-rule-rate-limit').value = ''
+      document.getElementById('p-calc-rate-limit').value = ''
+      smsEnabled = true
+      document.getElementById('sms-toggle').classList.add('on')
+      document.getElementById('max-sms-field').classList.remove('hidden')
+    }
+
+    function openAdd() {
+      editingId = null
+      document.getElementById('modal-title').textContent = 'Add tenant profile'
+      document.getElementById('save-btn').textContent = 'Create'
+      resetForm()
+      UI.openModal('profile-modal')
+    }
+
+    function openEdit(id) {
+      const p = Store.get().tenantProfiles.find((x) => x.id === id)
+      if (!p) return
+      editingId = id
+      document.getElementById('modal-title').textContent = 'Edit tenant profile'
+      document.getElementById('save-btn').textContent = 'Save changes'
+      resetForm()
+      document.getElementById('p-name').value = p.name
+      document.getElementById('p-description').value = p.description || ''
+      document.getElementById('p-max-devices').value = p.maxDevices ?? 0
+      document.getElementById('p-max-dashboards').value = p.maxDashboards ?? 0
+      document.getElementById('p-max-assets').value = p.maxAssets ?? 0
+      document.getElementById('p-max-users').value = p.maxUsers ?? 0
+      document.getElementById('p-entities-rate-limit').value = p.entitiesRateLimit ?? ''
+      document.getElementById('p-max-rule-executions').value = p.maxRuleEngineExecutions ?? 0
+      document.getElementById('p-max-transport-messages').value = p.maxTransportMessages ?? 0
+      document.getElementById('p-rule-rate-limit').value = p.ruleEngineRateLimit ?? ''
+      document.getElementById('p-max-calc-fields').value = p.maxCalculatedFieldsPerEntity ?? 5
+      document.getElementById('p-max-data-points').value = p.maxDataPointsRolling ?? 1000
+      document.getElementById('p-max-calc-args').value = p.maxArgumentsPerCalculatedField ?? 10
+      document.getElementById('p-calc-rate-limit').value = p.calculatedFieldsRateLimit ?? ''
+      document.getElementById('p-max-storage-days').value = p.maxDataPointsStorageDays ?? 0
+      document.getElementById('p-alarms-ttl').value = p.alarmsTtlDays ?? 0
+      document.getElementById('p-default-storage-ttl').value = p.defaultStorageTtlDays ?? 0
+      document.getElementById('p-rpc-ttl').value = p.rpcTtlDays ?? 0
+      document.getElementById('p-queue-ttl').value = p.queueStatsTtlDays ?? 0
+      document.getElementById('p-rule-exceptions-ttl').value = p.ruleEngineExceptionsTtlDays ?? 0
+      smsEnabled = p.smsEnabled ?? true
+      document.getElementById('sms-toggle').classList.toggle('on', smsEnabled)
+      document.getElementById('sms-toggle').setAttribute('aria-pressed', String(smsEnabled))
+      document.getElementById('max-sms-field').classList.toggle('hidden', !smsEnabled)
+      document.getElementById('p-max-sms').value = p.maxSmsSent ?? 0
+      document.getElementById('p-max-emails').value = p.maxEmailsSent ?? 0
+      document.getElementById('p-max-alarms').value = p.maxAlarmsCreated ?? 0
+      document.getElementById('p-alarms-reeval').value = p.alarmsReevaluationIntervalSeconds ?? 60
+      document.getElementById('p-max-debug').value = p.maxDebugDurationMinutes ?? 15
+      UI.openModal('profile-modal')
+    }
+
+    function handleRemove(id) {
+      const p = Store.get().tenantProfiles.find((x) => x.id === id)
+      if (!p) return
+      const counts = usageCountByProfile()
+      if (counts[p.name]) {
+        UI.toast(`Reassign tenants using "${p.name}" before deleting it.`)
+        return
+      }
+      UI.confirm({
+        message: `Delete <strong>${p.name}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeTenantProfile(id)
+          render()
+          UI.toast(`"${p.name}" profile deleted successfully!`)
+        },
+      })
+    }
+
+    document.getElementById('add-btn').addEventListener('click', openAdd)
+    document.getElementById('search').addEventListener('input', render)
+
+    document.getElementById('profile-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const name = document.getElementById('p-name').value.trim()
+      if (!name) return
+      const num = (id) => Number(document.getElementById('p-' + id).value) || 0
+      const payload = {
+        name,
+        description: document.getElementById('p-description').value.trim(),
+        maxDevices: num('max-devices'),
+        maxDashboards: num('max-dashboards'),
+        maxAssets: num('max-assets'),
+        maxUsers: num('max-users'),
+        entitiesRateLimit: document.getElementById('p-entities-rate-limit').value.trim(),
+        maxRuleEngineExecutions: num('max-rule-executions'),
+        maxTransportMessages: num('max-transport-messages'),
+        ruleEngineRateLimit: document.getElementById('p-rule-rate-limit').value.trim(),
+        maxCalculatedFieldsPerEntity: num('max-calc-fields'),
+        maxDataPointsRolling: num('max-data-points'),
+        maxArgumentsPerCalculatedField: num('max-calc-args'),
+        calculatedFieldsRateLimit: document.getElementById('p-calc-rate-limit').value.trim(),
+        maxDataPointsStorageDays: num('max-storage-days'),
+        alarmsTtlDays: num('alarms-ttl'),
+        defaultStorageTtlDays: num('default-storage-ttl'),
+        rpcTtlDays: num('rpc-ttl'),
+        queueStatsTtlDays: num('queue-ttl'),
+        ruleEngineExceptionsTtlDays: num('rule-exceptions-ttl'),
+        smsEnabled,
+        maxSmsSent: num('max-sms'),
+        maxEmailsSent: num('max-emails'),
+        maxAlarmsCreated: num('max-alarms'),
+        alarmsReevaluationIntervalSeconds: num('alarms-reeval'),
+        maxDebugDurationMinutes: num('max-debug'),
+      }
+      if (editingId) {
+        Store.updateTenantProfile(editingId, payload)
+        UI.toast(`"${name}" updated successfully!`)
+      } else {
+        Store.addTenantProfile(payload)
+        UI.toast(`"${name}" tenant profile created successfully!`)
+      }
+      UI.closeModal('profile-modal')
+      render()
+    })
+
+    render()
+  </script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/rule-engine.css" />
+  <title>Rule engines — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Rule engines</h1>
+            <p class="page-subtitle">Automated rules that evaluate device conditions and trigger actions</p>
+          </div>
+          <div class="page-header-actions">
+            <button type="button" class="solid-action-button" id="add-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              Add rule engine
+            </button>
+          </div>
+        </div>
+
+        <div class="table-search-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="search" placeholder="Search rule engines" />
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Trigger</th><th>Condition</th><th>Action</th><th>Created time</th><th class="data-table-menu-col"></th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="engine-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Add rule engine</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('engine-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="engine-form">
+          <div class="section">
+            <button type="button" class="section-header" data-toggle="details">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon expanded" data-caret="details"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="section-title">Details</span>
+            </button>
+            <div class="section-body" data-body="details">
+              <div class="modal-field"><label for="engine-name">Name*</label><input id="engine-name" type="text" required /></div>
+              <div class="modal-field"><label for="engine-description">Description</label><textarea id="engine-description" rows="2"></textarea></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <button type="button" class="section-header" data-toggle="triggers">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon expanded" data-caret="triggers"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="section-title">Triggers</span>
+            </button>
+            <div class="section-body" data-body="triggers">
+              <div class="modal-field">
+                <label for="engine-trigger">Trigger type</label>
+                <select id="engine-trigger">
+                  <option>Telemetry received</option>
+                  <option>Attribute updated</option>
+                  <option>Device connected</option>
+                  <option>Device disconnected</option>
+                  <option>Alarm raised</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <button type="button" class="section-header" data-toggle="conditions">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon expanded" data-caret="conditions"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="section-title">Conditions</span>
+            </button>
+            <div class="section-body" data-body="conditions">
+              <p class="section-hint">Leave the metric blank to run the action every time the trigger fires.</p>
+              <div class="condition-field-row">
+                <div class="modal-field"><label for="engine-metric">Metric</label><input id="engine-metric" type="text" placeholder="e.g. temperature" /></div>
+                <div class="modal-field">
+                  <label for="engine-operator">Operator</label>
+                  <select id="engine-operator">
+                    <option>&gt;</option><option>&lt;</option><option>&gt;=</option><option>&lt;=</option><option>==</option><option>!=</option>
+                  </select>
+                </div>
+                <div class="modal-field"><label for="engine-value">Value</label><input id="engine-value" type="text" placeholder="e.g. 30" /></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <button type="button" class="section-header" data-toggle="action">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon expanded" data-caret="action"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="section-title">Action</span>
+            </button>
+            <div class="section-body" data-body="action">
+              <div class="modal-field">
+                <label for="engine-action-type">Action type</label>
+                <select id="engine-action-type">
+                  <option>Create alarm</option><option>Send email</option><option>Send SMS</option><option>Call webhook</option><option>Send notification</option>
+                </select>
+              </div>
+              <div class="modal-field">
+                <label for="engine-action-detail" id="action-detail-label">Severity</label>
+                <select id="engine-action-detail-select"><option>Critical</option><option>Major</option><option>Minor</option><option>Warning</option></select>
+                <input id="engine-action-detail-input" type="text" class="hidden" />
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('engine-modal')">Cancel</button>
+        <button type="submit" form="engine-form" class="modal-button primary" id="save-btn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mount({
+      active: 'rule-engines',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'Rule engines', href: 'rule-engines.html' },
+        { label: 'Rule engine' },
+      ],
+    })
+
+    let editingId = null
+
+    function conditionSummary(e) {
+      return e.conditionMetric && e.conditionMetric.trim() ? `${e.conditionMetric} ${e.conditionOperator} ${e.conditionValue}` : 'Always'
+    }
+
+    function render() {
+      const data = Store.get()
+      const term = document.getElementById('search').value.trim().toLowerCase()
+      const engines = term ? data.ruleEngines.filter((e) => e.name.toLowerCase().includes(term)) : data.ruleEngines
+      const tbody = document.getElementById('tbody')
+      if (engines.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-table-note">No rule engines match your search.</td></tr>'
+        return
+      }
+      tbody.innerHTML = engines
+        .map(
+          (e) => `
+        <tr>
+          <td>${e.name}</td>
+          <td><span class="rule-summary-pill">${e.triggerType}</span></td>
+          <td>${conditionSummary(e)}</td>
+          <td>${e.actionType}</td>
+          <td>${e.createdDate}</td>
+          <td class="data-table-menu-col">
+            <div class="row-menu">
+              <button type="button" class="row-menu-button" data-menu-toggle>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="row-menu-dropdown">
+                <button type="button" class="row-menu-item" data-edit="${e.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Edit
+                </button>
+                <button type="button" class="row-menu-item danger" data-delete="${e.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>`,
+        )
+        .join('')
+      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
+      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const menu = btn.closest('.row-menu')
+          const wasOpen = menu.classList.contains('open')
+          UI.closeRowMenus()
+          if (!wasOpen) UI.openRowMenu(btn)
+        }),
+      )
+    }
+    document.addEventListener('click', () => UI.closeRowMenus())
+
+    document.querySelectorAll('[data-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-toggle')
+        document.querySelector(`[data-body="${key}"]`).classList.toggle('hidden')
+        document.querySelector(`[data-caret="${key}"]`).classList.toggle('expanded')
+      })
+    })
+
+    function updateActionDetailField() {
+      const type = document.getElementById('engine-action-type').value
+      const label = document.getElementById('action-detail-label')
+      const select = document.getElementById('engine-action-detail-select')
+      const input = document.getElementById('engine-action-detail-input')
+      const labels = { 'Create alarm': 'Severity', 'Send email': 'Email address', 'Send SMS': 'Phone number', 'Call webhook': 'Webhook URL', 'Send notification': 'Notification message' }
+      label.textContent = labels[type] || 'Detail'
+      if (type === 'Create alarm') {
+        select.classList.remove('hidden')
+        input.classList.add('hidden')
+      } else {
+        select.classList.add('hidden')
+        input.classList.remove('hidden')
+        input.value = ''
+      }
+    }
+    document.getElementById('engine-action-type').addEventListener('change', updateActionDetailField)
+
+    function getActionDetail() {
+      return document.getElementById('engine-action-type').value === 'Create alarm'
+        ? document.getElementById('engine-action-detail-select').value
+        : document.getElementById('engine-action-detail-input').value.trim()
+    }
+
+    function openAdd() {
+      editingId = null
+      document.getElementById('modal-title').textContent = 'Add rule engine'
+      document.getElementById('save-btn').textContent = 'Add'
+      document.getElementById('engine-name').value = ''
+      document.getElementById('engine-description').value = ''
+      document.getElementById('engine-trigger').value = 'Telemetry received'
+      document.getElementById('engine-metric').value = ''
+      document.getElementById('engine-operator').value = '>'
+      document.getElementById('engine-value').value = ''
+      document.getElementById('engine-action-type').value = 'Create alarm'
+      updateActionDetailField()
+      UI.openModal('engine-modal')
+    }
+
+    function openEdit(id) {
+      const e = Store.get().ruleEngines.find((x) => x.id === id)
+      if (!e) return
+      editingId = id
+      document.getElementById('modal-title').textContent = 'Edit rule engine'
+      document.getElementById('save-btn').textContent = 'Save'
+      document.getElementById('engine-name').value = e.name
+      document.getElementById('engine-description').value = e.description || ''
+      document.getElementById('engine-trigger').value = e.triggerType
+      document.getElementById('engine-metric').value = e.conditionMetric || ''
+      document.getElementById('engine-operator').value = e.conditionOperator
+      document.getElementById('engine-value').value = e.conditionValue || ''
+      document.getElementById('engine-action-type').value = e.actionType
+      updateActionDetailField()
+      if (e.actionType === 'Create alarm') document.getElementById('engine-action-detail-select').value = e.actionDetail
+      else document.getElementById('engine-action-detail-input').value = e.actionDetail
+      UI.openModal('engine-modal')
+    }
+
+    function confirmDelete(id) {
+      const e = Store.get().ruleEngines.find((x) => x.id === id)
+      if (!e) return
+      UI.confirm({
+        message: `Delete <strong>${e.name}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeRuleEngine(id)
+          render()
+          UI.toast(`"${e.name}" deleted successfully!`)
+        },
+      })
+    }
+
+    document.getElementById('add-btn').addEventListener('click', openAdd)
+    document.getElementById('search').addEventListener('input', render)
+
+    document.getElementById('engine-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const name = document.getElementById('engine-name').value.trim()
+      if (!name) return
+      const payload = {
+        name,
+        description: document.getElementById('engine-description').value.trim(),
+        conditionMetric: document.getElementById('engine-metric').value.trim(),
+        conditionOperator: document.getElementById('engine-operator').value,
+        conditionValue: document.getElementById('engine-value').value.trim(),
+        triggerType: document.getElementById('engine-trigger').value,
+        actionType: document.getElementById('engine-action-type').value,
+        actionDetail: getActionDetail(),
+      }
+      if (editingId) {
+        Store.updateRuleEngine(editingId, payload)
+        UI.toast(`"${name}" rule engine updated successfully!`)
+      } else {
+        Store.addRuleEngine(payload)
+        UI.toast(`"${name}" rule engine created successfully!`)
+      }
+      UI.closeModal('engine-modal')
+      render()
+    })
+
+    render()
+  </script>
+</body>
+</html>

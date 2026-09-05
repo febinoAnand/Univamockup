@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/roles.css" />
+  <title>Roles &amp; permissions — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Roles &amp; permissions</h1>
+            <p class="page-subtitle">Control what each role can see and do across the tenant</p>
+          </div>
+          <button type="button" class="add-role-button" id="add-role-btn">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+            Add role
+          </button>
+        </div>
+
+        <div class="roles-body">
+          <div class="role-rail" id="role-rail"></div>
+          <div class="detail-pane" id="detail-pane"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add role modal -->
+  <div class="modal-overlay" id="add-role-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Add role</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('add-role-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="add-role-form">
+          <div class="modal-field"><label for="role-name">Role name*</label><input id="role-name" type="text" required /></div>
+          <div class="modal-field"><label for="role-description">Description</label><textarea id="role-description" rows="3"></textarea></div>
+          <p class="modal-hint">New roles start with no permissions granted &mdash; open "Edit permissions" afterwards to configure access.</p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('add-role-modal')">Cancel</button>
+        <button type="submit" form="add-role-form" class="modal-button primary">Create role</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit permissions modal -->
+  <div class="modal-overlay" id="edit-permissions-modal">
+    <div class="modal-card" style="max-width:640px;">
+      <div class="modal-header">
+        <h2 id="edit-permissions-title">Edit permissions</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('edit-permissions-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint hidden" id="edit-permissions-locked-hint">Owner always has full access &mdash; permissions cannot be changed for this role.</p>
+        <form id="edit-permissions-form">
+          <div class="matrix-wrap">
+            <table class="permission-matrix editable" id="edit-permissions-matrix">
+              <thead><tr id="edit-permissions-head"></tr></thead>
+              <tbody id="edit-permissions-body"></tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer" id="edit-permissions-footer"></div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mount({
+      active: 'roles',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'User management', href: 'users.html' },
+        { label: 'Roles & permissions' },
+      ],
+    })
+
+    // ------------------------------------------------------------------
+    // Port of src/modules/users/permissionsRegistry.js — RolesPermissionsPage.jsx
+    // keeps its roles/permissions as plain component state (no Context/provider),
+    // so — like Credentials and Software OTA — this whole page is page-local and
+    // intentionally resets every time it loads, not backed by Store.
+    // ------------------------------------------------------------------
+
+    const PERMISSION_ACTIONS = [
+      { key: 'view', label: 'View' },
+      { key: 'create', label: 'Create' },
+      { key: 'edit', label: 'Edit' },
+      { key: 'delete', label: 'Delete' },
+    ]
+    const FIELD_ACTION_KEYS = ['view', 'edit']
+
+    const PERMISSION_MODULES = [
+      { key: 'dashboard', label: 'Dashboard', iconFamily: 'dashboard', fields: [
+        { key: 'widgetFields', label: 'Custom widget fields' },
+        { key: 'headerStyle', label: 'Widget header style' },
+      ] },
+      { key: 'devices', label: 'Devices', iconFamily: 'device', fields: [
+        { key: 'deviceProfile', label: 'Device profile' },
+        { key: 'endpointToken', label: 'Device token' },
+        { key: 'deviceName', label: 'Device name' },
+        { key: 'tokenStatus', label: 'Endpoint token status' },
+        { key: 'commands', label: 'Commands' },
+      ] },
+      { key: 'deviceProfiles', label: 'Device profiles', iconFamily: 'device', fields: [
+        { key: 'name', label: 'Profile name' },
+        { key: 'description', label: 'Description' },
+      ] },
+      { key: 'credentials', label: 'Credentials', iconFamily: 'device', fields: [] },
+      { key: 'softwareOta', label: 'Software OTA', iconFamily: 'device', fields: [] },
+      { key: 'users', label: 'Users', iconFamily: 'users', fields: [
+        { key: 'name', label: 'Full name' },
+        { key: 'email', label: 'Email address' },
+        { key: 'role', label: 'Role assignment' },
+        { key: 'groupNames', label: 'Groups' },
+      ] },
+      { key: 'userGroups', label: 'User groups', iconFamily: 'users', fields: [
+        { key: 'name', label: 'Group name' },
+        { key: 'description', label: 'Description' },
+      ] },
+      { key: 'rolesPermissions', label: 'Roles & permissions', iconFamily: 'users', fields: [] },
+      { key: 'assets', label: 'Assets', iconFamily: 'asset', fields: [
+        { key: 'name', label: 'Asset name' },
+        { key: 'location', label: 'Location' },
+        { key: 'groupNames', label: 'Groups' },
+        { key: 'profileName', label: 'Asset profile' },
+        { key: 'deviceIds', label: 'Linked devices' },
+      ] },
+      { key: 'assetGroups', label: 'Asset groups', iconFamily: 'asset', fields: [
+        { key: 'name', label: 'Group name' },
+        { key: 'description', label: 'Description' },
+      ] },
+      { key: 'assetProfiles', label: 'Asset profiles', iconFamily: 'asset', fields: [
+        { key: 'name', label: 'Profile name' },
+        { key: 'category', label: 'Category' },
+        { key: 'description', label: 'Description' },
+      ] },
+      { key: 'ruleEngines', label: 'Rule engine', iconFamily: 'ruleEngine', fields: [
+        { key: 'name', label: 'Name' },
+        { key: 'description', label: 'Description' },
+        { key: 'trigger', label: 'Trigger condition' },
+        { key: 'action', label: 'Action' },
+      ] },
+      { key: 'ruleEngineReports', label: 'Reports', iconFamily: 'ruleEngine', fields: [] },
+    ]
+
+    function emptyModulePermissions() {
+      const base = { fields: {} }
+      PERMISSION_ACTIONS.forEach((action) => { base[action.key] = false })
+      return base
+    }
+    function buildEmptyPermissions() {
+      const out = {}
+      PERMISSION_MODULES.forEach((module) => { out[module.key] = emptyModulePermissions() })
+      return out
+    }
+    function buildPermissions(grantedActions, overrides) {
+      overrides = overrides || {}
+      const out = {}
+      PERMISSION_MODULES.forEach((module) => {
+        const modulePerm = emptyModulePermissions()
+        const granted = overrides[module.key] || grantedActions
+        PERMISSION_ACTIONS.forEach((action) => { modulePerm[action.key] = granted.includes(action.key) })
+        out[module.key] = modulePerm
+      })
+      return out
+    }
+    function getFieldPermission(role, moduleKey, fieldKey) {
+      const modulePerm = role.permissions[moduleKey]
+      const override = modulePerm.fields && modulePerm.fields[fieldKey]
+      if (override) return override
+      return { view: modulePerm.view, edit: modulePerm.edit }
+    }
+    const METADATA_SOURCE_BY_MODULE = { devices: 'devices', deviceProfiles: 'deviceProfiles', assets: 'assets', assetProfiles: 'assetProfiles' }
+    function getModuleFields(module, context) {
+      context = context || {}
+      const sourceKey = METADATA_SOURCE_BY_MODULE[module.key]
+      if (!sourceKey) return module.fields
+      const keys = new Set()
+      ;(context[sourceKey] || []).forEach((record) => {
+        ;(record.metadata || []).forEach((field) => keys.add(field.key))
+      })
+      const metadataFields = Array.from(keys).sort((a, b) => a.localeCompare(b)).map((key) => ({ key: 'metadata:' + key, label: 'Metadata: ' + key }))
+      return module.fields.concat(metadataFields)
+    }
+    function coverage(role, context) {
+      context = context || {}
+      let granted = 0
+      let total = 0
+      PERMISSION_MODULES.forEach((module) => {
+        PERMISSION_ACTIONS.forEach((action) => {
+          total += 1
+          if (role.permissions[module.key][action.key]) granted += 1
+        })
+        getModuleFields(module, context).forEach((field) => {
+          FIELD_ACTION_KEYS.forEach((actionKey) => {
+            total += 1
+            if (getFieldPermission(role, module.key, field.key)[actionKey]) granted += 1
+          })
+        })
+      })
+      return { granted: granted, total: total }
+    }
+
+    function formatDate(date) {
+      const pad = (value) => String(value).padStart(2, '0')
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+    }
+
+    const MODULE_ICON_SVG = {
+      dashboard: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="9" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.5"/></svg>',
+      device: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.5h17M9 3.5v6" stroke-linecap="round"/></svg>',
+      asset: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      users: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 19c1-3.2 3.4-5 6-5s5 1.8 6 5" stroke-linecap="round"/></svg>',
+      ruleEngine: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7 5h6a4 4 0 0 1 4 4v0M7 19h6a4 4 0 0 0 4-4v0" stroke-linecap="round"/></svg>',
+    }
+    const CHECK_MARK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    const DASH_MARK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 12h12" stroke-linecap="round"/></svg>'
+    const SHIELD_SVG = '<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    const EDIT_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    const TRASH_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>'
+    const INFO_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 16.5v.01" stroke-linecap="round"/><circle cx="12" cy="12" r="9"/></svg>'
+    function chevronSvg(expanded) {
+      return `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" style="transform:rotate(${expanded ? 90 : 0}deg);transition:transform 0.15s ease;"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+    }
+
+    let roles = [
+      {
+        id: 'owner', name: 'Owner', tier: 'owner', system: true, userCount: 1,
+        description: 'Full access to every area of the tenant. Cannot be edited or removed.',
+        createdDate: '2025-11-02',
+        permissions: buildPermissions(['view', 'create', 'edit', 'delete']),
+      },
+      {
+        id: 'admin', name: 'Admin', tier: 'admin', system: false, userCount: 1,
+        description: 'Manage devices, assets, and users. Cannot delete other users.',
+        createdDate: '2025-12-19',
+        permissions: buildPermissions(['view', 'create', 'edit', 'delete'], { users: ['view', 'create', 'edit'] }),
+      },
+      {
+        id: 'member', name: 'Member', tier: 'member', system: false, userCount: 1,
+        description: 'Day-to-day device and asset operations.',
+        createdDate: '2026-01-08',
+        permissions: buildPermissions(['view'], { devices: ['view', 'create', 'edit'], assets: ['view', 'create', 'edit'] }),
+      },
+      {
+        id: 'viewer', name: 'Viewer', tier: 'viewer', system: false, userCount: 1,
+        description: 'Read-only access across the tenant.',
+        createdDate: '2026-03-22',
+        permissions: buildPermissions(['view']),
+      },
+    ]
+    let expandedModules = new Set()
+    let selectedId = 'admin'
+    let editingRoleId = null
+    let editDraft = null
+    let editExpandedModules = new Set()
+
+    function fieldContext() {
+      const data = Store.get()
+      return { devices: data.devices, assets: data.assets, assetProfiles: data.assetProfiles, deviceProfiles: data.deviceProfiles }
+    }
+
+    function renderRoleRail() {
+      const rail = document.getElementById('role-rail')
+      const ctx = fieldContext()
+      rail.innerHTML = roles.map((role) => {
+        const roleCoverage = coverage(role, ctx)
+        const percent = Math.round((roleCoverage.granted / roleCoverage.total) * 100)
+        return `
+        <button type="button" class="role-card${role.id === selectedId ? ' selected' : ''}" data-role="${role.id}">
+          <span class="role-stripe tier-${role.tier}"></span>
+          <span class="role-card-body">
+            <span class="role-card-top">
+              <span class="role-name">${role.name}</span>
+              ${role.system ? `<span class="system-badge">${SHIELD_SVG}System</span>` : ''}
+            </span>
+            <p class="role-desc">${role.description}</p>
+            <span class="role-meta">
+              <span>${role.userCount} user${role.userCount === 1 ? '' : 's'}</span>
+              <span class="meta-dot"></span>
+              <span>${roleCoverage.granted} / ${roleCoverage.total} granted</span>
+            </span>
+            <span class="coverage-track"><span class="coverage-fill tier-${role.tier}" style="width:${percent}%"></span></span>
+          </span>
+        </button>`
+      }).join('')
+
+      rail.querySelectorAll('[data-role]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          selectedId = btn.getAttribute('data-role')
+          renderRoleRail()
+          renderDetailPane()
+        })
+      })
+    }
+
+    function renderDetailPane() {
+      const ctx = fieldContext()
+      const selectedRole = roles.find((role) => role.id === selectedId) || roles[0]
+      const selectedCoverage = coverage(selectedRole, ctx)
+      const pane = document.getElementById('detail-pane')
+
+      const rowsHtml = PERMISSION_MODULES.map((module) => {
+        const expanded = expandedModules.has(module.key)
+        const moduleFields = getModuleFields(module, ctx)
+        const hasFields = moduleFields.length > 0
+        const actionCells = PERMISSION_ACTIONS.map((action) => {
+          const granted = selectedRole.permissions[module.key][action.key]
+          return `<td><span class="permission-mark${granted ? ' granted' : ' denied'}">${granted ? CHECK_MARK_SVG : DASH_MARK_SVG}</span></td>`
+        }).join('')
+        let fieldRowsHtml = ''
+        if (expanded) {
+          fieldRowsHtml = moduleFields.map((field) => {
+            const fieldPermission = getFieldPermission(selectedRole, module.key, field.key)
+            const cells = PERMISSION_ACTIONS.map((action) => {
+              if (!FIELD_ACTION_KEYS.includes(action.key)) return '<td></td>'
+              const granted = fieldPermission[action.key]
+              return `<td><span class="permission-mark small${granted ? ' granted' : ' denied'}">${granted ? CHECK_MARK_SVG : DASH_MARK_SVG}</span></td>`
+            }).join('')
+            return `<tr class="field-row"><td class="module-cell field-cell">${field.label}</td>${cells}</tr>`
+          }).join('')
+        }
+        return `
+        <tr>
+          <td class="module-cell">
+            ${hasFields ? `<button type="button" class="module-expand-toggle" data-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
+            <span class="module-icon">${MODULE_ICON_SVG[module.iconFamily]}</span>
+            ${module.label}
+          </td>
+          ${actionCells}
+        </tr>
+        ${fieldRowsHtml}`
+      }).join('')
+
+      pane.innerHTML = `
+        <div class="detail-head">
+          <div class="detail-head-left">
+            <span class="role-avatar tier-${selectedRole.tier}">${selectedRole.name.charAt(0)}</span>
+            <div>
+              <h2>${selectedRole.name}</h2>
+              <p>${selectedCoverage.granted} of ${selectedCoverage.total} permissions granted &middot; ${selectedRole.userCount} user${selectedRole.userCount === 1 ? '' : 's'} assigned</p>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button type="button" class="ghost-button" id="edit-permissions-btn">${EDIT_SVG}Edit permissions</button>
+            <button type="button" class="ghost-button danger" id="delete-role-btn" ${selectedRole.system ? 'disabled' : ''}>${TRASH_SVG}Delete</button>
+          </div>
+        </div>
+        ${selectedRole.system ? `<p class="system-hint">${INFO_SVG}Owner is a system role &mdash; it always has full access and cannot be edited or removed.</p>` : ''}
+        <div class="matrix-wrap">
+          <table class="permission-matrix">
+            <thead><tr><th>Module</th>${PERMISSION_ACTIONS.map((a) => `<th>${a.label}</th>`).join('')}</tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div class="matrix-legend">
+          <span><span class="permission-mark granted legend-mark">${CHECK_MARK_SVG}</span>Granted</span>
+          <span><span class="permission-mark denied legend-mark">${DASH_MARK_SVG}</span>Not granted</span>
+        </div>`
+
+      pane.querySelectorAll('[data-expand]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-expand')
+          if (expandedModules.has(key)) expandedModules.delete(key)
+          else expandedModules.add(key)
+          renderDetailPane()
+        })
+      })
+      document.getElementById('edit-permissions-btn').addEventListener('click', () => openEditPermissions(selectedRole))
+      document.getElementById('delete-role-btn').addEventListener('click', () => handleDeleteRole(selectedRole))
+    }
+
+    function handleDeleteRole(role) {
+      if (role.system) {
+        UI.toast(`"${role.name}" is a system role and cannot be removed.`)
+        return
+      }
+      UI.confirm({
+        message: `Delete the <strong>${role.name}</strong> role? This can't be undone.`,
+        onConfirm: () => {
+          roles = roles.filter((item) => item.id !== role.id)
+          if (selectedId === role.id) selectedId = roles[0] ? roles[0].id : null
+          UI.toast(`"${role.name}" removed successfully!`)
+          renderRoleRail()
+          renderDetailPane()
+        },
+      })
+    }
+
+    document.getElementById('add-role-btn').addEventListener('click', () => {
+      document.getElementById('role-name').value = ''
+      document.getElementById('role-description').value = ''
+      UI.openModal('add-role-modal')
+    })
+
+    document.getElementById('add-role-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const name = document.getElementById('role-name').value.trim()
+      if (!name) return
+      const record = {
+        id: crypto.randomUUID(),
+        name,
+        tier: 'custom',
+        system: false,
+        userCount: 0,
+        description: document.getElementById('role-description').value.trim(),
+        createdDate: formatDate(new Date()),
+        permissions: buildEmptyPermissions(),
+      }
+      roles.push(record)
+      selectedId = record.id
+      UI.closeModal('add-role-modal')
+      UI.toast(`Role "${record.name}" created successfully!`)
+      renderRoleRail()
+      renderDetailPane()
+    })
+
+    function clonePermissions(permissions) {
+      const next = {}
+      PERMISSION_MODULES.forEach((module) => {
+        const modulePerm = permissions[module.key]
+        next[module.key] = Object.assign({}, modulePerm, { fields: Object.assign({}, modulePerm.fields || {}) })
+      })
+      return next
+    }
+
+    function openEditPermissions(role) {
+      editingRoleId = role.id
+      editDraft = clonePermissions(role.permissions)
+      editExpandedModules = new Set()
+      document.getElementById('edit-permissions-title').textContent = `Edit permissions — ${role.name}`
+      document.getElementById('edit-permissions-locked-hint').classList.toggle('hidden', !role.system)
+      const footer = document.getElementById('edit-permissions-footer')
+      footer.innerHTML = role.system
+        ? `<button type="button" class="modal-button primary" id="edit-permissions-close-btn">Close</button>`
+        : `<button type="button" class="modal-button secondary" onclick="UI.closeModal('edit-permissions-modal')">Cancel</button>
+           <button type="submit" form="edit-permissions-form" class="modal-button primary">Save changes</button>`
+      if (role.system) {
+        document.getElementById('edit-permissions-close-btn').addEventListener('click', () => UI.closeModal('edit-permissions-modal'))
+      }
+      renderEditMatrix()
+      UI.openModal('edit-permissions-modal')
+    }
+
+    function renderEditMatrix() {
+      const role = roles.find((r) => r.id === editingRoleId)
+      const locked = role.system
+      const ctx = fieldContext()
+
+      document.getElementById('edit-permissions-head').innerHTML =
+        '<th>Module</th>' +
+        PERMISSION_ACTIONS.map((action) => {
+          const allOn = PERMISSION_MODULES.every((module) => editDraft[module.key][action.key])
+          return `<th><label class="matrix-column-toggle"><input type="checkbox" data-toggle-column="${action.key}" ${allOn ? 'checked' : ''} ${locked ? 'disabled' : ''}/>${action.label}</label></th>`
+        }).join('')
+
+      document.getElementById('edit-permissions-body').innerHTML = PERMISSION_MODULES.map((module) => {
+        const expanded = editExpandedModules.has(module.key)
+        const moduleFields = getModuleFields(module, ctx)
+        const hasFields = moduleFields.length > 0
+        const cells = PERMISSION_ACTIONS.map((action) => {
+          const checked = editDraft[module.key][action.key]
+          return `<td><input type="checkbox" data-cell-module="${module.key}" data-cell-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${module.label}"/></td>`
+        }).join('')
+        let fieldRowsHtml = ''
+        if (expanded) {
+          fieldRowsHtml = moduleFields.map((field) => {
+            const fieldPermission = getFieldPermission({ permissions: editDraft }, module.key, field.key)
+            const fieldCells = PERMISSION_ACTIONS.map((action) => {
+              if (!FIELD_ACTION_KEYS.includes(action.key)) return '<td></td>'
+              const checked = fieldPermission[action.key]
+              return `<td><input type="checkbox" data-field-module="${module.key}" data-field-key="${field.key}" data-field-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${field.label} on ${module.label}"/></td>`
+            }).join('')
+            return `<tr class="field-row"><td class="module-cell field-cell">${field.label}</td>${fieldCells}</tr>`
+          }).join('')
+        }
+        return `
+        <tr>
+          <td class="module-cell">
+            ${hasFields ? `<button type="button" class="module-expand-toggle" data-edit-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
+            ${module.label}
+          </td>
+          ${cells}
+        </tr>
+        ${fieldRowsHtml}`
+      }).join('')
+
+      document.querySelectorAll('[data-edit-expand]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-edit-expand')
+          if (editExpandedModules.has(key)) editExpandedModules.delete(key)
+          else editExpandedModules.add(key)
+          renderEditMatrix()
+        })
+      })
+      if (!locked) {
+        document.querySelectorAll('[data-toggle-column]').forEach((cb) => {
+          cb.addEventListener('change', () => {
+            const actionKey = cb.getAttribute('data-toggle-column')
+            const allOn = PERMISSION_MODULES.every((module) => editDraft[module.key][actionKey])
+            PERMISSION_MODULES.forEach((module) => { editDraft[module.key][actionKey] = !allOn })
+            renderEditMatrix()
+          })
+        })
+        document.querySelectorAll('[data-cell-module]').forEach((cb) => {
+          cb.addEventListener('change', () => {
+            const moduleKey = cb.getAttribute('data-cell-module')
+            const actionKey = cb.getAttribute('data-cell-action')
+            editDraft[moduleKey][actionKey] = !editDraft[moduleKey][actionKey]
+            renderEditMatrix()
+          })
+        })
+        document.querySelectorAll('[data-field-module]').forEach((cb) => {
+          cb.addEventListener('change', () => {
+            const moduleKey = cb.getAttribute('data-field-module')
+            const fieldKey = cb.getAttribute('data-field-key')
+            const actionKey = cb.getAttribute('data-field-action')
+            const modulePerm = editDraft[moduleKey]
+            const currentField = modulePerm.fields[fieldKey] || { view: modulePerm.view, edit: modulePerm.edit }
+            modulePerm.fields[fieldKey] = Object.assign({}, currentField, { [actionKey]: !currentField[actionKey] })
+            renderEditMatrix()
+          })
+        })
+      }
+    }
+
+    document.getElementById('edit-permissions-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const role = roles.find((r) => r.id === editingRoleId)
+      if (!role || role.system) return
+      role.permissions = editDraft
+      UI.toast(`Permissions for "${role.name}" updated successfully!`)
+      UI.closeModal('edit-permissions-modal')
+      renderRoleRail()
+      renderDetailPane()
+    })
+
+    renderRoleRail()
+    renderDetailPane()
+  </script>
+</body>
+</html>

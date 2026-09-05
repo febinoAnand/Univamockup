@@ -1,0 +1,204 @@
+.versions-card {
+  border: 1px solid #e7e5e4;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(12, 10, 9, 0.04), 0 6px 16px rgba(12, 10, 9, 0.06);
+  overflow: hidden;
+}
+
+.versions-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.row-menu-col {
+  width: 48px;
+}
+
+.empty-table-note {
+  padding: 4rem 1rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #1c1917;
+}
+
+.empty-table-note p {
+  margin: 0.15rem 0;
+}
+
+.help-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #a8a29e;
+  cursor: help;
+}
+
+.toast-success {
+  position: fixed;
+  top: 5.75rem;
+  right: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border-left: 3px solid #22c55e;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 8px 24px rgba(12, 10, 9, 0.15);
+  font-size: 0.85rem;
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  color: #22c55e;
+}
+
+.toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #a8a29e;
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  color: #57534e;
+}
+
+.text-link {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: inherit;
+  font-weight: 600;
+  color: #7c3aed;
+  cursor: pointer;
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.firmware-upload-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 14px;
+  background: #ffffff;
+}
+.firmware-upload-box.error {
+  border-color: #dc2626;
+}
+
+.firmware-upload-label {
+  margin: 0;
+  align-self: flex-start;
+  font-size: 0.82rem;
+  color: #1c1917;
+}
+
+.upload-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5b21b6;
+  background: #ede9fe;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.upload-button:hover {
+  opacity: 0.9;
+}
+
+.firmware-file-input {
+  display: none;
+}
+
+.firmware-file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.firmware-file-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #1c1917;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.firmware-file-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #a8a29e;
+  cursor: pointer;
+}
+.firmware-file-remove:hover {
+  color: #dc2626;
+}
+
+.field-error {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: #dc2626;
+}
+
+.select-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.select-with-icon select {
+  flex: 1;
+}
+
+.rollout-section {
+  margin-top: 0.5rem;
+}
+
+.field-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1c1917;
+}
+
+.rollout-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: #78716c;
+}
+
+.radio-row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #1c1917;
+  cursor: pointer;
+}

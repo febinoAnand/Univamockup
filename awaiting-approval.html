@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/auth.css" />
+  <link rel="stylesheet" href="shared/approval.css" />
+  <title>Awaiting approval — Univa</title>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <img src="assets/favicon.png" alt="Univa" class="auth-logo" />
+
+      <div class="approval-icon-wrap">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <h2 class="approval-heading">Awaiting Approval</h2>
+      <p class="approval-description">Your account is being reviewed by the organization administrator</p>
+
+      <div class="steps-row">
+        <div class="step">
+          <div class="step-circle completed">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="step-label completed">Account Created</span>
+        </div>
+        <div class="step-connector completed"></div>
+        <div class="step">
+          <div class="step-circle pending" id="step2-circle">2</div>
+          <span class="step-label pending" id="step2-label">Under Review</span>
+        </div>
+        <div class="step-connector pending"></div>
+        <div class="step">
+          <div class="step-circle pending">3</div>
+          <span class="step-label pending">Approved</span>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="info-box-title"><span class="info-box-icon">!</span> What happens next?</p>
+        <ul>
+          <li>Administrator will review your account details</li>
+          <li>You'll receive an email notification upon approval</li>
+          <li>Typical approval time: 24-48 hours</li>
+        </ul>
+      </div>
+
+      <button type="button" class="login-button approval-primary-button" id="get-approval-btn">Get Approval</button>
+      <button type="button" class="signout-button" onclick="window.location.href='login.html'">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 16l4-4-4-4M20 12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sign Out
+      </button>
+
+      <div class="divider"></div>
+      <p class="login-footer">© 2026 All rights reserved.</p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('get-approval-btn').addEventListener('click', function () {
+      this.disabled = true
+      const circle = document.getElementById('step2-circle')
+      circle.classList.remove('pending')
+      circle.classList.add('active')
+      circle.innerHTML =
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" class="spin-icon"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke-linecap="round"/></svg>'
+      const label = document.getElementById('step2-label')
+      label.classList.remove('pending')
+      label.classList.add('active')
+    })
+  </script>
+</body>
+</html>

@@ -1,0 +1,942 @@
+/* Exact port of src/modules/devices/DeviceDetailPage/DeviceDetail.css */
+
+.device-detail-page {
+  padding: 1.5rem 2rem 3rem;
+  overflow-x: hidden;
+}
+
+.device-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.device-detail-title {
+  margin: 0 0 0.3rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1c1917;
+}
+
+.device-detail-id {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #78716c;
+}
+
+.device-detail-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #78716c;
+}
+
+.device-not-found {
+  color: #57534e;
+  margin-bottom: 0.5rem;
+}
+
+/* .text-link isn't defined in the real DeviceDetail.css/DevicesPage.css either —
+   it renders correctly there only because Vite bundles every module's CSS into
+   one file, so SoftwareOtaPage.css's copy applies globally. Reproduced here for
+   the same reason (used by the Alerts/Data logs JSON toggle buttons). */
+.text-link {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: inherit;
+  font-weight: 600;
+  color: #7c3aed;
+  cursor: pointer;
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.device-actions-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.device-actions-dropdown {
+  min-width: 180px;
+}
+.device-actions-dropdown:not(.hidden) {
+  display: block;
+}
+
+.row-menu-dropdown.row-menu-dropdown-portal {
+  position: fixed;
+  z-index: 200;
+}
+
+.token-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  background: #f5f3ff;
+  border-radius: 14px;
+  color: #6d28d9;
+  font-size: 0.85rem;
+}
+
+.token-info-banner-icon {
+  display: flex;
+}
+
+.token-info-banner span:nth-child(2) {
+  flex: 1;
+}
+
+.token-info-banner-close {
+  color: #6d28d9;
+}
+
+.device-detail-tabs {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid #e7e5e4;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+/* .tab-button is a global class bundled in from CredentialsPage.css in the
+   real app (Vite bundles all CSS together) — device-detail.html doesn't
+   load that stylesheet, so it needs its own copy here for the tab strip
+   (and the Overview tab's Telemetry/Analytics toggle, which reuses it) to
+   render as underlined text tabs instead of default bordered buttons. */
+.tab-button {
+  padding: 0.6rem 0.1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #a8a29e;
+  cursor: pointer;
+}
+.tab-button.active {
+  color: #1c1917;
+  border-bottom-color: #7c3aed;
+}
+
+.device-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.device-panel {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 1px 2px rgba(12, 10, 9, 0.04), 0 6px 16px rgba(12, 10, 9, 0.06);
+}
+
+.device-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1c1917;
+}
+
+.detail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.detail-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.metadata-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.metadata-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #f5f5f4;
+  font-size: 0.82rem;
+}
+
+.metadata-list-row:last-child {
+  border-bottom: none;
+}
+
+.metadata-key {
+  color: #78716c;
+}
+
+.metadata-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  color: #1c1917;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}
+
+.metadata-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.metadata-add-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.8rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  outline: none;
+}
+
+.metadata-add-row input:focus {
+  border-color: #8b5cf6;
+}
+
+.device-panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.device-panel-title-row .device-panel-title {
+  margin-bottom: 0;
+}
+
+.device-panel-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.metadata-search-input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  outline: none;
+}
+
+.metadata-search-input:focus {
+  border-color: #8b5cf6;
+}
+
+.metadata-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.metadata-edit-row input {
+  width: 110px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.8rem;
+  border: 1px solid #8b5cf6;
+  border-radius: 8px;
+  outline: none;
+}
+
+.metadata-row-menu-dropdown {
+  min-width: 150px;
+}
+
+.stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.stat-value small {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #78716c;
+  margin-left: 0.3rem;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: #78716c;
+}
+
+.token-note {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: #57534e;
+  line-height: 1.5;
+}
+
+.token-value {
+  display: block;
+  margin: 0 0 0.85rem;
+  padding: 0.5rem 0.6rem;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #44403c;
+  background: #f5f5f4;
+  border: 1px solid #e7e5e4;
+  border-radius: 10px;
+  word-break: break-all;
+}
+
+.token-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.telemetry-card {
+  grid-column: 1 / -1;
+  box-shadow: 0 1px 2px rgba(12, 10, 9, 0.04), 0 6px 16px rgba(12, 10, 9, 0.06);
+}
+
+.telemetry-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.telemetry-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.telemetry-view-toggle {
+  display: flex;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.telemetry-view-toggle button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.55rem;
+  background: #ffffff;
+  border: none;
+  color: #78716c;
+  cursor: pointer;
+}
+
+.telemetry-view-toggle button.active {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.telemetry-range-select {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.82rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  color: #44403c;
+  outline: none;
+}
+
+.telemetry-legend {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.legend-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #57534e;
+  background: #f5f5f4;
+  border: 1px solid #e7e5e4;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.legend-chip.inactive {
+  opacity: 0.45;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.telemetry-chart-wrap {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+}
+
+.telemetry-chart-body {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 480px;
+}
+
+.chart-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+  width: 46px;
+  padding: 2px 0;
+  font-size: 0.68rem;
+  color: #a8a29e;
+  text-align: right;
+}
+
+.chart-plot-col {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.telemetry-chart-wrap svg {
+  display: block;
+  width: 100%;
+  height: 220px;
+  cursor: crosshair;
+  animation: chartFadeIn 0.35s ease;
+}
+
+@keyframes chartFadeIn {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.chart-x-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  font-size: 0.68rem;
+  color: #a8a29e;
+}
+
+.telemetry-empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #a8a29e;
+  font-size: 0.85rem;
+}
+
+.status-pill.status-open,
+.status-pill.status-pending,
+.status-pill.status-warning {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.status-pill.status-acknowledged,
+.status-pill.status-info {
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+
+.status-pill.status-resolved,
+.status-pill.status-delivered,
+.status-pill.status-active {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.status-pill.status-failed,
+.status-pill.status-revoked,
+.status-pill.status-unavailable,
+.status-pill.status-critical {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.status-pill.status-suspended {
+  color: #78716c;
+  background: #f5f5f4;
+}
+
+.status-pill.status-pending {
+  animation: statusPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.direction-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.direction-badge.direction-up {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.direction-badge.direction-down {
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+
+.payload-preview {
+  display: block;
+  max-width: 320px;
+  font-family: monospace;
+  font-size: 0.76rem;
+  color: #57534e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logs-filter-select {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  color: #44403c;
+  outline: none;
+}
+
+.device-detail-page .device-panel {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.device-detail-page .device-panel:hover {
+  box-shadow: 0 4px 18px rgba(12, 10, 9, 0.08);
+}
+
+.tab-panel-enter {
+  animation: tabPanelFadeIn 0.22s ease;
+}
+
+@keyframes tabPanelFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  min-width: 150px;
+  padding: 0.5rem 0.65rem;
+  background: #1c1917;
+  color: #f5f5f4;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(12, 10, 9, 0.3);
+  z-index: 5;
+}
+
+.chart-tooltip-time {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #d6d3d1;
+}
+
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.commands-grid,
+.relations-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .commands-grid,
+  .relations-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.radio-field-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.radio-field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1c1917;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #44403c;
+  cursor: pointer;
+}
+
+.collapsible-field {
+  margin-bottom: 0.85rem;
+}
+
+.collapsible-field-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0;
+  margin-bottom: 0.4rem;
+  background: none;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1c1917;
+  cursor: pointer;
+}
+
+.collapsible-field textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-family: monospace;
+  font-size: 0.82rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  color: #1c1917;
+  outline: none;
+  resize: vertical;
+}
+
+.collapsible-field textarea:focus {
+  border-color: #8b5cf6;
+}
+
+.retention-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.retention-row input {
+  width: 80px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  outline: none;
+}
+
+.retention-row select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  outline: none;
+}
+
+.relations-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+}
+
+.relations-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1c1917;
+}
+
+.relation-box {
+  position: relative;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid #e7e5e4;
+  border-radius: 14px;
+}
+
+.relation-box-remove {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  color: #7c3aed;
+}
+
+.relation-box-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #44403c;
+}
+
+.relation-required {
+  color: #dc2626;
+}
+
+.help-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #a8a29e;
+  cursor: help;
+}
+
+.relation-box-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.relation-box-field select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1.5px solid #c4b5fd;
+  border-radius: 10px;
+  color: #1c1917;
+  background: #ffffff;
+  outline: none;
+}
+
+.relation-box-field select:focus {
+  border-color: #8b5cf6;
+}
+
+.dashed-add-button {
+  padding: 0.6rem;
+  background: none;
+  border: 1.5px dashed #c4b5fd;
+  border-radius: 10px;
+  color: #7c3aed;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+.dashed-add-button:hover:not(:disabled) {
+  background: #f5f3ff;
+}
+
+.dashed-add-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.topic-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.4rem 0;
+  font-size: 0.8rem;
+}
+
+.topic-row code {
+  font-family: monospace;
+  color: #44403c;
+  word-break: break-all;
+}
+
+.topic-badge {
+  flex-shrink: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.topic-badge.topic-pub {
+  background: #7c3aed;
+}
+
+.topic-badge.topic-sub {
+  background: #78716c;
+}
+
+.topic-badge.topic-post {
+  background: #15803d;
+}
+
+.publish-subheading {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1c1917;
+}
+
+.publish-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.publish-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.device-token-input {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  outline: none;
+  min-width: 200px;
+}
+
+.device-token-input:focus {
+  border-color: #8b5cf6;
+}
+
+.json-code-block {
+  padding: 0.75rem 0.9rem;
+  margin: 0.4rem 0;
+  background: #0c0a09;
+  color: #e7e5e4;
+  border-radius: 14px;
+  font-family: monospace;
+  font-size: 0.78rem;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code-example-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-bottom: 1px solid #e7e5e4;
+  margin-top: 0.5rem;
+}
+
+.json-cell-pre {
+  margin: 0.3rem 0 0;
+  padding: 0.5rem 0.6rem;
+  background: #f5f5f4;
+  border: 1px solid #e7e5e4;
+  border-radius: 10px;
+  font-size: 0.74rem;
+  max-width: 260px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.stat-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #f5f5f4;
+  border-radius: 14px;
+}
+
+.stat-box-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.stat-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.75rem;
+  background: #f5f5f4;
+  border-radius: 14px;
+}
+
+.telemetry-mode-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.series-panel-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+  color: #78716c;
+  cursor: pointer;
+}
+
+.series-panel-toggle:hover {
+  color: #7c3aed;
+}

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/admin.css" />
+  <title>Tenants — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content admin-page" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Tenants</h1>
+            <p class="page-subtitle">Every tenant organization provisioned on this platform</p>
+          </div>
+          <div class="page-header-actions">
+            <button type="button" class="solid-action-button" id="add-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              Add tenant
+            </button>
+          </div>
+        </div>
+
+        <div class="table-search-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="search" placeholder="Search tenants" />
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th><button type="button" class="th-sort-button" data-sort="title">Title<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="title"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+                <th>Email</th>
+                <th>Country</th>
+                <th><button type="button" class="th-sort-button" data-sort="tenantProfileName">Tenant profile<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="tenantProfileName"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+                <th><button type="button" class="th-sort-button" data-sort="deviceCount">Devices<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="deviceCount"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+                <th>Status</th>
+                <th class="data-table-menu-col"></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="tenant-modal">
+    <div class="modal-card" style="max-width:600px;">
+      <div class="modal-header">
+        <h2 id="modal-title">Add tenant</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('tenant-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="tenant-form">
+          <div class="modal-grid">
+            <div class="modal-field modal-field-full"><label for="t-title">Title*</label><input id="t-title" type="text" required /></div>
+            <div class="modal-field"><label for="t-email">Email</label><input id="t-email" type="email" /></div>
+            <div class="modal-field"><label for="t-phone">Phone</label><input id="t-phone" type="tel" /></div>
+            <div class="modal-field modal-field-full"><label for="t-address">Address</label><input id="t-address" type="text" /></div>
+            <div class="modal-field"><label for="t-city">City</label><input id="t-city" type="text" /></div>
+            <div class="modal-field"><label for="t-state">State</label><input id="t-state" type="text" /></div>
+            <div class="modal-field"><label for="t-postal">Postal code</label><input id="t-postal" type="text" /></div>
+            <div class="modal-field"><label for="t-country">Country</label><input id="t-country" type="text" /></div>
+            <div class="modal-field modal-field-full"><label for="t-profile">Tenant profile</label><select id="t-profile"></select></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('tenant-modal')">Cancel</button>
+        <button type="submit" form="tenant-form" class="modal-button primary" id="save-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mountAdmin({
+      active: 'tenants',
+      breadcrumbs: [{ label: 'Tenants' }],
+    })
+
+    let editingId = null
+    let sort = { key: null, direction: 'asc' }
+
+    function compareValues(a, b, direction) {
+      const result = typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))
+      return direction === 'asc' ? result : -result
+    }
+
+    document.querySelectorAll('[data-sort]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-sort')
+        sort = sort.key === key ? { key, direction: sort.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' }
+        render()
+      })
+    })
+
+    function render() {
+      const data = Store.get()
+      const term = document.getElementById('search').value.trim().toLowerCase()
+      let tenants = term ? data.tenants.filter((t) => t.title.toLowerCase().includes(term)) : data.tenants
+      if (sort.key) tenants = [...tenants].sort((a, b) => compareValues(a[sort.key], b[sort.key], sort.direction))
+
+      document.querySelectorAll('[data-sort-icon]').forEach((icon) => {
+        const key = icon.getAttribute('data-sort-icon')
+        icon.classList.toggle('flipped', sort.key === key && sort.direction === 'desc')
+      })
+
+      const tbody = document.getElementById('tbody')
+      if (tenants.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-table-note">No tenants match your search.</td></tr>'
+        return
+      }
+      tbody.innerHTML = tenants
+        .map(
+          (t) => `
+        <tr>
+          <td>${t.title}</td>
+          <td>${t.email}</td>
+          <td>${t.country}</td>
+          <td>${t.tenantProfileName}</td>
+          <td>${t.deviceCount}</td>
+          <td><span class="status-pill status-${t.status}">${t.status}</span></td>
+          <td class="data-table-menu-col">
+            <div class="row-menu">
+              <button type="button" class="row-menu-button" data-menu-toggle>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="row-menu-dropdown">
+                <button type="button" class="row-menu-item" data-edit="${t.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Edit
+                </button>
+                <button type="button" class="row-menu-item" data-toggle-status="${t.id}">
+                  ${t.status === 'active'
+                    ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+                    : '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 5l12 7-12 7V5Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+                  ${t.status === 'active' ? 'Suspend' : 'Activate'}
+                </button>
+                <button type="button" class="row-menu-item danger" data-delete="${t.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>`,
+        )
+        .join('')
+      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
+      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-toggle-status]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-toggle-status')
+          const t = Store.get().tenants.find((x) => x.id === id)
+          Store.toggleTenantStatus(id)
+          render()
+          UI.toast(`"${t.title}" ${t.status === 'active' ? 'suspended' : 'activated'} successfully!`)
+        }),
+      )
+      document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const menu = btn.closest('.row-menu')
+          const wasOpen = menu.classList.contains('open')
+          UI.closeRowMenus()
+          if (!wasOpen) UI.openRowMenu(btn)
+        }),
+      )
+    }
+    document.addEventListener('click', () => UI.closeRowMenus())
+
+    function populateProfiles(selected) {
+      const profiles = Store.get().tenantProfiles
+      const select = document.getElementById('t-profile')
+      select.innerHTML = profiles.map((p) => `<option value="${p.name}">${p.name}${p.isDefault ? ' (default)' : ''}</option>`).join('')
+      select.value = selected || (profiles.find((p) => p.isDefault) || profiles[0])?.name || ''
+    }
+
+    function openAdd() {
+      editingId = null
+      document.getElementById('modal-title').textContent = 'Add tenant'
+      document.getElementById('save-btn').textContent = 'Create'
+      ;['t-title', 't-email', 't-phone', 't-address', 't-city', 't-state', 't-postal', 't-country'].forEach((id) => (document.getElementById(id).value = ''))
+      populateProfiles()
+      UI.openModal('tenant-modal')
+    }
+
+    function openEdit(id) {
+      const t = Store.get().tenants.find((x) => x.id === id)
+      if (!t) return
+      editingId = id
+      document.getElementById('modal-title').textContent = 'Edit tenant'
+      document.getElementById('save-btn').textContent = 'Save changes'
+      document.getElementById('t-title').value = t.title
+      document.getElementById('t-email').value = t.email
+      document.getElementById('t-phone').value = t.phone
+      document.getElementById('t-address').value = t.address
+      document.getElementById('t-city').value = t.city
+      document.getElementById('t-state').value = t.state
+      document.getElementById('t-postal').value = t.postalCode
+      document.getElementById('t-country').value = t.country
+      populateProfiles(t.tenantProfileName)
+      UI.openModal('tenant-modal')
+    }
+
+    function confirmDelete(id) {
+      const t = Store.get().tenants.find((x) => x.id === id)
+      if (!t) return
+      UI.confirm({
+        message: `Delete <strong>${t.title}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeTenant(id)
+          render()
+          UI.toast(`"${t.title}" deleted successfully!`)
+        },
+      })
+    }
+
+    document.getElementById('add-btn').addEventListener('click', openAdd)
+    document.getElementById('search').addEventListener('input', render)
+
+    document.getElementById('tenant-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const title = document.getElementById('t-title').value.trim()
+      if (!title) return
+      const payload = {
+        title,
+        email: document.getElementById('t-email').value.trim(),
+        phone: document.getElementById('t-phone').value.trim(),
+        address: document.getElementById('t-address').value.trim(),
+        city: document.getElementById('t-city').value.trim(),
+        state: document.getElementById('t-state').value.trim(),
+        postalCode: document.getElementById('t-postal').value.trim(),
+        country: document.getElementById('t-country').value.trim(),
+        tenantProfileName: document.getElementById('t-profile').value,
+      }
+      if (editingId) {
+        Store.updateTenant(editingId, payload)
+        UI.toast(`"${title}" updated successfully!`)
+      } else {
+        Store.addTenant(payload)
+        UI.toast(`"${title}" tenant created successfully!`)
+      }
+      UI.closeModal('tenant-modal')
+      render()
+    })
+
+    render()
+  </script>
+</body>
+</html>

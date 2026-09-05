@@ -1,0 +1,491 @@
+/* Exact port of src/modules/users/RolesPermissions.css (role-specific rules only —
+   .page-header/.page-title/.page-subtitle/.modal-field/.device-toast* are already
+   covered by app.css). */
+
+.add-role-button {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.05rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #7c3aed;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.add-role-button:hover {
+  background: #6d28d9;
+}
+
+.roles-body {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .roles-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Role rail */
+
+.role-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.role-card {
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 16px;
+  padding: 0.9rem 1rem 0.9rem 0.85rem;
+  cursor: pointer;
+  display: flex;
+  gap: 0.7rem;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  width: 100%;
+}
+
+.role-card:hover {
+  border-color: #7c3aed;
+}
+
+.role-card.selected {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px #f5f3ff;
+}
+
+.role-stripe {
+  width: 4px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.role-stripe.tier-owner {
+  background: #b45309;
+}
+
+.role-stripe.tier-admin {
+  background: #5b21b6;
+}
+
+.role-stripe.tier-member {
+  background: #15803d;
+}
+
+.role-stripe.tier-viewer {
+  background: #57534e;
+}
+
+.role-stripe.tier-custom {
+  background: #6d28d9;
+}
+
+.role-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.role-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+
+.role-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1c1917;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.system-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.role-desc {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  color: #78716c;
+  line-height: 1.4;
+}
+
+.role-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: #a8a29e;
+}
+
+.meta-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #a8a29e;
+}
+
+.coverage-track {
+  display: block;
+  margin-top: 0.6rem;
+  height: 5px;
+  border-radius: 999px;
+  background: #f5f5f4;
+  overflow: hidden;
+}
+
+.coverage-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.coverage-fill.tier-owner {
+  background: #b45309;
+}
+
+.coverage-fill.tier-admin {
+  background: #5b21b6;
+}
+
+.coverage-fill.tier-member {
+  background: #15803d;
+}
+
+.coverage-fill.tier-viewer {
+  background: #57534e;
+}
+
+.coverage-fill.tier-custom {
+  background: #6d28d9;
+}
+
+/* Detail pane */
+
+.detail-pane {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(12, 10, 9, 0.06);
+}
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.detail-head-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.role-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.role-avatar.tier-owner {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.role-avatar.tier-admin {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.role-avatar.tier-member {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.role-avatar.tier-viewer {
+  background: #f5f5f4;
+  color: #57534e;
+}
+
+.role-avatar.tier-custom {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.detail-head h2 {
+  margin: 0 0 0.15rem;
+  font-size: 1.05rem;
+  color: #1c1917;
+}
+
+.detail-head p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #78716c;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ghost-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  background: transparent;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1c1917;
+  cursor: pointer;
+}
+
+.ghost-button:hover {
+  border-color: #7c3aed;
+  color: #6d28d9;
+}
+
+.ghost-button.danger:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.ghost-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ghost-button:disabled:hover {
+  border-color: #d6d3d1;
+  color: #1c1917;
+}
+
+.system-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.76rem;
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.matrix-wrap {
+  overflow-x: auto;
+}
+
+.permission-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.permission-matrix thead th {
+  text-align: center;
+  padding: 0.7rem 0.5rem 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #a8a29e;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.permission-matrix thead th:first-child {
+  text-align: left;
+  padding-left: 1.4rem;
+}
+
+.permission-matrix tbody td {
+  text-align: center;
+  padding: 0.65rem 0.5rem;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.permission-matrix tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.module-cell {
+  text-align: left !important;
+  padding-left: 1.4rem !important;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  color: #1c1917;
+}
+
+.module-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f5f5f4;
+  color: #78716c;
+}
+
+.permission-mark {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.permission-mark.small {
+  width: 18px;
+  height: 18px;
+}
+
+.module-expand-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #a8a29e;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.module-expand-toggle:hover {
+  background: #f5f5f4;
+  color: #1c1917;
+}
+
+.module-expand-spacer {
+  display: inline-block;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.field-row .module-cell {
+  padding-left: 3.4rem !important;
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: #78716c;
+}
+
+.field-row td {
+  background: #fafaf9;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.permission-mark.granted {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.permission-mark.denied {
+  background: #f5f5f4;
+  color: #d6d3d1;
+}
+
+.legend-mark {
+  width: 16px;
+  height: 16px;
+}
+
+.matrix-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.4rem;
+  padding: 0.9rem 1.4rem 1.1rem;
+  font-size: 0.75rem;
+  color: #78716c;
+}
+
+.matrix-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.modal-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.78rem;
+  color: #78716c;
+  background: #f5f5f4;
+  border: 1px solid #e7e5e4;
+  border-radius: 10px;
+}
+
+/* Editable permission matrix (Edit permissions modal) */
+
+.permission-matrix.editable thead th {
+  text-align: center;
+}
+
+.matrix-column-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.permission-matrix.editable tbody td input[type='checkbox'],
+.matrix-column-toggle input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #7c3aed;
+}
+
+.permission-matrix.editable tbody td input[type='checkbox']:disabled,
+.matrix-column-toggle input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
