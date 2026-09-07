@@ -759,6 +759,30 @@ img {
   overflow-y: auto;
 }
 
+.checklist-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.checklist-search-wrap svg {
+  flex-shrink: 0;
+  color: #a8a29e;
+}
+
+.checklist-search-wrap input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.82rem;
+  color: #1c1917;
+  background: transparent;
+}
+
 .modal-checkbox {
   display: flex;
   align-items: center;
