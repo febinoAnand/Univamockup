@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <style>
+    .default-profile-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.55rem;
+      border-radius: 999px; font-size: 0.7rem; font-weight: 700; color: #b45309; background: #fef3c7;
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+  </style>
+  <title>Application profiles — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Application profiles</h1>
+            <p class="page-subtitle">Templates that define shared metadata for a class of applications</p>
+          </div>
+          <div class="page-header-actions">
+            <button type="button" class="solid-action-button" id="add-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+              Add application profile
+            </button>
+          </div>
+        </div>
+
+        <div class="table-search-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="search" placeholder="Search application profiles" />
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Default</th><th>Created time</th><th class="data-table-menu-col"></th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Add application profile</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="profile-form">
+          <div class="modal-field">
+            <label for="profile-name">Profile name*</label>
+            <input id="profile-name" type="text" required />
+          </div>
+          <div class="modal-field">
+            <label for="profile-description">Description</label>
+            <textarea id="profile-description" rows="2"></textarea>
+          </div>
+          <div class="modal-field">
+            <label>Metadata attributes</label>
+            <div class="metadata-fields" id="metadata-fields"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('profile-modal')">Cancel</button>
+        <button type="submit" form="profile-form" class="modal-button primary" id="save-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    Layout.mount({
+      active: 'application-profiles',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'Application management', href: 'applications.html' },
+        { label: 'Application profiles' },
+      ],
+    })
+
+    let editingId = null
+    let metadataRows = []
+    let metadataNextId = 1
+
+    function renderMetadata() {
+      document.getElementById('metadata-fields').innerHTML = metadataRows
+        .map(
+          (row) => `
+        <div class="metadata-row">
+          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+          </button>
+          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>
+          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${row.value}" /></div>
+        </div>`,
+        )
+        .join('') + `<button type="button" class="metadata-add" id="metadata-add-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+          Add
+        </button>`
+
+      document.getElementById('metadata-add-btn').addEventListener('click', () => {
+        metadataRows.push({ id: metadataNextId++, key: '', value: '' })
+        renderMetadata()
+      })
+      document.querySelectorAll('[data-remove]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          metadataRows = metadataRows.filter((r) => r.id !== Number(btn.getAttribute('data-remove')))
+          renderMetadata()
+        }),
+      )
+      document.querySelectorAll('[data-key]').forEach((input) =>
+        input.addEventListener('input', () => {
+          metadataRows.find((r) => r.id === Number(input.getAttribute('data-key'))).key = input.value
+        }),
+      )
+      document.querySelectorAll('[data-value]').forEach((input) =>
+        input.addEventListener('input', () => {
+          metadataRows.find((r) => r.id === Number(input.getAttribute('data-value'))).value = input.value
+        }),
+      )
+    }
+
+    function render() {
+      const data = Store.get()
+      const term = document.getElementById('search').value.trim().toLowerCase()
+      const profiles = term ? data.applicationProfiles.filter((p) => p.name.toLowerCase().includes(term)) : data.applicationProfiles
+      const tbody = document.getElementById('tbody')
+      if (profiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-table-note">No application profiles match your search.</td></tr>'
+        return
+      }
+      tbody.innerHTML = profiles
+        .map(
+          (p) => `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.isDefault ? '<span class="default-profile-badge">Default</span>' : ''}</td>
+          <td>${p.createdDate}</td>
+          <td class="data-table-menu-col">
+            <div class="row-menu">
+              <button type="button" class="row-menu-button" data-menu-toggle>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="row-menu-dropdown">
+                <button type="button" class="row-menu-item" data-default="${p.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7L12 3Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Set default
+                </button>
+                <button type="button" class="row-menu-item" data-edit="${p.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Edit
+                </button>
+                <button type="button" class="row-menu-item danger" data-delete="${p.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>`,
+        )
+        .join('')
+
+      document.querySelectorAll('[data-default]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const p = Store.get().applicationProfiles.find((x) => x.id === btn.getAttribute('data-default'))
+          Store.setDefaultApplicationProfile(btn.getAttribute('data-default'))
+          render()
+          UI.toast(`"${p.name}" set as default application profile successfully!`)
+        }),
+      )
+      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
+      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const menu = btn.closest('.row-menu')
+          const wasOpen = menu.classList.contains('open')
+          UI.closeRowMenus()
+          if (!wasOpen) UI.openRowMenu(btn)
+        }),
+      )
+    }
+    document.addEventListener('click', () => UI.closeRowMenus())
+
+    function openAdd() {
+      editingId = null
+      metadataRows = []
+      metadataNextId = 1
+      document.getElementById('modal-title').textContent = 'Add application profile'
+      document.getElementById('save-btn').textContent = 'Create'
+      document.getElementById('profile-name').value = ''
+      document.getElementById('profile-description').value = ''
+      renderMetadata()
+      UI.openModal('profile-modal')
+    }
+
+    function openEdit(id) {
+      const p = Store.get().applicationProfiles.find((x) => x.id === id)
+      if (!p) return
+      editingId = id
+      metadataRows = (p.metadata || []).map((f, i) => ({ id: i + 1, key: f.key, value: f.value }))
+      metadataNextId = metadataRows.length + 1
+      document.getElementById('modal-title').textContent = 'Edit application profile'
+      document.getElementById('save-btn').textContent = 'Save changes'
+      document.getElementById('profile-name').value = p.name
+      document.getElementById('profile-description').value = p.description || ''
+      renderMetadata()
+      UI.openModal('profile-modal')
+    }
+
+    function confirmDelete(id) {
+      const p = Store.get().applicationProfiles.find((x) => x.id === id)
+      if (!p) return
+      UI.confirm({
+        message: `Delete <strong>${p.name}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeApplicationProfile(id)
+          render()
+          UI.toast(`"${p.name}" deleted successfully!`)
+        },
+      })
+    }
+
+    document.getElementById('add-btn').addEventListener('click', openAdd)
+    document.getElementById('search').addEventListener('input', render)
+
+    document.getElementById('profile-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const name = document.getElementById('profile-name').value.trim()
+      if (!name) return
+      const description = document.getElementById('profile-description').value.trim()
+      const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
+      if (editingId) {
+        Store.updateApplicationProfile(editingId, { name, description, metadata })
+        UI.toast(`"${name}" application profile updated successfully!`)
+      } else {
+        Store.addApplicationProfile({ name, description, metadata })
+        UI.toast(`"${name}" application profile created successfully!`)
+      }
+      UI.closeModal('profile-modal')
+      render()
+    })
+
+    render()
+  </script>
+</body>
+</html>

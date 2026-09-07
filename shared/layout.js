@@ -17,6 +17,15 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    key: 'application-management',
+    label: 'Application management',
+    icon: 'app',
+    children: [
+      { key: 'applications', label: 'Applications', href: 'applications.html' },
+      { key: 'application-profiles', label: 'Application profiles', href: 'application-profiles.html' },
+    ],
+  },
+  {
     key: 'user-management',
     label: 'User management',
     icon: 'users',
@@ -45,6 +54,7 @@ const NAV_SECTIONS = [
       { key: 'rule-engine-reports', label: 'Reports', href: 'rule-engine-reports.html' },
     ],
   },
+  { key: 'shift-management', label: 'Shift management', icon: 'shift', href: 'shift-management.html' },
 ]
 
 function iconSvg(name) {
@@ -57,8 +67,12 @@ function iconSvg(name) {
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 19c1-3.2 3.4-5 6-5s5 1.8 6 5" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3"/><path d="M15.5 5.3a3 3 0 0 1 0 5.9" stroke-linecap="round"/><path d="M19.5 19c-.6-2.1-1.7-3.6-3-4.4" stroke-linecap="round"/></svg>',
     asset:
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7.5 12 12l8-4.5M12 12v9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    app:
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>',
     'rule-engine':
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7 5h6a4 4 0 0 1 4 4v0M7 19h6a4 4 0 0 0 4-4v0" stroke-linecap="round"/></svg>',
+    shift:
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     chevron:
       '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     bell:

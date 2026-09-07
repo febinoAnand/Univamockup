@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v3'
+const STORAGE_KEY = 'univa-html-demo-v4'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -73,6 +73,16 @@ const DEFAULT_DATA = {
     { id: 'p2', name: 'HVAC units', description: 'Commercial HVAC monitoring profile.', metadata: [], isDefault: false, createdDate: '2025-12-19 14:02:00' },
     { id: 'p3', name: 'Generators', description: 'Backup generator telemetry profile.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
   ],
+  applications: [
+    { id: 'app1', name: 'Fleet Tracker', profileName: 'Web application', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', metadata: [], createdDate: '2025-11-02 09:14:00' },
+    { id: 'app2', name: 'Field Technician', profileName: 'Mobile application', description: 'Companion app for on-site maintenance crews.', status: 'active', metadata: [], createdDate: '2025-12-19 14:02:00' },
+    { id: 'app3', name: 'Telemetry Ingest', profileName: 'Background service', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', metadata: [], createdDate: '2026-01-08 11:47:00' },
+  ],
+  applicationProfiles: [
+    { id: 'ap1', name: 'Web application', description: 'Browser-based application served over HTTPS.', metadata: [], isDefault: true, createdDate: '2025-11-02 09:14:00' },
+    { id: 'ap2', name: 'Mobile application', description: 'Native iOS/Android companion application.', metadata: [], isDefault: false, createdDate: '2025-12-19 14:02:00' },
+    { id: 'ap3', name: 'Background service', description: 'Headless service with no direct user interface.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
+  ],
   assets: [
     { id: 'a1', name: 'Forklift Unit 3', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'operational', location: 'North Yard', deviceIds: [], metadata: [], createdDate: '2025-11-05 10:00:00' },
     { id: 'a2', name: 'HVAC Compressor A', groupNames: ['HVAC units'], profileName: 'Rooftop HVAC unit', status: 'maintenance', location: 'Building 2 Roof', deviceIds: [], metadata: [], createdDate: '2025-12-20 09:30:00' },
@@ -99,10 +109,32 @@ const DEFAULT_DATA = {
     { id: 'rx3', ruleEngineName: 'High temperature alert', triggeredAt: '2026-03-18 14:03:57', triggerType: 'Telemetry received', condition: 'temperature > 30', actionType: 'Create alarm', outcome: 'failed' },
   ],
   tenants: [
-    { id: 't1', title: 'Northbridge Logistics', email: 'admin@northbridge.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Enterprise', deviceCount: 128, status: 'active', createdDate: '2025-11-02 09:14:00' },
-    { id: 't2', title: 'Cradlewell Facilities', email: 'admin@cradlewell.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United Kingdom', tenantProfileName: 'Default', deviceCount: 42, status: 'active', createdDate: '2025-12-19 14:02:00' },
-    { id: 't3', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00' },
-    { id: 't4', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00' },
+    { id: 't1', title: 'Northbridge Logistics', email: 'admin@northbridge.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Enterprise', deviceCount: 128, status: 'active', createdDate: '2025-11-02 09:14:00',
+      users: [
+        { id: 'tu1', name: 'Dana Whitfield', email: 'dana.whitfield@northbridge.com', role: 'Owner', status: 'active', createdDate: '2025-11-02 09:20:00' },
+        { id: 'tu2', name: 'Omar Salim', email: 'omar.salim@northbridge.com', role: 'Admin', status: 'active', createdDate: '2025-12-01 10:05:00' },
+      ],
+      devices: [
+        { id: 'td1', name: 'Warehouse Scanner 1', status: 'operational', createdDate: '2025-11-05 09:00:00' },
+        { id: 'td2', name: 'Loading Dock Sensor', status: 'offline', createdDate: '2025-12-14 13:30:00' },
+      ],
+      applications: [
+        { id: 'ta1', name: 'Fleet Tracker', status: 'active', createdDate: '2025-11-06 08:00:00' },
+      ],
+    },
+    { id: 't2', title: 'Cradlewell Facilities', email: 'admin@cradlewell.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United Kingdom', tenantProfileName: 'Default', deviceCount: 42, status: 'active', createdDate: '2025-12-19 14:02:00',
+      users: [
+        { id: 'tu3', name: 'Isla Brennan', email: 'isla.brennan@cradlewell.com', role: 'Owner', status: 'active', createdDate: '2025-12-19 14:10:00' },
+      ],
+      devices: [
+        { id: 'td3', name: 'HVAC Controller B2', status: 'operational', createdDate: '2025-12-20 09:15:00' },
+      ],
+      applications: [
+        { id: 'ta2', name: 'Facilities Dashboard', status: 'active', createdDate: '2025-12-21 11:00:00' },
+      ],
+    },
+    { id: 't3', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00', users: [], devices: [], applications: [] },
+    { id: 't4', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00', users: [], devices: [], applications: [] },
   ],
   tenantProfiles: [
     { id: 'tp1', name: 'Default', description: 'Default tenant profile with standard platform limits.', isDefault: true, maxDevices: 500, maxAssets: 500, maxUsers: 50, maxDashboards: 50, createdDate: '2025-11-02 09:10:00' },
@@ -118,6 +150,11 @@ const DEFAULT_DATA = {
     { id: 'g1', name: 'Administrators', description: 'Full access to devices, applications, solutions, and settings.', createdDate: '2025-11-02 09:14:00' },
     { id: 'g2', name: 'Operators', description: 'Can view and control devices; no billing or settings access.', createdDate: '2025-12-19 14:02:00' },
     { id: 'g3', name: 'Viewers', description: 'Read-only access to dashboards and device data.', createdDate: '2026-01-08 11:47:00' },
+  ],
+  shifts: [
+    { id: 'sh1', name: 'Morning shift', startTime: '06:00', endTime: '14:00', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], userIds: ['u1', 'u3'], status: 'active', createdDate: '2025-11-02 09:14:00' },
+    { id: 'sh2', name: 'Evening shift', startTime: '14:00', endTime: '22:00', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], userIds: ['u2'], status: 'active', createdDate: '2025-12-19 14:02:00' },
+    { id: 'sh3', name: 'Night shift', startTime: '22:00', endTime: '06:00', days: ['Sat', 'Sun'], userIds: [], status: 'suspended', createdDate: '2026-01-08 11:47:00' },
   ],
 }
 
@@ -154,6 +191,10 @@ function nowStamp() {
   const d = new Date()
   const pad = (n) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+function findTenant(store, tenantId) {
+  return store.tenants.find((t) => t.id === tenantId)
 }
 
 const Store = {
@@ -380,6 +421,61 @@ const Store = {
     saveData(store)
   },
 
+  // -------------------------------------------------------- applications
+  addApplication(data) {
+    const store = loadData()
+    const record = { id: uid('apn'), name: data.name, profileName: data.profileName, description: data.description, status: 'active', metadata: data.metadata ?? [], createdDate: nowStamp() }
+    store.applications.push(record)
+    saveData(store)
+    return record
+  },
+  updateApplication(id, data) {
+    const store = loadData()
+    const app = store.applications.find((a) => a.id === id)
+    if (app) Object.assign(app, { name: data.name, profileName: data.profileName, description: data.description, metadata: data.metadata ?? app.metadata })
+    saveData(store)
+  },
+  toggleApplicationStatus(id) {
+    const store = loadData()
+    const app = store.applications.find((a) => a.id === id)
+    if (app) app.status = app.status === 'active' ? 'suspended' : 'active'
+    saveData(store)
+  },
+  removeApplication(id) {
+    const store = loadData()
+    store.applications = store.applications.filter((a) => a.id !== id)
+    saveData(store)
+  },
+
+  addApplicationProfile(data) {
+    const store = loadData()
+    const record = { id: uid('apf'), name: data.name, description: data.description, metadata: data.metadata ?? [], isDefault: false, createdDate: nowStamp() }
+    store.applicationProfiles.push(record)
+    saveData(store)
+    return record
+  },
+  updateApplicationProfile(id, data) {
+    const store = loadData()
+    const previous = store.applicationProfiles.find((p) => p.id === id)
+    if (previous && previous.name !== data.name) {
+      store.applications.forEach((app) => {
+        if (app.profileName === previous.name) app.profileName = data.name
+      })
+    }
+    if (previous) Object.assign(previous, { name: data.name, description: data.description, metadata: data.metadata ?? previous.metadata })
+    saveData(store)
+  },
+  setDefaultApplicationProfile(id) {
+    const store = loadData()
+    store.applicationProfiles.forEach((p) => { p.isDefault = p.id === id })
+    saveData(store)
+  },
+  removeApplicationProfile(id) {
+    const store = loadData()
+    store.applicationProfiles = store.applicationProfiles.filter((p) => p.id !== id)
+    saveData(store)
+  },
+
   // ------------------------------------------------------------- assets
   addAsset(data) {
     const store = loadData()
@@ -477,7 +573,7 @@ const Store = {
   // -------------------------------------------------------------- tenants
   addTenant(data) {
     const store = loadData()
-    const record = { id: uid('t'), ...data, deviceCount: 0, status: 'active', createdDate: nowStamp() }
+    const record = { id: uid('t'), ...data, deviceCount: 0, status: 'active', createdDate: nowStamp(), users: [], devices: [], applications: [] }
     store.tenants.push(record)
     saveData(store)
     return record
@@ -526,6 +622,91 @@ const Store = {
   removeTenantProfile(id) {
     const store = loadData()
     store.tenantProfiles = store.tenantProfiles.filter((p) => p.id !== id)
+    saveData(store)
+  },
+
+  // ------------------------------------------------------ tenant resources
+  addTenantUser(tenantId, data) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (!tenant) return
+    const record = { id: uid('tu'), name: data.name, email: data.email, role: data.role, status: 'active', createdDate: nowStamp() }
+    tenant.users.push(record)
+    saveData(store)
+    return record
+  },
+  updateTenantUser(tenantId, userId, data) {
+    const store = loadData()
+    const user = findTenant(store, tenantId)?.users.find((u) => u.id === userId)
+    if (user) Object.assign(user, { name: data.name, email: data.email, role: data.role })
+    saveData(store)
+  },
+  toggleTenantUserStatus(tenantId, userId) {
+    const store = loadData()
+    const user = findTenant(store, tenantId)?.users.find((u) => u.id === userId)
+    if (user) user.status = user.status === 'active' ? 'suspended' : 'active'
+    saveData(store)
+  },
+  removeTenantUser(tenantId, userId) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (tenant) tenant.users = tenant.users.filter((u) => u.id !== userId)
+    saveData(store)
+  },
+
+  addTenantDevice(tenantId, data) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (!tenant) return
+    const record = { id: uid('td'), name: data.name, status: 'offline', createdDate: nowStamp() }
+    tenant.devices.push(record)
+    saveData(store)
+    return record
+  },
+  updateTenantDevice(tenantId, deviceId, data) {
+    const store = loadData()
+    const device = findTenant(store, tenantId)?.devices.find((d) => d.id === deviceId)
+    if (device) device.name = data.name
+    saveData(store)
+  },
+  toggleTenantDeviceStatus(tenantId, deviceId) {
+    const store = loadData()
+    const device = findTenant(store, tenantId)?.devices.find((d) => d.id === deviceId)
+    if (device) device.status = device.status === 'operational' ? 'offline' : 'operational'
+    saveData(store)
+  },
+  removeTenantDevice(tenantId, deviceId) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (tenant) tenant.devices = tenant.devices.filter((d) => d.id !== deviceId)
+    saveData(store)
+  },
+
+  addTenantApplication(tenantId, data) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (!tenant) return
+    const record = { id: uid('ta'), name: data.name, status: 'active', createdDate: nowStamp() }
+    tenant.applications.push(record)
+    saveData(store)
+    return record
+  },
+  updateTenantApplication(tenantId, appId, data) {
+    const store = loadData()
+    const app = findTenant(store, tenantId)?.applications.find((a) => a.id === appId)
+    if (app) app.name = data.name
+    saveData(store)
+  },
+  toggleTenantApplicationStatus(tenantId, appId) {
+    const store = loadData()
+    const app = findTenant(store, tenantId)?.applications.find((a) => a.id === appId)
+    if (app) app.status = app.status === 'active' ? 'suspended' : 'active'
+    saveData(store)
+  },
+  removeTenantApplication(tenantId, appId) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (tenant) tenant.applications = tenant.applications.filter((a) => a.id !== appId)
     saveData(store)
   },
 
@@ -588,6 +769,32 @@ const Store = {
   removeUserGroup(id) {
     const store = loadData()
     store.userGroups = store.userGroups.filter((g) => g.id !== id)
+    saveData(store)
+  },
+
+  // ------------------------------------------------------------- shifts
+  addShift(data) {
+    const store = loadData()
+    const record = { id: uid('sh'), name: data.name, startTime: data.startTime, endTime: data.endTime, days: data.days ?? [], userIds: data.userIds ?? [], status: 'active', createdDate: nowStamp() }
+    store.shifts.push(record)
+    saveData(store)
+    return record
+  },
+  updateShift(id, data) {
+    const store = loadData()
+    const shift = store.shifts.find((s) => s.id === id)
+    if (shift) Object.assign(shift, { name: data.name, startTime: data.startTime, endTime: data.endTime, days: data.days ?? [], userIds: data.userIds ?? [] })
+    saveData(store)
+  },
+  toggleShiftStatus(id) {
+    const store = loadData()
+    const shift = store.shifts.find((s) => s.id === id)
+    if (shift) shift.status = shift.status === 'active' ? 'suspended' : 'active'
+    saveData(store)
+  },
+  removeShift(id) {
+    const store = loadData()
+    store.shifts = store.shifts.filter((s) => s.id !== id)
     saveData(store)
   },
 }
