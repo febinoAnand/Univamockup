@@ -247,6 +247,38 @@ img {
   flex-shrink: 0;
 }
 
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.sidebar-toggle-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sidebar-toggle-btn:hover {
+  background: var(--surface-alt);
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 9, 0.45);
+  z-index: 190;
+}
+
 .top-bar-breadcrumbs {
   display: flex;
   align-items: center;
@@ -294,6 +326,57 @@ img {
 
 .top-bar-icon-button:hover {
   background: var(--surface-alt);
+}
+
+/* ----------------------------------------------------------- responsive
+   Below this breakpoint the fixed 260px sidebar would leave almost no room
+   for content, so it becomes an off-canvas drawer (Layout.mount() /
+   mountAdmin() toggle `.sidebar-open` on #app-shell via the hamburger
+   button rendered into the top bar — see shared/layout.js). */
+@media (max-width: 900px) {
+  .sidebar-toggle-btn {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+  }
+
+  .app-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .app-shell.sidebar-open .sidebar-backdrop {
+    display: block;
+  }
+
+  .app-content {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .top-bar {
+    padding: 0.75rem 1rem;
+  }
+
+  .top-bar-breadcrumbs {
+    overflow-x: auto;
+  }
+
+  .page-header-actions {
+    width: 100%;
+  }
+
+  .table-search-wrap {
+    max-width: none;
+  }
 }
 
 /* ---------------------------------------------------------- page header

@@ -121,6 +121,31 @@
   width: 100%;
 }
 
+/* Below this width the 12-column drag/resize grid (colWidth computed in
+   dashboard.js from the canvas's measured pixel width) leaves each widget
+   only a sliver wide. Rather than reflowing the column math, drop each
+   .grid-item out of absolute positioning and let it stack full-width in
+   its original DOM order — its JS-computed pixel height is left alone. */
+@media (max-width: 640px) {
+  .dashboard-grid {
+    height: auto !important;
+  }
+  .grid-item {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    margin-bottom: 0.75rem;
+  }
+  .widget-drag-handle,
+  .widget-resize-handle {
+    display: none !important;
+  }
+  .dashboard-page {
+    padding: 1rem 1rem 3rem;
+  }
+}
+
 .widget-drag-handle {
   position: absolute;
   top: 6px;

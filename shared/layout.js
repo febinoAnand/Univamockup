@@ -87,6 +87,8 @@ function iconSvg(name) {
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10.5" r="2"/><path d="M5.8 16c.7-1.8 1.9-2.7 3.2-2.7s2.5.9 3.2 2.7" stroke-linecap="round"/><path d="M14.5 9h3M14.5 12h3" stroke-linecap="round"/></svg>',
     'admin-logout':
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 16l4-4-4-4M20 12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    hamburger:
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>',
   }
   return icons[name] || ''
 }
@@ -141,12 +143,36 @@ function renderTopBar(breadcrumbs) {
 
   return `
     <header class="top-bar">
-      <div class="top-bar-breadcrumbs">${crumbHtml}</div>
+      <div class="top-bar-left">
+        <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle navigation">${iconSvg('hamburger')}</button>
+        <div class="top-bar-breadcrumbs">${crumbHtml}</div>
+      </div>
       <div class="top-bar-actions">
         <button type="button" class="top-bar-icon-button" title="Notifications">${iconSvg('bell')}</button>
         <button type="button" class="top-bar-icon-button" id="logout-button" title="Sign out">${iconSvg('user')}</button>
       </div>
     </header>`
+}
+
+// Off-canvas sidebar drawer below the tablet/mobile breakpoint (app.css
+// `@media (max-width: 900px)`). One shell (#app-shell) is reused by both
+// the regular app layout and the sysadmin layout, so this wiring covers both.
+function ensureSidebarBackdrop(shell) {
+  if (shell.querySelector('.sidebar-backdrop')) return
+  const backdrop = document.createElement('div')
+  backdrop.className = 'sidebar-backdrop'
+  backdrop.addEventListener('click', () => shell.classList.remove('sidebar-open'))
+  shell.appendChild(backdrop)
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') shell.classList.remove('sidebar-open')
+  })
+}
+
+// Re-run after every renderTopBar() (including Layout.setBreadcrumbs(), which
+// replaces .top-bar's outerHTML and so discards the previous button node).
+function wireSidebarToggle(shell) {
+  const toggleBtn = document.getElementById('sidebar-toggle-btn')
+  if (toggleBtn) toggleBtn.addEventListener('click', () => shell.classList.toggle('sidebar-open'))
 }
 
 const Layout = {
@@ -162,6 +188,8 @@ const Layout = {
         window.location.href = 'login.html'
       })
     }
+    const shell = document.getElementById('app-shell')
+    if (shell) wireSidebarToggle(shell)
   },
 
   mount({ active, breadcrumbs }) {
@@ -187,6 +215,9 @@ const Layout = {
         window.location.href = 'login.html'
       })
     }
+
+    ensureSidebarBackdrop(shell)
+    wireSidebarToggle(shell)
   },
 
   // Mirrors src/core/layouts/AdminSidebar.jsx + AdminLayout.jsx — a
@@ -231,13 +262,19 @@ const Layout = {
     contentHost.insertAdjacentHTML(
       'beforebegin',
       `<header class="admin-top-bar">
-        <span class="admin-top-bar-title">Control Center</span>
+        <div class="admin-top-bar-left">
+          <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle navigation">${iconSvg('hamburger')}</button>
+          <span class="admin-top-bar-title">Control Center</span>
+        </div>
         <div class="admin-top-bar-actions">
           <button type="button" class="admin-top-bar-icon-button" aria-label="Notifications">${iconSvg('bell')}</button>
           <button type="button" class="admin-top-bar-icon-button" aria-label="Account">${iconSvg('user')}</button>
         </div>
       </header>`,
     )
+
+    ensureSidebarBackdrop(shell)
+    wireSidebarToggle(shell)
   },
 }
 

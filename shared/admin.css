@@ -18,6 +18,13 @@
   border-bottom: 1px solid #e7e5e4;
   flex-shrink: 0;
 }
+.admin-top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .admin-top-bar-title {
   font-size: 0.9rem;
   font-weight: 700;
