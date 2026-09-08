@@ -141,6 +141,13 @@
         { key: 'checksum', label: 'Checksum' },
         { key: 'rolloutConfig', label: 'Rollout configuration' },
       ] },
+      { key: 'applications', label: 'Applications', iconFamily: 'app', fields: [
+        { key: 'name', label: 'Application name' },
+        { key: 'description', label: 'Description' },
+        { key: 'deviceIds', label: 'Linked devices' },
+        { key: 'assetIds', label: 'Linked assets' },
+        { key: 'userIds', label: 'Linked users' },
+      ] },
       { key: 'users', label: 'Users', iconFamily: 'users', fields: [
         { key: 'name', label: 'Full name' },
         { key: 'email', label: 'Email address' },
@@ -182,6 +189,13 @@
         { key: 'actionDetail', label: 'Action detail' },
       ] },
       { key: 'ruleEngineReports', label: 'Reports', iconFamily: 'ruleEngine', fields: [] },
+      { key: 'shiftManagement', label: 'Shift management', iconFamily: 'shift', fields: [
+        { key: 'name', label: 'Shift name' },
+        { key: 'startTime', label: 'Start time' },
+        { key: 'endTime', label: 'End time' },
+        { key: 'days', label: 'Days of week' },
+        { key: 'userIds', label: 'Assigned users' },
+      ] },
     ]
 
     function emptyModulePermissions() {
@@ -211,7 +225,7 @@
       if (override) return override
       return { view: modulePerm.view, edit: modulePerm.edit }
     }
-    const METADATA_SOURCE_BY_MODULE = { devices: 'devices', deviceProfiles: 'deviceProfiles', assets: 'assets', assetProfiles: 'assetProfiles' }
+    const METADATA_SOURCE_BY_MODULE = { devices: 'devices', deviceProfiles: 'deviceProfiles', assets: 'assets', assetProfiles: 'assetProfiles', applications: 'applications' }
     function getModuleFields(module, context) {
       context = context || {}
       const sourceKey = METADATA_SOURCE_BY_MODULE[module.key]
@@ -253,6 +267,8 @@
       asset: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
       users: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 19c1-3.2 3.4-5 6-5s5 1.8 6 5" stroke-linecap="round"/></svg>',
       ruleEngine: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7 5h6a4 4 0 0 1 4 4v0M7 19h6a4 4 0 0 0 4-4v0" stroke-linecap="round"/></svg>',
+      app: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>',
+      shift: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     }
     const CHECK_MARK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     const DASH_MARK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 12h12" stroke-linecap="round"/></svg>'
@@ -298,7 +314,7 @@
 
     function fieldContext() {
       const data = Store.get()
-      return { devices: data.devices, assets: data.assets, assetProfiles: data.assetProfiles, deviceProfiles: data.deviceProfiles }
+      return { devices: data.devices, assets: data.assets, assetProfiles: data.assetProfiles, deviceProfiles: data.deviceProfiles, applications: data.applications }
     }
 
     function renderRoleRail() {
