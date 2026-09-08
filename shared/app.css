@@ -193,6 +193,7 @@ img {
 
 .sidebar-section-label {
   flex: 1;
+  color: var(--sidebar-text-muted);
 }
 
 .sidebar-section-children {
@@ -202,10 +203,12 @@ img {
 }
 
 .sidebar-child-link {
-  display: block;
-  padding: 0.6rem 1.1rem 0.6rem 2.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1.1rem;
   font-size: 0.88rem;
-  color: var(--sidebar-text-muted);
+  color: var(--sidebar-text);
   text-decoration: none;
 }
 

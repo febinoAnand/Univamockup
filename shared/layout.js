@@ -5,48 +5,44 @@
 
 const NAV_SECTIONS = [
   { key: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: 'dashboard.html' },
+  { key: 'applications', label: 'Applications', icon: 'app', href: 'applications.html' },
   {
     key: 'device-management',
     label: 'Device management',
-    icon: 'device',
     children: [
-      { key: 'devices', label: 'Devices', href: 'devices.html' },
-      { key: 'device-profiles', label: 'Device profiles', href: 'device-profiles.html' },
-      { key: 'credentials', label: 'Credentials', href: 'credentials.html' },
-      { key: 'software-ota', label: 'Software OTA', href: 'software-ota.html' },
-    ],
-  },
-  { key: 'applications', label: 'Application management', icon: 'app', href: 'applications.html' },
-  {
-    key: 'user-management',
-    label: 'User management',
-    icon: 'users',
-    children: [
-      { key: 'users', label: 'Users', href: 'users.html' },
-      { key: 'user-groups', label: 'User groups', href: 'user-groups.html' },
-      { key: 'roles', label: 'Roles & permissions', href: 'roles.html' },
+      { key: 'devices', label: 'Devices', icon: 'device', href: 'devices.html' },
+      { key: 'device-profiles', label: 'Device profiles', icon: 'profile', href: 'device-profiles.html' },
+      { key: 'credentials', label: 'Credentials', icon: 'credentials', href: 'credentials.html' },
+      { key: 'software-ota', label: 'Software OTA', icon: 'cloud-ota', href: 'software-ota.html' },
     ],
   },
   {
     key: 'asset-management',
     label: 'Asset management',
-    icon: 'asset',
     children: [
-      { key: 'assets', label: 'Assets', href: 'assets.html' },
-      { key: 'asset-groups', label: 'Asset groups', href: 'asset-groups.html' },
-      { key: 'asset-profiles', label: 'Asset profiles', href: 'asset-profiles.html' },
+      { key: 'assets', label: 'Assets', icon: 'asset', href: 'assets.html' },
+      { key: 'asset-groups', label: 'Asset groups', icon: 'group', href: 'asset-groups.html' },
+      { key: 'asset-profiles', label: 'Asset profiles', icon: 'profile', href: 'asset-profiles.html' },
     ],
   },
+  { key: 'shift-management', label: 'Shifts', icon: 'shift', href: 'shift-management.html' },
   {
     key: 'rule-engines',
     label: 'Rule engines',
-    icon: 'rule-engine',
     children: [
-      { key: 'rule-engines', label: 'Rule engine', href: 'rule-engines.html' },
-      { key: 'rule-engine-reports', label: 'Reports', href: 'rule-engine-reports.html' },
+      { key: 'rule-engines', label: 'Rule engine', icon: 'rule-engine', href: 'rule-engines.html' },
+      { key: 'rule-engine-reports', label: 'Reports', icon: 'report', href: 'rule-engine-reports.html' },
     ],
   },
-  { key: 'shift-management', label: 'Shift management', icon: 'shift', href: 'shift-management.html' },
+  {
+    key: 'user-management',
+    label: 'User management',
+    children: [
+      { key: 'users', label: 'Users', icon: 'users', href: 'users.html' },
+      { key: 'user-groups', label: 'User groups', icon: 'group', href: 'user-groups.html' },
+      { key: 'roles', label: 'Roles & permissions', icon: 'shield', href: 'roles.html' },
+    ],
+  },
 ]
 
 function iconSvg(name) {
@@ -65,6 +61,18 @@ function iconSvg(name) {
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7 5h6a4 4 0 0 1 4 4v0M7 19h6a4 4 0 0 0 4-4v0" stroke-linecap="round"/></svg>',
     shift:
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    profile:
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6.5 15.5c.6-1.4 1.5-2 2.5-2s1.9.6 2.5 2" stroke-linecap="round"/><path d="M14.5 9.5h3M14.5 12.5h3" stroke-linecap="round"/></svg>',
+    credentials:
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5 18 5M15.5 7.5l2 2M18.5 4.5l2 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'cloud-ota':
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 18a4 4 0 0 1-.5-7.97A5 5 0 0 1 16.5 9 4 4 0 0 1 17 18H7Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 11v6M9.5 14.5 12 17l2.5-2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    group:
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c.8-2.8 2.6-4.3 5-4.3s4.2 1.5 5 4.3M11 19c.8-2.8 2.6-4.3 5-4.3s4.2 1.5 5 4.3" stroke-linecap="round"/></svg>',
+    shield:
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.5 19 6v6c0 4.5-3 7.5-7 8.5-4-1-7-4-7-8.5V6l7-2.5Z" stroke-linecap="round" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    report:
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 13v4M12 9.5v7.5M16 11.5v5.5" stroke-linecap="round"/></svg>',
     bell:
       '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 18.5a2 2 0 0 0 4 0" stroke-linecap="round"/></svg>',
     user:
@@ -91,12 +99,11 @@ function renderSidebar(active) {
     }
     // Static section — always shows its children, no expand/collapse.
     const children = section.children
-      .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}">${child.label}</a>`)
+      .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}">${iconSvg(child.icon)}<span>${child.label}</span></a>`)
       .join('')
     return `
       <div class="sidebar-section" data-group="${section.key}">
         <div class="sidebar-section-header">
-          ${iconSvg(section.icon)}
           <span class="sidebar-section-label">${section.label}</span>
         </div>
         <div class="sidebar-section-children">${children}</div>
