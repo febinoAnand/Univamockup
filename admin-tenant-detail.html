@@ -208,7 +208,7 @@
             </div>
             <div class="table-scroll">
               <table class="data-table">
-                <thead><tr><th>Name</th><th>Devices</th><th>Assets</th><th>Users</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
+                <thead><tr><th>Name</th><th>Devices</th><th>Assets</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="applications-tbody"></tbody>
               </table>
             </div>
@@ -380,14 +380,6 @@
             </div>
             <div class="group-checkbox-list" id="ta-assets-list"></div>
           </div>
-          <div class="modal-field">
-            <label>Users</label>
-            <div class="checklist-search-wrap">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
-              <input type="text" id="ta-users-search" placeholder="Search users" />
-            </div>
-            <div class="group-checkbox-list" id="ta-users-list"></div>
-          </div>
           <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="application-metadata-fields"></div></div>
         </form>
       </div>
@@ -505,7 +497,7 @@
         emptyNote.remove()
       }
     }
-    ;['tas-groups', 'tas-devices', 'ta-devices', 'ta-assets', 'ta-users'].forEach((prefix) => {
+    ;['tas-groups', 'tas-devices', 'ta-devices', 'ta-assets'].forEach((prefix) => {
       document.getElementById(`${prefix}-search`).addEventListener('input', (e) => filterChecklist(`${prefix}-list`, e.target.value))
     })
 
@@ -1016,14 +1008,6 @@
           ? '<span class="section-empty">No assets in this tenant yet</span>'
           : t.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
     }
-    function renderAppUsersList(selectedIds) {
-      const t = getTenant()
-      document.getElementById('ta-users-list').innerHTML =
-        t.users.length === 0
-          ? '<span class="section-empty">No users in this tenant yet</span>'
-          : t.users.map((u) => `<label class="modal-checkbox"><input type="checkbox" data-user="${u.id}" ${selectedIds.includes(u.id) ? 'checked' : ''}/> ${u.name}</label>`).join('')
-    }
-
     function renderApplications() {
       const t = getTenant()
       const term = document.getElementById('applications-search').value.trim().toLowerCase()
@@ -1031,7 +1015,7 @@
       updateLimitBadge('applications', t.applications.length)
       const tbody = document.getElementById('applications-tbody')
       if (apps.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-table-note">No applications for this tenant yet.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-table-note">No applications for this tenant yet.</td></tr>'
         return
       }
       tbody.innerHTML = apps
@@ -1041,7 +1025,6 @@
           <td><div class="group-name-cell">${a.name}${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
           <td>${(a.deviceIds || []).length}</td>
           <td>${(a.assetIds || []).length}</td>
-          <td>${(a.userIds || []).length}</td>
           <td><span class="status-pill status-${a.status}">${a.status}</span></td>
           <td>${a.createdDate}</td>
           <td class="data-table-menu-col">
@@ -1099,10 +1082,8 @@
       document.getElementById('ta-description').value = ''
       document.getElementById('ta-devices-search').value = ''
       document.getElementById('ta-assets-search').value = ''
-      document.getElementById('ta-users-search').value = ''
       renderAppDevicesList([])
       renderAppAssetsList([])
-      renderAppUsersList([])
       resetMetadata('application')
       UI.openModal('application-modal')
     }
@@ -1117,10 +1098,8 @@
       document.getElementById('ta-description').value = app.description || ''
       document.getElementById('ta-devices-search').value = ''
       document.getElementById('ta-assets-search').value = ''
-      document.getElementById('ta-users-search').value = ''
       renderAppDevicesList(app.deviceIds || [])
       renderAppAssetsList(app.assetIds || [])
-      renderAppUsersList(app.userIds || [])
       resetMetadata('application', app.metadata)
       UI.openModal('application-modal')
     }
@@ -1147,14 +1126,13 @@
       const description = document.getElementById('ta-description').value.trim()
       const deviceIds = Array.from(document.querySelectorAll('#ta-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
       const assetIds = Array.from(document.querySelectorAll('#ta-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
-      const userIds = Array.from(document.querySelectorAll('#ta-users-list input:checked')).map((el) => el.getAttribute('data-user'))
       const metadata = collectMetadata('application')
       if (editingApplicationId) {
-        Store.updateTenantApplication(tenantId, editingApplicationId, { name, description, deviceIds, assetIds, userIds, metadata })
+        Store.updateTenantApplication(tenantId, editingApplicationId, { name, description, deviceIds, assetIds, metadata })
         UI.toast(`"${name}" updated successfully!`)
       } else {
         if (isAtLimit('applications')) { warnAtLimit('applications'); UI.closeModal('application-modal'); renderApplications(); return }
-        Store.addTenantApplication(tenantId, { name, description, deviceIds, assetIds, userIds, metadata })
+        Store.addTenantApplication(tenantId, { name, description, deviceIds, assetIds, metadata })
         UI.toast(`"${name}" application added successfully!`)
       }
       UI.closeModal('application-modal')

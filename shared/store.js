@@ -74,9 +74,9 @@ const DEFAULT_DATA = {
     { id: 'p3', name: 'Generators', description: 'Backup generator telemetry profile.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
   ],
   applications: [
-    { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], userIds: ['u1', 'u3'], metadata: [], createdDate: '2025-11-02 09:14:00' },
-    { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], userIds: ['u3'], metadata: [], createdDate: '2025-12-19 14:02:00' },
-    { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], userIds: ['u2'], metadata: [], createdDate: '2026-01-08 11:47:00' },
+    { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], metadata: [], createdDate: '2025-11-02 09:14:00' },
+    { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], metadata: [], createdDate: '2025-12-19 14:02:00' },
+    { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], metadata: [], createdDate: '2026-01-08 11:47:00' },
   ],
   assets: [
     { id: 'a1', name: 'Forklift Unit 3', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'operational', location: 'North Yard', deviceIds: [], metadata: [], createdDate: '2025-11-05 10:00:00' },
@@ -425,7 +425,7 @@ const Store = {
   // -------------------------------------------------------- applications
   addApplication(data) {
     const store = loadData()
-    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], metadata: data.metadata ?? [], createdDate: nowStamp() }
+    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], metadata: data.metadata ?? [], createdDate: nowStamp() }
     store.applications.push(record)
     saveData(store)
     return record
@@ -433,7 +433,7 @@ const Store = {
   updateApplication(id, data) {
     const store = loadData()
     const app = store.applications.find((a) => a.id === id)
-    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], metadata: data.metadata ?? app.metadata })
+    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], metadata: data.metadata ?? app.metadata })
     saveData(store)
   },
   toggleApplicationStatus(id) {
@@ -688,7 +688,7 @@ const Store = {
     const store = loadData()
     const tenant = findTenant(store, tenantId)
     if (!tenant) return
-    const record = { id: uid('ta'), name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], status: 'active', metadata: data.metadata ?? [], createdDate: nowStamp() }
+    const record = { id: uid('ta'), name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], status: 'active', metadata: data.metadata ?? [], createdDate: nowStamp() }
     tenant.applications.push(record)
     saveData(store)
     return record
@@ -696,7 +696,7 @@ const Store = {
   updateTenantApplication(tenantId, appId, data) {
     const store = loadData()
     const app = findTenant(store, tenantId)?.applications.find((a) => a.id === appId)
-    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], metadata: data.metadata ?? app.metadata })
+    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], metadata: data.metadata ?? app.metadata })
     saveData(store)
   },
   toggleTenantApplicationStatus(tenantId, appId) {
