@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v5'
+const STORAGE_KEY = 'univa-html-demo-v7'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -113,6 +113,9 @@ const DEFAULT_DATA = {
         { id: 'td1', name: 'Warehouse Scanner 1', status: 'operational', createdDate: '2025-11-05 09:00:00' },
         { id: 'td2', name: 'Loading Dock Sensor', status: 'offline', createdDate: '2025-12-14 13:30:00' },
       ],
+      assets: [
+        { id: 'tas1', name: 'Forklift Unit 3', status: 'operational', createdDate: '2025-11-05 10:00:00' },
+      ],
       applications: [
         { id: 'ta1', name: 'Fleet Tracker', status: 'active', createdDate: '2025-11-06 08:00:00' },
       ],
@@ -124,16 +127,19 @@ const DEFAULT_DATA = {
       devices: [
         { id: 'td3', name: 'HVAC Controller B2', status: 'operational', createdDate: '2025-12-20 09:15:00' },
       ],
+      assets: [
+        { id: 'tas2', name: 'HVAC Compressor A', status: 'operational', createdDate: '2025-12-20 09:30:00' },
+      ],
       applications: [
         { id: 'ta2', name: 'Facilities Dashboard', status: 'active', createdDate: '2025-12-21 11:00:00' },
       ],
     },
-    { id: 't3', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00', users: [], devices: [], applications: [] },
-    { id: 't4', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00', users: [], devices: [], applications: [] },
+    { id: 't3', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00', users: [], devices: [], assets: [], applications: [] },
+    { id: 't4', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00', users: [], devices: [], assets: [], applications: [] },
   ],
   tenantProfiles: [
-    { id: 'tp1', name: 'Default', description: 'Default tenant profile with standard platform limits.', isDefault: true, maxDevices: 500, maxAssets: 500, maxUsers: 50, maxDashboards: 50, createdDate: '2025-11-02 09:10:00' },
-    { id: 'tp2', name: 'Enterprise', description: 'Higher limits for large multi-site tenants.', isDefault: false, maxDevices: 5000, maxAssets: 5000, maxUsers: 500, maxDashboards: 200, createdDate: '2025-12-05 10:00:00' },
+    { id: 'tp1', name: 'Default', description: 'Default tenant profile with standard platform limits.', isDefault: true, maxDevices: 500, maxAssets: 500, maxUsers: 50, maxDashboards: 50, maxApplications: 50, createdDate: '2025-11-02 09:10:00' },
+    { id: 'tp2', name: 'Enterprise', description: 'Higher limits for large multi-site tenants.', isDefault: false, maxDevices: 5000, maxAssets: 5000, maxUsers: 500, maxDashboards: 200, maxApplications: 200, createdDate: '2025-12-05 10:00:00' },
   ],
   users: [
     { id: 'u1', name: 'Alicia Ferrer', email: 'alicia.ferrer@example.com', role: 'Owner', groupNames: ['Administrators'], status: 'active', createdDate: '2025-11-02 09:20:00' },
@@ -539,7 +545,7 @@ const Store = {
   // -------------------------------------------------------------- tenants
   addTenant(data) {
     const store = loadData()
-    const record = { id: uid('t'), ...data, deviceCount: 0, status: 'active', createdDate: nowStamp(), users: [], devices: [], applications: [] }
+    const record = { id: uid('t'), ...data, deviceCount: 0, status: 'active', createdDate: nowStamp(), users: [], devices: [], assets: [], applications: [] }
     store.tenants.push(record)
     saveData(store)
     return record
@@ -624,11 +630,13 @@ const Store = {
     const store = loadData()
     const tenant = findTenant(store, tenantId)
     if (!tenant) return
-    const record = { id: uid('td'), name: data.name, status: 'offline', createdDate: nowStamp() }
+    const record = { id: uid('td'), name: data.name, profileName: data.profileName, endpointToken: data.endpointToken || '', status: 'offline', metadata: data.metadata ?? [], createdDate: nowStamp() }
     tenant.devices.push(record)
     saveData(store)
     return record
   },
+  // Mirrors the real Devices page: a device's profile, token, and metadata
+  // are only set at creation — editing only ever changes the name.
   updateTenantDevice(tenantId, deviceId, data) {
     const store = loadData()
     const device = findTenant(store, tenantId)?.devices.find((d) => d.id === deviceId)
@@ -648,11 +656,39 @@ const Store = {
     saveData(store)
   },
 
+  addTenantAsset(tenantId, data) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (!tenant) return
+    const record = { id: uid('tas'), name: data.name, groupNames: data.groupNames ?? [], profileName: data.profileName, location: data.location, deviceIds: data.deviceIds ?? [], status: 'operational', metadata: data.metadata ?? [], createdDate: nowStamp() }
+    tenant.assets.push(record)
+    saveData(store)
+    return record
+  },
+  updateTenantAsset(tenantId, assetId, data) {
+    const store = loadData()
+    const asset = findTenant(store, tenantId)?.assets.find((a) => a.id === assetId)
+    if (asset) Object.assign(asset, { name: data.name, groupNames: data.groupNames ?? [], profileName: data.profileName, location: data.location, deviceIds: data.deviceIds ?? [], metadata: data.metadata ?? asset.metadata })
+    saveData(store)
+  },
+  toggleTenantAssetStatus(tenantId, assetId) {
+    const store = loadData()
+    const asset = findTenant(store, tenantId)?.assets.find((a) => a.id === assetId)
+    if (asset) asset.status = asset.status === 'operational' ? 'offline' : 'operational'
+    saveData(store)
+  },
+  removeTenantAsset(tenantId, assetId) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    if (tenant) tenant.assets = tenant.assets.filter((a) => a.id !== assetId)
+    saveData(store)
+  },
+
   addTenantApplication(tenantId, data) {
     const store = loadData()
     const tenant = findTenant(store, tenantId)
     if (!tenant) return
-    const record = { id: uid('ta'), name: data.name, status: 'active', createdDate: nowStamp() }
+    const record = { id: uid('ta'), name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], status: 'active', metadata: data.metadata ?? [], createdDate: nowStamp() }
     tenant.applications.push(record)
     saveData(store)
     return record
@@ -660,7 +696,7 @@ const Store = {
   updateTenantApplication(tenantId, appId, data) {
     const store = loadData()
     const app = findTenant(store, tenantId)?.applications.find((a) => a.id === appId)
-    if (app) app.name = data.name
+    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], metadata: data.metadata ?? app.metadata })
     saveData(store)
   },
   toggleTenantApplicationStatus(tenantId, appId) {

@@ -34,7 +34,7 @@
 
         <div class="table-scroll">
           <table class="data-table">
-            <thead><tr><th>Name</th><th>Max devices</th><th>Max assets</th><th>Max users</th><th>Max dashboards</th><th>In use</th><th>Default</th><th class="data-table-menu-col"></th></tr></thead>
+            <thead><tr><th>Name</th><th>Max devices</th><th>Max assets</th><th>Max users</th><th>Max applications</th><th>Max dashboards</th><th>In use</th><th>Default</th><th class="data-table-menu-col"></th></tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
@@ -62,6 +62,7 @@
               <div class="modal-field"><label for="p-max-dashboards">Dashboards maximum number*</label><input id="p-max-dashboards" type="number" min="0" required /></div>
               <div class="modal-field"><label for="p-max-assets">Assets maximum number*</label><input id="p-max-assets" type="number" min="0" required /></div>
               <div class="modal-field"><label for="p-max-users">Users maximum number*</label><input id="p-max-users" type="number" min="0" required /></div>
+              <div class="modal-field"><label for="p-max-applications">Applications maximum number*</label><input id="p-max-applications" type="number" min="0" required /></div>
             </div>
             <div class="profile-advanced">
               <button type="button" class="profile-advanced-toggle" data-toggle="entities-advanced">
@@ -201,7 +202,7 @@
       const counts = usageCountByProfile()
       const tbody = document.getElementById('tbody')
       if (profiles.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-table-note">No tenant profiles match your search.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-table-note">No tenant profiles match your search.</td></tr>'
         return
       }
       tbody.innerHTML = profiles
@@ -212,6 +213,7 @@
           <td>${p.maxDevices}</td>
           <td>${p.maxAssets}</td>
           <td>${p.maxUsers}</td>
+          <td>${p.maxApplications}</td>
           <td>${p.maxDashboards}</td>
           <td>${counts[p.name] ?? 0}</td>
           <td>${p.isDefault ? '<span class="default-profile-badge">Default</span>' : ''}</td>
@@ -262,7 +264,7 @@
     document.addEventListener('click', () => UI.closeRowMenus())
 
     const NUMERIC_FIELDS = [
-      'max-devices', 'max-dashboards', 'max-assets', 'max-users', 'max-rule-executions', 'max-transport-messages',
+      'max-devices', 'max-dashboards', 'max-assets', 'max-users', 'max-applications', 'max-rule-executions', 'max-transport-messages',
       'max-calc-fields', 'max-data-points', 'max-calc-args', 'max-storage-days', 'alarms-ttl', 'default-storage-ttl',
       'rpc-ttl', 'queue-ttl', 'rule-exceptions-ttl', 'max-sms', 'max-emails', 'max-alarms', 'alarms-reeval', 'max-debug',
     ]
@@ -305,6 +307,7 @@
       document.getElementById('p-max-dashboards').value = p.maxDashboards ?? 0
       document.getElementById('p-max-assets').value = p.maxAssets ?? 0
       document.getElementById('p-max-users').value = p.maxUsers ?? 0
+      document.getElementById('p-max-applications').value = p.maxApplications ?? 0
       document.getElementById('p-entities-rate-limit').value = p.entitiesRateLimit ?? ''
       document.getElementById('p-max-rule-executions').value = p.maxRuleEngineExecutions ?? 0
       document.getElementById('p-max-transport-messages').value = p.maxTransportMessages ?? 0
@@ -364,6 +367,7 @@
         maxDashboards: num('max-dashboards'),
         maxAssets: num('max-assets'),
         maxUsers: num('max-users'),
+        maxApplications: num('max-applications'),
         entitiesRateLimit: document.getElementById('p-entities-rate-limit').value.trim(),
         maxRuleEngineExecutions: num('max-rule-executions'),
         maxTransportMessages: num('max-transport-messages'),
