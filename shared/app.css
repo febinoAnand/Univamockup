@@ -162,7 +162,7 @@ img {
   object-fit: contain;
 }
 
-.sidebar-group-header,
+.sidebar-section-header,
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -174,13 +174,15 @@ img {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--sidebar-text);
-  cursor: pointer;
   text-align: left;
   text-decoration: none;
 }
 
-.sidebar-link:hover,
-.sidebar-group-header:hover {
+.sidebar-link {
+  cursor: pointer;
+}
+
+.sidebar-link:hover {
   background: var(--sidebar-hover);
 }
 
@@ -189,31 +191,14 @@ img {
   color: var(--sidebar-active-text);
 }
 
-.sidebar-group-label {
+.sidebar-section-label {
   flex: 1;
 }
 
-.sidebar-group-chevron {
+.sidebar-section-children {
   display: flex;
-  transition: transform 0.15s ease;
-}
-
-.sidebar-group.expanded .sidebar-group-chevron {
-  transform: rotate(180deg);
-}
-
-.sidebar-group.expanded {
-  background: #241f30;
-}
-
-.sidebar-group-children {
-  display: none;
   flex-direction: column;
   padding-bottom: 0.5rem;
-}
-
-.sidebar-group.expanded .sidebar-group-children {
-  display: flex;
 }
 
 .sidebar-child-link {

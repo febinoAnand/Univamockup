@@ -73,8 +73,6 @@ function iconSvg(name) {
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7 5h6a4 4 0 0 1 4 4v0M7 19h6a4 4 0 0 0 4-4v0" stroke-linecap="round"/></svg>',
     shift:
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    chevron:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     bell:
       '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 18.5a2 2 0 0 0 4 0" stroke-linecap="round"/></svg>',
     user:
@@ -93,31 +91,23 @@ function iconSvg(name) {
   return icons[name] || ''
 }
 
-function sectionContainsActive(section, active) {
-  if (section.key === active) return true
-  if (section.children) return section.children.some((c) => c.key === active)
-  return false
-}
-
 function renderSidebar(active) {
   const items = NAV_SECTIONS.map((section) => {
     if (!section.children) {
       const isActive = section.key === active
       return `<a class="sidebar-link${isActive ? ' active' : ''}" href="${section.href}">${iconSvg(section.icon)}<span>${section.label}</span></a>`
     }
-    // Every group starts expanded, matching Sidebar.jsx's default state.
+    // Static section — always shows its children, no expand/collapse.
     const children = section.children
       .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}">${child.label}</a>`)
       .join('')
     return `
-      <div class="sidebar-group expanded" data-group="${section.key}">
-        <button type="button" class="sidebar-group-header">
+      <div class="sidebar-section" data-group="${section.key}">
+        <div class="sidebar-section-header">
           ${iconSvg(section.icon)}
-          <span class="sidebar-group-label">${section.label}</span>
-          <span class="sidebar-group-chevron">${iconSvg('chevron')}</span>
-        </button>
-        <div class="sidebar-group-children">${children}</div>
-        ${sectionContainsActive(section, active) ? '<span class="sidebar-active-bar"></span>' : ''}
+          <span class="sidebar-section-label">${section.label}</span>
+        </div>
+        <div class="sidebar-section-children">${children}</div>
       </div>`
   }).join('')
 
@@ -201,12 +191,6 @@ const Layout = {
 
     shell.insertAdjacentHTML('afterbegin', renderSidebar(active))
     contentHost.insertAdjacentHTML('beforebegin', renderTopBar(breadcrumbs || []))
-
-    shell.querySelectorAll('.sidebar-group-header').forEach((header) => {
-      header.addEventListener('click', () => {
-        header.closest('.sidebar-group').classList.toggle('expanded')
-      })
-    })
 
     const logoutButton = document.getElementById('logout-button')
     if (logoutButton) {
