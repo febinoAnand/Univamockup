@@ -8,6 +8,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
   <link rel="stylesheet" href="shared/admin.css" />
+  <style>
+    /* Ported from shared/devices.css's AddDeviceModal block — the collapsible
+       "Device details" / "Metadata attributes" sections used on the real
+       Devices page. Inlined rather than loading devices.css wholesale
+       because that file also redeclares .modal-field without margin-bottom,
+       which would collapse spacing in this page's other three modals. */
+    .modal-intro {
+      margin: 0 0 1.25rem;
+      font-size: 0.85rem;
+      color: #78716c;
+      line-height: 1.5;
+    }
+    .modal-field-hint {
+      margin: 0.4rem 0 0;
+      font-size: 0.78rem;
+      color: #a8a29e;
+    }
+    .section {
+      border: 1px solid #e7e5e4;
+      border-radius: 14px;
+      margin-bottom: 1rem;
+      background: #ffffff;
+      overflow: hidden;
+    }
+    .section-plain {
+      border: none;
+      border-radius: 0;
+      margin-bottom: 0;
+      background: transparent;
+      overflow: visible;
+    }
+    .section-plain > .section-header {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .section-plain > .section-body {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      background: none;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1c1917;
+      cursor: pointer;
+      text-align: left;
+    }
+    .caret-icon {
+      flex-shrink: 0;
+      transform: rotate(-90deg);
+      transition: transform 0.15s ease;
+    }
+    .caret-icon.expanded {
+      transform: rotate(0deg);
+    }
+    .section-title {
+      flex: 1;
+    }
+    .help-icon {
+      display: inline-flex;
+      align-items: center;
+      color: #a8a29e;
+      cursor: help;
+    }
+    .section-body {
+      padding: 0 0.9rem 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .section-body .modal-field {
+      margin-bottom: 0;
+    }
+  </style>
   <title>Tenant details — Univa</title>
 </head>
 <body>
@@ -38,20 +118,24 @@
           <div class="tenant-detail-tabs">
             <button type="button" class="tab-button active" id="tab-users">Users</button>
             <button type="button" class="tab-button" id="tab-devices">Devices</button>
+            <button type="button" class="tab-button" id="tab-assets">Assets</button>
             <button type="button" class="tab-button" id="tab-applications">Applications</button>
           </div>
 
           <!-- Users -->
           <div id="users-view">
-            <div class="page-header-actions" style="justify-content: space-between; display: flex; margin-bottom: 1rem;">
+            <div class="page-header-actions" style="justify-content: space-between; display: flex; align-items: center; margin-bottom: 1rem;">
               <div class="table-search-wrap" style="margin: 0;">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
                 <input type="text" id="users-search" placeholder="Search users" />
               </div>
-              <button type="button" class="solid-action-button" id="add-user-btn">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
-                Add user
-              </button>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="limit-badge" id="users-limit-badge"></span>
+                <button type="button" class="solid-action-button" id="add-user-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+                  Add user
+                </button>
+              </div>
             </div>
             <div class="table-scroll">
               <table class="data-table">
@@ -63,39 +147,68 @@
 
           <!-- Devices -->
           <div id="devices-view" class="hidden">
-            <div class="page-header-actions" style="justify-content: space-between; display: flex; margin-bottom: 1rem;">
+            <div class="page-header-actions" style="justify-content: space-between; display: flex; align-items: center; margin-bottom: 1rem;">
               <div class="table-search-wrap" style="margin: 0;">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
                 <input type="text" id="devices-search" placeholder="Search devices" />
               </div>
-              <button type="button" class="solid-action-button" id="add-device-btn">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
-                Add device
-              </button>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="limit-badge" id="devices-limit-badge"></span>
+                <button type="button" class="solid-action-button" id="add-device-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+                  Add device
+                </button>
+              </div>
             </div>
             <div class="table-scroll">
               <table class="data-table">
-                <thead><tr><th>Name</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
+                <thead><tr><th>Name</th><th>Profile</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="devices-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Assets -->
+          <div id="assets-view" class="hidden">
+            <div class="page-header-actions" style="justify-content: space-between; display: flex; align-items: center; margin-bottom: 1rem;">
+              <div class="table-search-wrap" style="margin: 0;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+                <input type="text" id="assets-search" placeholder="Search assets" />
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="limit-badge" id="assets-limit-badge"></span>
+                <button type="button" class="solid-action-button" id="add-asset-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+                  Add asset
+                </button>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th>Name</th><th>Group</th><th>Profile</th><th>Location</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
+                <tbody id="assets-tbody"></tbody>
               </table>
             </div>
           </div>
 
           <!-- Applications -->
           <div id="applications-view" class="hidden">
-            <div class="page-header-actions" style="justify-content: space-between; display: flex; margin-bottom: 1rem;">
+            <div class="page-header-actions" style="justify-content: space-between; display: flex; align-items: center; margin-bottom: 1rem;">
               <div class="table-search-wrap" style="margin: 0;">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
                 <input type="text" id="applications-search" placeholder="Search applications" />
               </div>
-              <button type="button" class="solid-action-button" id="add-application-btn">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
-                Add application
-              </button>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="limit-badge" id="applications-limit-badge"></span>
+                <button type="button" class="solid-action-button" id="add-application-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+                  Add application
+                </button>
+              </div>
             </div>
             <div class="table-scroll">
               <table class="data-table">
-                <thead><tr><th>Name</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
+                <thead><tr><th>Name</th><th>Devices</th><th>Assets</th><th>Users</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="applications-tbody"></tbody>
               </table>
             </div>
@@ -142,12 +255,100 @@
       </div>
       <div class="modal-body">
         <form id="device-form">
-          <div class="modal-field"><label for="td-name">Device name*</label><input id="td-name" type="text" required /></div>
+          <p class="modal-intro" id="td-modal-intro">To add a new device, you need to select a device profile and set up an initial authentication token.</p>
+
+          <div class="modal-field" style="margin-bottom:1rem;">
+            <label for="td-profile">
+              Device profile
+              <span class="help-icon" title="The device profile this device will use"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+            </label>
+            <select id="td-profile"></select>
+            <p class="modal-field-hint hidden" id="td-profile-hint">A device's profile can't be changed after it's created.</p>
+          </div>
+
+          <div id="td-add-mode-fields">
+            <div class="section">
+              <button type="button" class="section-header" id="td-details-toggle">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon expanded"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="section-title">Device details</span>
+                <span class="help-icon" title="Identify and authenticate this device"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+              </button>
+              <div class="section-body" id="td-details-body">
+                <div class="modal-field">
+                  <label for="td-endpoint-token">
+                    Device token
+                    <span class="help-icon" title="A token generated to authenticate this device"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+                  </label>
+                  <input id="td-endpoint-token" type="text" />
+                </div>
+                <div class="modal-field">
+                  <label for="td-name">Device name</label>
+                  <input id="td-name" type="text" />
+                </div>
+
+                <div class="section section-plain">
+                  <button type="button" class="section-header" id="td-metadata-toggle">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" class="caret-icon" id="td-metadata-caret"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="section-title">Metadata attributes</span>
+                    <span class="help-icon" title="Custom key-value data for this device"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.4 1-1.4 1.9v.3" stroke-linecap="round"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></svg></span>
+                  </button>
+                  <div class="section-body hidden" id="td-metadata-body">
+                    <div class="metadata-fields" id="device-metadata-fields"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="td-edit-mode-fields" class="hidden">
+            <div class="modal-field">
+              <label for="td-name-edit">Device name</label>
+              <input id="td-name-edit" type="text" />
+            </div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="modal-button secondary" onclick="UI.closeModal('device-modal')">Cancel</button>
-        <button type="submit" form="device-form" class="modal-button primary" id="device-save-btn">Create</button>
+        <button type="submit" form="device-form" class="modal-button primary" id="device-save-btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit asset modal -->
+  <div class="modal-overlay" id="asset-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="asset-modal-title">Add asset</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('asset-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="asset-form">
+          <div class="modal-field"><label for="tas-name">Asset name*</label><input id="tas-name" type="text" required /></div>
+          <div class="modal-field">
+            <label>Asset groups</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="tas-groups-search" placeholder="Search asset groups" />
+            </div>
+            <div class="group-checkbox-list" id="tas-groups-list"></div>
+          </div>
+          <div class="modal-field"><label for="tas-profile">Asset profile</label><select id="tas-profile"></select></div>
+          <div class="modal-field"><label for="tas-location">Location</label><input id="tas-location" type="text" /></div>
+          <div class="modal-field">
+            <label>Devices</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="tas-devices-search" placeholder="Search devices" />
+            </div>
+            <div class="group-checkbox-list" id="tas-devices-list"></div>
+          </div>
+          <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="asset-metadata-fields"></div></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('asset-modal')">Cancel</button>
+        <button type="submit" form="asset-form" class="modal-button primary" id="asset-save-btn">Create</button>
       </div>
     </div>
   </div>
@@ -162,6 +363,32 @@
       <div class="modal-body">
         <form id="application-form">
           <div class="modal-field"><label for="ta-name">Application name*</label><input id="ta-name" type="text" required /></div>
+          <div class="modal-field"><label for="ta-description">Description</label><textarea id="ta-description" rows="3"></textarea></div>
+          <div class="modal-field">
+            <label>Devices</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="ta-devices-search" placeholder="Search devices" />
+            </div>
+            <div class="group-checkbox-list" id="ta-devices-list"></div>
+          </div>
+          <div class="modal-field">
+            <label>Assets</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="ta-assets-search" placeholder="Search assets" />
+            </div>
+            <div class="group-checkbox-list" id="ta-assets-list"></div>
+          </div>
+          <div class="modal-field">
+            <label>Users</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="ta-users-search" placeholder="Search users" />
+            </div>
+            <div class="group-checkbox-list" id="ta-users-list"></div>
+          </div>
+          <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="application-metadata-fields"></div></div>
         </form>
       </div>
       <div class="modal-footer">
@@ -180,10 +407,45 @@
     const tenantId = window.location.hash.slice(1)
     let editingUserId = null
     let editingDeviceId = null
+    let editingAssetId = null
     let editingApplicationId = null
 
     function getTenant() {
       return Store.get().tenants.find((t) => t.id === tenantId)
+    }
+
+    // Resource ceilings come from the tenant's assigned tenant profile
+    // (admin-tenant-profiles.html) — missing/unmatched profile means unlimited.
+    function getLimits() {
+      const t = getTenant()
+      const profile = Store.get().tenantProfiles.find((p) => p.name === t.tenantProfileName)
+      return {
+        users: profile ? profile.maxUsers : Infinity,
+        devices: profile ? profile.maxDevices : Infinity,
+        assets: profile ? profile.maxAssets : Infinity,
+        applications: profile ? profile.maxApplications : Infinity,
+      }
+    }
+
+    function updateLimitBadge(key, count) {
+      const badge = document.getElementById(`${key}-limit-badge`)
+      if (!badge) return
+      const max = getLimits()[key]
+      const atLimit = Number.isFinite(max) && count >= max
+      badge.textContent = `${count} / ${Number.isFinite(max) ? max : '∞'}`
+      badge.classList.toggle('limit-reached', atLimit)
+    }
+
+    function isAtLimit(key) {
+      const t = getTenant()
+      const max = getLimits()[key]
+      return Number.isFinite(max) && t[key].length >= max
+    }
+
+    const LIMIT_LABELS = { users: 'users', devices: 'devices', assets: 'assets', applications: 'applications' }
+    function warnAtLimit(key) {
+      const max = getLimits()[key]
+      UI.toast(`This tenant's plan allows up to ${max} ${LIMIT_LABELS[key]} — remove one before adding another.`)
     }
 
     function renderHeader() {
@@ -217,8 +479,90 @@
     }
     document.addEventListener('click', () => UI.closeRowMenus())
 
+    // Same searchable-checklist pattern used on assets.html / applications.html /
+    // shift-management.html — filters a .group-checkbox-list's .modal-checkbox
+    // rows in place so checked state survives the search.
+    function filterChecklist(listId, term) {
+      const container = document.getElementById(listId)
+      if (!container) return
+      const t = term.trim().toLowerCase()
+      const labels = Array.from(container.querySelectorAll('.modal-checkbox'))
+      let visibleCount = 0
+      labels.forEach((label) => {
+        const match = !t || label.textContent.trim().toLowerCase().includes(t)
+        label.style.display = match ? '' : 'none'
+        if (match) visibleCount++
+      })
+      let emptyNote = container.querySelector('.checklist-no-match')
+      if (labels.length > 0 && visibleCount === 0) {
+        if (!emptyNote) {
+          emptyNote = document.createElement('p')
+          emptyNote.className = 'section-empty checklist-no-match'
+          emptyNote.textContent = 'No matches found.'
+          container.appendChild(emptyNote)
+        }
+      } else if (emptyNote) {
+        emptyNote.remove()
+      }
+    }
+    ;['tas-groups', 'tas-devices', 'ta-devices', 'ta-assets', 'ta-users'].forEach((prefix) => {
+      document.getElementById(`${prefix}-search`).addEventListener('input', (e) => filterChecklist(`${prefix}-list`, e.target.value))
+    })
+
+    // Metadata editor is reused by the Device/Asset/Application modals, which
+    // all coexist in the DOM at once — state and DOM queries are namespaced
+    // per modal so editing one never touches another's rows.
+    const metadataState = {
+      device: { rows: [], nextId: 1 },
+      asset: { rows: [], nextId: 1 },
+      application: { rows: [], nextId: 1 },
+    }
+    function renderMetadata(ns) {
+      const state = metadataState[ns]
+      const container = document.getElementById(`${ns}-metadata-fields`)
+      container.innerHTML = state.rows
+        .map(
+          (row) => `
+        <div class="metadata-row">
+          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+          </button>
+          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>
+          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${row.value}" /></div>
+        </div>`,
+        )
+        .join('') + `<button type="button" class="metadata-add" id="${ns}-metadata-add-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+          Add
+        </button>`
+      container.querySelector(`#${ns}-metadata-add-btn`).addEventListener('click', () => {
+        state.rows.push({ id: state.nextId++, key: '', value: '' })
+        renderMetadata(ns)
+      })
+      container.querySelectorAll('[data-remove]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          state.rows = state.rows.filter((r) => r.id !== Number(btn.getAttribute('data-remove')))
+          renderMetadata(ns)
+        }),
+      )
+      container.querySelectorAll('[data-key]').forEach((input) =>
+        input.addEventListener('input', () => { state.rows.find((r) => r.id === Number(input.getAttribute('data-key'))).key = input.value }),
+      )
+      container.querySelectorAll('[data-value]').forEach((input) =>
+        input.addEventListener('input', () => { state.rows.find((r) => r.id === Number(input.getAttribute('data-value'))).value = input.value }),
+      )
+    }
+    function resetMetadata(ns, existingRows) {
+      metadataState[ns].rows = (existingRows || []).map((f, i) => ({ id: i + 1, key: f.key, value: f.value }))
+      metadataState[ns].nextId = metadataState[ns].rows.length + 1
+      renderMetadata(ns)
+    }
+    function collectMetadata(ns) {
+      return metadataState[ns].rows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
+    }
+
     // ------------------------------------------------------------- tabs
-    const TABS = ['users', 'devices', 'applications']
+    const TABS = ['users', 'devices', 'assets', 'applications']
     function showTab(tab) {
       TABS.forEach((key) => {
         document.getElementById(`tab-${key}`).classList.toggle('active', key === tab)
@@ -232,6 +576,7 @@
       const t = getTenant()
       const term = document.getElementById('users-search').value.trim().toLowerCase()
       const users = term ? t.users.filter((u) => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term)) : t.users
+      updateLimitBadge('users', t.users.length)
       const tbody = document.getElementById('users-tbody')
       if (users.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="empty-table-note">No users for this tenant yet.</td></tr>'
@@ -293,6 +638,7 @@
     }
 
     function openUserAdd() {
+      if (isAtLimit('users')) { warnAtLimit('users'); return }
       editingUserId = null
       document.getElementById('user-modal-title').textContent = 'Add user'
       document.getElementById('user-save-btn').textContent = 'Create'
@@ -341,6 +687,7 @@
         Store.updateTenantUser(tenantId, editingUserId, { name, email, role })
         UI.toast(`"${name}" updated successfully!`)
       } else {
+        if (isAtLimit('users')) { warnAtLimit('users'); UI.closeModal('user-modal'); renderUsers(); return }
         Store.addTenantUser(tenantId, { name, email, role })
         UI.toast(`"${name}" added successfully!`)
       }
@@ -349,13 +696,21 @@
     })
 
     // ----------------------------------------------------------- devices
+    function populateDeviceProfileSelect(selectedName) {
+      const data = Store.get()
+      const select = document.getElementById('td-profile')
+      select.innerHTML = data.deviceProfiles.map((p) => `<option value="${p.name}">${p.name}</option>`).join('')
+      select.value = selectedName || data.deviceProfiles[0]?.name || ''
+    }
+
     function renderDevices() {
       const t = getTenant()
       const term = document.getElementById('devices-search').value.trim().toLowerCase()
       const devices = term ? t.devices.filter((d) => d.name.toLowerCase().includes(term)) : t.devices
+      updateLimitBadge('devices', t.devices.length)
       const tbody = document.getElementById('devices-tbody')
       if (devices.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-table-note">No devices for this tenant yet.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-table-note">No devices for this tenant yet.</td></tr>'
         return
       }
       tbody.innerHTML = devices
@@ -363,6 +718,7 @@
           (d) => `
         <tr>
           <td>${d.name}</td>
+          <td>${d.profileName || '—'}</td>
           <td><span class="status-pill status-${d.status}">${d.status}</span></td>
           <td>${d.createdDate}</td>
           <td class="data-table-menu-col">
@@ -411,11 +767,28 @@
       wireMenuToggles(tbody)
     }
 
+    document.getElementById('td-details-toggle').addEventListener('click', () => {
+      document.getElementById('td-details-body').classList.toggle('hidden')
+      document.querySelector('#td-details-toggle .caret-icon').classList.toggle('expanded')
+    })
+    document.getElementById('td-metadata-toggle').addEventListener('click', () => {
+      document.getElementById('td-metadata-body').classList.toggle('hidden')
+      document.getElementById('td-metadata-caret').classList.toggle('expanded')
+    })
+
     function openDeviceAdd() {
+      if (isAtLimit('devices')) { warnAtLimit('devices'); return }
       editingDeviceId = null
       document.getElementById('device-modal-title').textContent = 'Add device'
-      document.getElementById('device-save-btn').textContent = 'Create'
+      document.getElementById('td-modal-intro').classList.remove('hidden')
+      document.getElementById('td-profile').disabled = false
+      document.getElementById('td-profile-hint').classList.add('hidden')
+      document.getElementById('td-add-mode-fields').classList.remove('hidden')
+      document.getElementById('td-edit-mode-fields').classList.add('hidden')
+      document.getElementById('td-endpoint-token').value = ''
       document.getElementById('td-name').value = ''
+      populateDeviceProfileSelect()
+      resetMetadata('device', [{ key: '', value: '' }])
       UI.openModal('device-modal')
     }
 
@@ -424,8 +797,13 @@
       if (!device) return
       editingDeviceId = id
       document.getElementById('device-modal-title').textContent = 'Edit device'
-      document.getElementById('device-save-btn').textContent = 'Save changes'
-      document.getElementById('td-name').value = device.name
+      document.getElementById('td-modal-intro').classList.add('hidden')
+      document.getElementById('td-profile').disabled = true
+      document.getElementById('td-profile-hint').classList.remove('hidden')
+      document.getElementById('td-add-mode-fields').classList.add('hidden')
+      document.getElementById('td-edit-mode-fields').classList.remove('hidden')
+      document.getElementById('td-name-edit').value = device.name
+      populateDeviceProfileSelect(device.profileName)
       UI.openModal('device-modal')
     }
 
@@ -446,34 +824,224 @@
     document.getElementById('devices-search').addEventListener('input', renderDevices)
     document.getElementById('device-form').addEventListener('submit', function (event) {
       event.preventDefault()
-      const name = document.getElementById('td-name').value.trim()
-      if (!name) return
       if (editingDeviceId) {
+        const name = document.getElementById('td-name-edit').value.trim()
+        if (!name) return
         Store.updateTenantDevice(tenantId, editingDeviceId, { name })
         UI.toast(`"${name}" updated successfully!`)
-      } else {
-        Store.addTenantDevice(tenantId, { name })
-        UI.toast(`"${name}" device added successfully!`)
+        UI.closeModal('device-modal')
+        renderDevices()
+        return
       }
+      if (isAtLimit('devices')) { warnAtLimit('devices'); UI.closeModal('device-modal'); renderDevices(); return }
+      const name = document.getElementById('td-name').value.trim()
+      const profileName = document.getElementById('td-profile').value
+      const endpointToken = document.getElementById('td-endpoint-token').value
+      const metadata = collectMetadata('device')
+      Store.addTenantDevice(tenantId, { name, profileName, endpointToken, metadata })
+      UI.toast(`"${name}" device added successfully!`)
       UI.closeModal('device-modal')
       renderDevices()
     })
 
+    // ------------------------------------------------------------ assets
+    function renderAssetGroupsList(selectedNames) {
+      const data = Store.get()
+      document.getElementById('tas-groups-list').innerHTML =
+        data.assetGroups.length === 0
+          ? '<span class="section-empty">No asset groups available</span>'
+          : data.assetGroups.map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${g.name}" ${selectedNames.includes(g.name) ? 'checked' : ''}/> ${g.name}</label>`).join('')
+    }
+    function populateAssetProfileSelect(selectedName) {
+      const data = Store.get()
+      const select = document.getElementById('tas-profile')
+      select.innerHTML = data.assetProfiles.map((p) => `<option value="${p.name}">${p.name}</option>`).join('')
+      select.value = selectedName || data.assetProfiles[0]?.name || ''
+    }
+    function renderAssetDevicesList(selectedIds) {
+      const t = getTenant()
+      document.getElementById('tas-devices-list').innerHTML =
+        t.devices.length === 0
+          ? '<span class="section-empty">No devices in this tenant yet</span>'
+          : t.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+    }
+
+    function renderAssets() {
+      const t = getTenant()
+      const term = document.getElementById('assets-search').value.trim().toLowerCase()
+      const assets = term ? t.assets.filter((a) => a.name.toLowerCase().includes(term)) : t.assets
+      updateLimitBadge('assets', t.assets.length)
+      const tbody = document.getElementById('assets-tbody')
+      if (assets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-table-note">No assets for this tenant yet.</td></tr>'
+        return
+      }
+      tbody.innerHTML = assets
+        .map(
+          (a) => `
+        <tr>
+          <td>${a.name}</td>
+          <td>${(a.groupNames || []).join(', ') || '—'}</td>
+          <td>${a.profileName || '—'}</td>
+          <td>${a.location || '—'}</td>
+          <td><span class="status-pill status-${a.status}">${a.status}</span></td>
+          <td>${a.createdDate}</td>
+          <td class="data-table-menu-col">
+            <div class="row-menu">
+              <button type="button" class="row-menu-button" data-menu-toggle>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="row-menu-dropdown">
+                <button type="button" class="row-menu-item" data-asset-toggle="${a.id}">
+                  ${a.status === 'operational'
+                    ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+                    : '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 5l12 7-12 7V5Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+                  ${a.status === 'operational' ? 'Mark offline' : 'Mark operational'}
+                </button>
+                <button type="button" class="row-menu-item" data-asset-edit="${a.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Edit
+                </button>
+                <button type="button" class="row-menu-item danger" data-asset-delete="${a.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>`,
+        )
+        .join('')
+
+      document.querySelectorAll('[data-asset-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const id = btn.getAttribute('data-asset-toggle')
+          const asset = getTenant().assets.find((x) => x.id === id)
+          Store.toggleTenantAssetStatus(tenantId, id)
+          renderAssets()
+          UI.toast(`"${asset.name}" status updated successfully!`)
+        }),
+      )
+      document.querySelectorAll('[data-asset-edit]').forEach((btn) =>
+        btn.addEventListener('click', (event) => { event.stopPropagation(); openAssetEdit(btn.getAttribute('data-asset-edit')) }),
+      )
+      document.querySelectorAll('[data-asset-delete]').forEach((btn) =>
+        btn.addEventListener('click', (event) => { event.stopPropagation(); confirmAssetDelete(btn.getAttribute('data-asset-delete')) }),
+      )
+      wireMenuToggles(tbody)
+    }
+
+    function openAssetAdd() {
+      if (isAtLimit('assets')) { warnAtLimit('assets'); return }
+      editingAssetId = null
+      document.getElementById('asset-modal-title').textContent = 'Add asset'
+      document.getElementById('asset-save-btn').textContent = 'Create'
+      document.getElementById('tas-name').value = ''
+      document.getElementById('tas-location').value = ''
+      document.getElementById('tas-groups-search').value = ''
+      document.getElementById('tas-devices-search').value = ''
+      renderAssetGroupsList([])
+      populateAssetProfileSelect()
+      renderAssetDevicesList([])
+      resetMetadata('asset')
+      UI.openModal('asset-modal')
+    }
+
+    function openAssetEdit(id) {
+      const asset = getTenant().assets.find((a) => a.id === id)
+      if (!asset) return
+      editingAssetId = id
+      document.getElementById('asset-modal-title').textContent = 'Edit asset'
+      document.getElementById('asset-save-btn').textContent = 'Save changes'
+      document.getElementById('tas-name').value = asset.name
+      document.getElementById('tas-location').value = asset.location || ''
+      document.getElementById('tas-groups-search').value = ''
+      document.getElementById('tas-devices-search').value = ''
+      renderAssetGroupsList(asset.groupNames || [])
+      populateAssetProfileSelect(asset.profileName)
+      renderAssetDevicesList(asset.deviceIds || [])
+      resetMetadata('asset', asset.metadata)
+      UI.openModal('asset-modal')
+    }
+
+    function confirmAssetDelete(id) {
+      const asset = getTenant().assets.find((a) => a.id === id)
+      if (!asset) return
+      UI.confirm({
+        message: `Delete <strong>${asset.name}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeTenantAsset(tenantId, id)
+          renderAssets()
+          UI.toast(`"${asset.name}" deleted successfully!`)
+        },
+      })
+    }
+
+    document.getElementById('add-asset-btn').addEventListener('click', openAssetAdd)
+    document.getElementById('assets-search').addEventListener('input', renderAssets)
+    document.getElementById('asset-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const name = document.getElementById('tas-name').value.trim()
+      if (!name) return
+      const groupNames = Array.from(document.querySelectorAll('#tas-groups-list input:checked')).map((el) => el.getAttribute('data-group'))
+      const profileName = document.getElementById('tas-profile').value
+      const location = document.getElementById('tas-location').value.trim()
+      const deviceIds = Array.from(document.querySelectorAll('#tas-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
+      const metadata = collectMetadata('asset')
+      if (editingAssetId) {
+        Store.updateTenantAsset(tenantId, editingAssetId, { name, groupNames, profileName, location, deviceIds, metadata })
+        UI.toast(`"${name}" updated successfully!`)
+      } else {
+        if (isAtLimit('assets')) { warnAtLimit('assets'); UI.closeModal('asset-modal'); renderAssets(); return }
+        Store.addTenantAsset(tenantId, { name, groupNames, profileName, location, deviceIds, metadata })
+        UI.toast(`"${name}" asset added successfully!`)
+      }
+      UI.closeModal('asset-modal')
+      renderAssets()
+    })
+
     // ------------------------------------------------------- applications
+    function renderAppDevicesList(selectedIds) {
+      const t = getTenant()
+      document.getElementById('ta-devices-list').innerHTML =
+        t.devices.length === 0
+          ? '<span class="section-empty">No devices in this tenant yet</span>'
+          : t.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+    }
+    function renderAppAssetsList(selectedIds) {
+      const t = getTenant()
+      document.getElementById('ta-assets-list').innerHTML =
+        t.assets.length === 0
+          ? '<span class="section-empty">No assets in this tenant yet</span>'
+          : t.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
+    }
+    function renderAppUsersList(selectedIds) {
+      const t = getTenant()
+      document.getElementById('ta-users-list').innerHTML =
+        t.users.length === 0
+          ? '<span class="section-empty">No users in this tenant yet</span>'
+          : t.users.map((u) => `<label class="modal-checkbox"><input type="checkbox" data-user="${u.id}" ${selectedIds.includes(u.id) ? 'checked' : ''}/> ${u.name}</label>`).join('')
+    }
+
     function renderApplications() {
       const t = getTenant()
       const term = document.getElementById('applications-search').value.trim().toLowerCase()
       const apps = term ? t.applications.filter((a) => a.name.toLowerCase().includes(term)) : t.applications
+      updateLimitBadge('applications', t.applications.length)
       const tbody = document.getElementById('applications-tbody')
       if (apps.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-table-note">No applications for this tenant yet.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-table-note">No applications for this tenant yet.</td></tr>'
         return
       }
       tbody.innerHTML = apps
         .map(
           (a) => `
         <tr>
-          <td>${a.name}</td>
+          <td><div class="group-name-cell">${a.name}${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
+          <td>${(a.deviceIds || []).length}</td>
+          <td>${(a.assetIds || []).length}</td>
+          <td>${(a.userIds || []).length}</td>
           <td><span class="status-pill status-${a.status}">${a.status}</span></td>
           <td>${a.createdDate}</td>
           <td class="data-table-menu-col">
@@ -523,10 +1091,19 @@
     }
 
     function openApplicationAdd() {
+      if (isAtLimit('applications')) { warnAtLimit('applications'); return }
       editingApplicationId = null
       document.getElementById('application-modal-title').textContent = 'Add application'
       document.getElementById('application-save-btn').textContent = 'Create'
       document.getElementById('ta-name').value = ''
+      document.getElementById('ta-description').value = ''
+      document.getElementById('ta-devices-search').value = ''
+      document.getElementById('ta-assets-search').value = ''
+      document.getElementById('ta-users-search').value = ''
+      renderAppDevicesList([])
+      renderAppAssetsList([])
+      renderAppUsersList([])
+      resetMetadata('application')
       UI.openModal('application-modal')
     }
 
@@ -537,6 +1114,14 @@
       document.getElementById('application-modal-title').textContent = 'Edit application'
       document.getElementById('application-save-btn').textContent = 'Save changes'
       document.getElementById('ta-name').value = app.name
+      document.getElementById('ta-description').value = app.description || ''
+      document.getElementById('ta-devices-search').value = ''
+      document.getElementById('ta-assets-search').value = ''
+      document.getElementById('ta-users-search').value = ''
+      renderAppDevicesList(app.deviceIds || [])
+      renderAppAssetsList(app.assetIds || [])
+      renderAppUsersList(app.userIds || [])
+      resetMetadata('application', app.metadata)
       UI.openModal('application-modal')
     }
 
@@ -559,11 +1144,17 @@
       event.preventDefault()
       const name = document.getElementById('ta-name').value.trim()
       if (!name) return
+      const description = document.getElementById('ta-description').value.trim()
+      const deviceIds = Array.from(document.querySelectorAll('#ta-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
+      const assetIds = Array.from(document.querySelectorAll('#ta-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
+      const userIds = Array.from(document.querySelectorAll('#ta-users-list input:checked')).map((el) => el.getAttribute('data-user'))
+      const metadata = collectMetadata('application')
       if (editingApplicationId) {
-        Store.updateTenantApplication(tenantId, editingApplicationId, { name })
+        Store.updateTenantApplication(tenantId, editingApplicationId, { name, description, deviceIds, assetIds, userIds, metadata })
         UI.toast(`"${name}" updated successfully!`)
       } else {
-        Store.addTenantApplication(tenantId, { name })
+        if (isAtLimit('applications')) { warnAtLimit('applications'); UI.closeModal('application-modal'); renderApplications(); return }
+        Store.addTenantApplication(tenantId, { name, description, deviceIds, assetIds, userIds, metadata })
         UI.toast(`"${name}" application added successfully!`)
       }
       UI.closeModal('application-modal')
@@ -578,6 +1169,7 @@
       renderHeader()
       renderUsers()
       renderDevices()
+      renderAssets()
       renderApplications()
     }
   </script>

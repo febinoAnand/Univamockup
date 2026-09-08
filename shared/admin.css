@@ -275,6 +275,16 @@
   color: #1c1917;
 }
 
+.limit-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #78716c;
+  white-space: nowrap;
+}
+.limit-badge.limit-reached {
+  color: #dc2626;
+}
+
 .modal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
