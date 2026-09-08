@@ -16,7 +16,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Applications</h1>
-            <p class="page-subtitle">Software applications and services running on your platform</p>
+            <p class="page-subtitle">Software applications and the devices, assets, and users tied to them</p>
           </div>
           <div class="page-header-actions">
             <button type="button" class="solid-action-button" id="add-btn">
@@ -36,8 +36,9 @@
             <thead>
               <tr>
                 <th><button type="button" class="th-sort-button" data-sort="name">Name<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="name"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
-                <th><button type="button" class="th-sort-button" data-sort="profileName">Profile<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="profileName"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
-                <th>Description</th>
+                <th>Devices</th>
+                <th>Assets</th>
+                <th>Users</th>
                 <th>Status</th>
                 <th><button type="button" class="th-sort-button" data-sort="createdDate">Created Date<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="createdDate"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
                 <th class="data-table-menu-col"></th>
@@ -59,8 +60,35 @@
       <div class="modal-body">
         <form id="app-form">
           <div class="modal-field"><label for="app-name">Application name*</label><input id="app-name" type="text" required /></div>
-          <div class="modal-field"><label for="app-profile">Application profile</label><select id="app-profile"></select></div>
           <div class="modal-field"><label for="app-description">Description</label><textarea id="app-description" rows="3"></textarea></div>
+
+          <div class="modal-field">
+            <label>Devices</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="app-devices-search" placeholder="Search devices" />
+            </div>
+            <div class="group-checkbox-list" id="app-devices-list"></div>
+          </div>
+
+          <div class="modal-field">
+            <label>Assets</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="app-assets-search" placeholder="Search assets" />
+            </div>
+            <div class="group-checkbox-list" id="app-assets-list"></div>
+          </div>
+
+          <div class="modal-field">
+            <label>Users</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="app-users-search" placeholder="Search users" />
+            </div>
+            <div class="group-checkbox-list" id="app-users-list"></div>
+          </div>
+
           <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="metadata-fields"></div></div>
         </form>
       </div>
@@ -79,7 +107,6 @@
       active: 'applications',
       breadcrumbs: [
         { label: 'Home', href: 'dashboard.html' },
-        { label: 'Application management', href: 'applications.html' },
         { label: 'Applications' },
       ],
     })
@@ -136,6 +163,34 @@
       )
     }
 
+    function filterChecklist(listId, term) {
+      const container = document.getElementById(listId)
+      if (!container) return
+      const t = term.trim().toLowerCase()
+      const labels = Array.from(container.querySelectorAll('.modal-checkbox'))
+      let visibleCount = 0
+      labels.forEach((label) => {
+        const match = !t || label.textContent.trim().toLowerCase().includes(t)
+        label.style.display = match ? '' : 'none'
+        if (match) visibleCount++
+      })
+      let emptyNote = container.querySelector('.checklist-no-match')
+      if (labels.length > 0 && visibleCount === 0) {
+        if (!emptyNote) {
+          emptyNote = document.createElement('p')
+          emptyNote.className = 'section-empty checklist-no-match'
+          emptyNote.textContent = 'No matches found.'
+          container.appendChild(emptyNote)
+        }
+      } else if (emptyNote) {
+        emptyNote.remove()
+      }
+    }
+
+    document.getElementById('app-devices-search').addEventListener('input', (e) => filterChecklist('app-devices-list', e.target.value))
+    document.getElementById('app-assets-search').addEventListener('input', (e) => filterChecklist('app-assets-list', e.target.value))
+    document.getElementById('app-users-search').addEventListener('input', (e) => filterChecklist('app-users-list', e.target.value))
+
     function render() {
       const data = Store.get()
       const term = document.getElementById('search').value.trim().toLowerCase()
@@ -149,16 +204,17 @@
 
       const tbody = document.getElementById('tbody')
       if (apps.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-table-note">No applications match your search.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-table-note">No applications match your search.</td></tr>'
         return
       }
       tbody.innerHTML = apps
         .map(
           (a) => `
         <tr>
-          <td>${a.name}</td>
-          <td>${a.profileName || '—'}</td>
-          <td>${a.description || '—'}</td>
+          <td><div class="group-name-cell">${a.name}${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
+          <td>${(a.deviceIds || []).length}</td>
+          <td>${(a.assetIds || []).length}</td>
+          <td>${(a.userIds || []).length}</td>
           <td><span class="status-pill status-${a.status}">${a.status}</span></td>
           <td>${a.createdDate}</td>
           <td class="data-table-menu-col">
@@ -211,10 +267,28 @@
     }
     document.addEventListener('click', () => UI.closeRowMenus())
 
-    function populateForm(profileName) {
+    function renderDevicesList(selectedIds) {
       const data = Store.get()
-      document.getElementById('app-profile').innerHTML = data.applicationProfiles.map((p) => `<option value="${p.name}">${p.name}</option>`).join('')
-      document.getElementById('app-profile').value = profileName
+      document.getElementById('app-devices-list').innerHTML =
+        data.devices.length === 0
+          ? '<span class="section-empty">No devices available</span>'
+          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+    }
+
+    function renderAssetsList(selectedIds) {
+      const data = Store.get()
+      document.getElementById('app-assets-list').innerHTML =
+        data.assets.length === 0
+          ? '<span class="section-empty">No assets available</span>'
+          : data.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
+    }
+
+    function renderUsersList(selectedIds) {
+      const data = Store.get()
+      document.getElementById('app-users-list').innerHTML =
+        data.users.length === 0
+          ? '<span class="section-empty">No users available</span>'
+          : data.users.map((u) => `<label class="modal-checkbox"><input type="checkbox" data-user="${u.id}" ${selectedIds.includes(u.id) ? 'checked' : ''}/> ${u.name}</label>`).join('')
     }
 
     function openAdd() {
@@ -225,8 +299,12 @@
       document.getElementById('save-btn').textContent = 'Create'
       document.getElementById('app-name').value = ''
       document.getElementById('app-description').value = ''
-      const data = Store.get()
-      populateForm(data.applicationProfiles[0]?.name ?? '')
+      document.getElementById('app-devices-search').value = ''
+      document.getElementById('app-assets-search').value = ''
+      document.getElementById('app-users-search').value = ''
+      renderDevicesList([])
+      renderAssetsList([])
+      renderUsersList([])
       renderMetadata()
       UI.openModal('app-modal')
     }
@@ -241,7 +319,12 @@
       document.getElementById('save-btn').textContent = 'Save changes'
       document.getElementById('app-name').value = a.name
       document.getElementById('app-description').value = a.description || ''
-      populateForm(a.profileName)
+      document.getElementById('app-devices-search').value = ''
+      document.getElementById('app-assets-search').value = ''
+      document.getElementById('app-users-search').value = ''
+      renderDevicesList(a.deviceIds || [])
+      renderAssetsList(a.assetIds || [])
+      renderUsersList(a.userIds || [])
       renderMetadata()
       UI.openModal('app-modal')
     }
@@ -266,15 +349,17 @@
       event.preventDefault()
       const name = document.getElementById('app-name').value.trim()
       if (!name) return
-      const profileName = document.getElementById('app-profile').value
       const description = document.getElementById('app-description').value.trim()
+      const deviceIds = Array.from(document.querySelectorAll('#app-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
+      const assetIds = Array.from(document.querySelectorAll('#app-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
+      const userIds = Array.from(document.querySelectorAll('#app-users-list input:checked')).map((el) => el.getAttribute('data-user'))
       const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
 
       if (editingId) {
-        Store.updateApplication(editingId, { name, profileName, description, metadata })
+        Store.updateApplication(editingId, { name, description, deviceIds, assetIds, userIds, metadata })
         UI.toast(`"${name}" updated successfully!`)
       } else {
-        Store.addApplication({ name, profileName, description, metadata })
+        Store.addApplication({ name, description, deviceIds, assetIds, userIds, metadata })
         UI.toast(`"${name}" application created successfully!`)
       }
       UI.closeModal('app-modal')

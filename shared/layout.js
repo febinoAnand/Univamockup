@@ -16,15 +16,7 @@ const NAV_SECTIONS = [
       { key: 'software-ota', label: 'Software OTA', href: 'software-ota.html' },
     ],
   },
-  {
-    key: 'application-management',
-    label: 'Application management',
-    icon: 'app',
-    children: [
-      { key: 'applications', label: 'Applications', href: 'applications.html' },
-      { key: 'application-profiles', label: 'Application profiles', href: 'application-profiles.html' },
-    ],
-  },
+  { key: 'applications', label: 'Application management', icon: 'app', href: 'applications.html' },
   {
     key: 'user-management',
     label: 'User management',

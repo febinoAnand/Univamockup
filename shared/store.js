@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v4'
+const STORAGE_KEY = 'univa-html-demo-v5'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -74,14 +74,9 @@ const DEFAULT_DATA = {
     { id: 'p3', name: 'Generators', description: 'Backup generator telemetry profile.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
   ],
   applications: [
-    { id: 'app1', name: 'Fleet Tracker', profileName: 'Web application', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', metadata: [], createdDate: '2025-11-02 09:14:00' },
-    { id: 'app2', name: 'Field Technician', profileName: 'Mobile application', description: 'Companion app for on-site maintenance crews.', status: 'active', metadata: [], createdDate: '2025-12-19 14:02:00' },
-    { id: 'app3', name: 'Telemetry Ingest', profileName: 'Background service', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', metadata: [], createdDate: '2026-01-08 11:47:00' },
-  ],
-  applicationProfiles: [
-    { id: 'ap1', name: 'Web application', description: 'Browser-based application served over HTTPS.', metadata: [], isDefault: true, createdDate: '2025-11-02 09:14:00' },
-    { id: 'ap2', name: 'Mobile application', description: 'Native iOS/Android companion application.', metadata: [], isDefault: false, createdDate: '2025-12-19 14:02:00' },
-    { id: 'ap3', name: 'Background service', description: 'Headless service with no direct user interface.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
+    { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], userIds: ['u1', 'u3'], metadata: [], createdDate: '2025-11-02 09:14:00' },
+    { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], userIds: ['u3'], metadata: [], createdDate: '2025-12-19 14:02:00' },
+    { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], userIds: ['u2'], metadata: [], createdDate: '2026-01-08 11:47:00' },
   ],
   assets: [
     { id: 'a1', name: 'Forklift Unit 3', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'operational', location: 'North Yard', deviceIds: [], metadata: [], createdDate: '2025-11-05 10:00:00' },
@@ -424,7 +419,7 @@ const Store = {
   // -------------------------------------------------------- applications
   addApplication(data) {
     const store = loadData()
-    const record = { id: uid('apn'), name: data.name, profileName: data.profileName, description: data.description, status: 'active', metadata: data.metadata ?? [], createdDate: nowStamp() }
+    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], metadata: data.metadata ?? [], createdDate: nowStamp() }
     store.applications.push(record)
     saveData(store)
     return record
@@ -432,7 +427,7 @@ const Store = {
   updateApplication(id, data) {
     const store = loadData()
     const app = store.applications.find((a) => a.id === id)
-    if (app) Object.assign(app, { name: data.name, profileName: data.profileName, description: data.description, metadata: data.metadata ?? app.metadata })
+    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], userIds: data.userIds ?? [], metadata: data.metadata ?? app.metadata })
     saveData(store)
   },
   toggleApplicationStatus(id) {
@@ -444,35 +439,6 @@ const Store = {
   removeApplication(id) {
     const store = loadData()
     store.applications = store.applications.filter((a) => a.id !== id)
-    saveData(store)
-  },
-
-  addApplicationProfile(data) {
-    const store = loadData()
-    const record = { id: uid('apf'), name: data.name, description: data.description, metadata: data.metadata ?? [], isDefault: false, createdDate: nowStamp() }
-    store.applicationProfiles.push(record)
-    saveData(store)
-    return record
-  },
-  updateApplicationProfile(id, data) {
-    const store = loadData()
-    const previous = store.applicationProfiles.find((p) => p.id === id)
-    if (previous && previous.name !== data.name) {
-      store.applications.forEach((app) => {
-        if (app.profileName === previous.name) app.profileName = data.name
-      })
-    }
-    if (previous) Object.assign(previous, { name: data.name, description: data.description, metadata: data.metadata ?? previous.metadata })
-    saveData(store)
-  },
-  setDefaultApplicationProfile(id) {
-    const store = loadData()
-    store.applicationProfiles.forEach((p) => { p.isDefault = p.id === id })
-    saveData(store)
-  },
-  removeApplicationProfile(id) {
-    const store = loadData()
-    store.applicationProfiles = store.applicationProfiles.filter((p) => p.id !== id)
     saveData(store)
   },
 
