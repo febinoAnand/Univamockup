@@ -608,6 +608,25 @@ img {
   color: #a8a29e;
 }
 
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: var(--surface-alt);
+}
+
+.default-profile-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+
 /* ------------------------------------------------------------- row menu
    The real RowMenu.jsx renders `.row-menu-button` + a portaled
    `.row-menu-dropdown.row-menu-dropdown-portal`, positioned in JS via

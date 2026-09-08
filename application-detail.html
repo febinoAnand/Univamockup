@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <title>Application — Univa</title>
+  <style>
+    .detail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .detail-card h2 {
+      margin: 0 0 1rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .detail-meta-item .label {
+      margin: 0 0 0.25rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-subtle);
+    }
+    .detail-meta-item .value {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      text-transform: capitalize;
+    }
+    .detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .detail-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    a.detail-list-item:hover {
+      background: var(--surface-alt);
+    }
+    .detail-metadata-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .detail-metadata-row:last-child {
+      border-bottom: none;
+    }
+    .detail-metadata-row .k {
+      font-weight: 600;
+      color: var(--text-subtle);
+    }
+    .detail-back-link {
+      display: inline-block;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .detail-back-link:hover {
+      text-decoration: underline;
+    }
+    .not-found-block {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-subtle);
+    }
+
+    /* ------------------------------------------------------- PMS tabs */
+    .pms-tabs {
+      display: flex;
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin: 0 0 1.25rem;
+    }
+    .pms-tab-button {
+      padding: 0.6rem 0.1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-faint);
+      cursor: pointer;
+    }
+    .pms-tab-button.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+    .pms-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+    .pms-panel-header {
+      padding: 0.75rem 1.1rem;
+      background: var(--surface-alt);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .pms-panel-body {
+      padding: 1rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .pms-select,
+    .pms-date-input {
+      padding: 0.5rem 0.7rem;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: var(--text);
+      background: var(--surface);
+    }
+    .pms-search-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 37px;
+      height: 37px;
+      border: none;
+      border-radius: 6px;
+      background: #2a7ab5;
+      color: #ffffff;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .pms-search-btn:hover {
+      background: #236a9e;
+    }
+    .pms-table-wrap {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .pms-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .pms-table th {
+      position: sticky;
+      top: 0;
+      padding: 0.65rem 1.1rem;
+      background: #2a7ab5;
+      color: #ffffff;
+      font-weight: 700;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .pms-table td {
+      padding: 0.6rem 1.1rem;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+    .pms-table tbody tr:nth-child(even) {
+      background: var(--surface-alt);
+    }
+    .pms-table tr.pms-total-row td {
+      font-weight: 700;
+      color: #2a7ab5;
+      border-bottom: none;
+    }
+    .pms-table td.pms-highlight {
+      font-weight: 700;
+      color: #2a7ab5;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div id="app-detail-root"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="app-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Edit application</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('app-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="app-form">
+          <div class="modal-field"><label for="app-name">Application name*</label><input id="app-name" type="text" required /></div>
+          <div class="modal-field"><label for="app-description">Description</label><textarea id="app-description" rows="3"></textarea></div>
+
+          <div class="modal-field">
+            <label>Devices</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="app-devices-search" placeholder="Search devices" />
+            </div>
+            <div class="group-checkbox-list" id="app-devices-list"></div>
+          </div>
+
+          <div class="modal-field">
+            <label>Assets</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="app-assets-search" placeholder="Search assets" />
+            </div>
+            <div class="group-checkbox-list" id="app-assets-list"></div>
+          </div>
+
+          <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="metadata-fields"></div></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('app-modal')">Cancel</button>
+        <button type="submit" form="app-form" class="modal-button primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    // The application id travels in the URL hash — see device-detail.html
+    // for why (a hash survives a static-file server in a way a query string
+    // used with clean-URL rewriting might not). Unlike device-detail.html,
+    // this page is also linked to from itself (every other application's
+    // sidebar entry points here too), so a click only changes the hash on
+    // an already-loaded document — the browser treats that as a
+    // same-document navigation and never reloads. 'hashchange' below is
+    // what makes clicking from one application to another actually update
+    // the page instead of requiring a manual refresh.
+    let applicationId = window.location.hash.slice(1)
+
+    function getApp() {
+      return Store.get().applications.find((a) => a.id === applicationId)
+    }
+
+    function breadcrumbsForApp(app) {
+      return app
+        ? [
+            { label: 'Home', href: 'dashboard.html' },
+            { label: 'Applications', href: 'applications.html' },
+            { label: app.name },
+          ]
+        : [
+            { label: 'Home', href: 'dashboard.html' },
+            { label: 'Applications', href: 'applications.html' },
+          ]
+    }
+
+    const initialApp = getApp()
+    Layout.mount({
+      active: initialApp ? `application-${initialApp.id}` : 'applications',
+      breadcrumbs: breadcrumbsForApp(initialApp),
+    })
+
+    window.addEventListener('hashchange', () => {
+      applicationId = window.location.hash.slice(1)
+      const app = getApp()
+      Layout.setBreadcrumbs(breadcrumbsForApp(app))
+      Layout.setActive(app ? `application-${app.id}` : 'applications')
+      renderPage()
+    })
+
+    let metadataRows = []
+    let metadataNextId = 1
+
+    function renderMetadataEditor() {
+      document.getElementById('metadata-fields').innerHTML = metadataRows
+        .map(
+          (row) => `
+        <div class="metadata-row">
+          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+          </button>
+          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>
+          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${row.value}" /></div>
+        </div>`,
+        )
+        .join('') + `<button type="button" class="metadata-add" id="metadata-add-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+          Add
+        </button>`
+      document.getElementById('metadata-add-btn').addEventListener('click', () => {
+        metadataRows.push({ id: metadataNextId++, key: '', value: '' })
+        renderMetadataEditor()
+      })
+      document.querySelectorAll('[data-remove]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          metadataRows = metadataRows.filter((r) => r.id !== Number(btn.getAttribute('data-remove')))
+          renderMetadataEditor()
+        }),
+      )
+      document.querySelectorAll('[data-key]').forEach((input) =>
+        input.addEventListener('input', () => { metadataRows.find((r) => r.id === Number(input.getAttribute('data-key'))).key = input.value }),
+      )
+      document.querySelectorAll('[data-value]').forEach((input) =>
+        input.addEventListener('input', () => { metadataRows.find((r) => r.id === Number(input.getAttribute('data-value'))).value = input.value }),
+      )
+    }
+
+    function filterChecklist(listId, term) {
+      const container = document.getElementById(listId)
+      if (!container) return
+      const t = term.trim().toLowerCase()
+      const labels = Array.from(container.querySelectorAll('.modal-checkbox'))
+      let visibleCount = 0
+      labels.forEach((label) => {
+        const match = !t || label.textContent.trim().toLowerCase().includes(t)
+        label.style.display = match ? '' : 'none'
+        if (match) visibleCount++
+      })
+      let emptyNote = container.querySelector('.checklist-no-match')
+      if (labels.length > 0 && visibleCount === 0) {
+        if (!emptyNote) {
+          emptyNote = document.createElement('p')
+          emptyNote.className = 'section-empty checklist-no-match'
+          emptyNote.textContent = 'No matches found.'
+          container.appendChild(emptyNote)
+        }
+      } else if (emptyNote) {
+        emptyNote.remove()
+      }
+    }
+
+    document.getElementById('app-devices-search').addEventListener('input', (e) => filterChecklist('app-devices-list', e.target.value))
+    document.getElementById('app-assets-search').addEventListener('input', (e) => filterChecklist('app-assets-list', e.target.value))
+
+    function renderDevicesChecklist(selectedIds) {
+      const data = Store.get()
+      document.getElementById('app-devices-list').innerHTML =
+        data.devices.length === 0
+          ? '<span class="section-empty">No devices available</span>'
+          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+    }
+
+    function renderAssetsChecklist(selectedIds) {
+      const data = Store.get()
+      document.getElementById('app-assets-list').innerHTML =
+        data.assets.length === 0
+          ? '<span class="section-empty">No assets available</span>'
+          : data.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
+    }
+
+    function openEdit() {
+      const app = getApp()
+      if (!app) return
+      metadataRows = (app.metadata || []).map((f, i) => ({ id: i + 1, key: f.key, value: f.value }))
+      metadataNextId = metadataRows.length + 1
+      document.getElementById('app-name').value = app.name
+      document.getElementById('app-description').value = app.description || ''
+      document.getElementById('app-devices-search').value = ''
+      document.getElementById('app-assets-search').value = ''
+      renderDevicesChecklist(app.deviceIds || [])
+      renderAssetsChecklist(app.assetIds || [])
+      renderMetadataEditor()
+      UI.openModal('app-modal')
+    }
+
+    document.getElementById('app-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const app = getApp()
+      if (!app) return
+      const name = document.getElementById('app-name').value.trim()
+      if (!name) return
+      const description = document.getElementById('app-description').value.trim()
+      const deviceIds = Array.from(document.querySelectorAll('#app-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
+      const assetIds = Array.from(document.querySelectorAll('#app-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
+      const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
+      Store.updateApplication(app.id, { name, description, deviceIds, assetIds, metadata })
+      UI.toast(`"${name}" updated successfully!`)
+      UI.closeModal('app-modal')
+      renderPage()
+    })
+
+    function confirmDelete() {
+      const app = getApp()
+      if (!app) return
+      UI.confirm({
+        message: `Delete <strong>${app.name}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeApplication(app.id)
+          UI.toast(`"${app.name}" deleted successfully!`)
+          window.location.href = 'applications.html'
+        },
+      })
+    }
+
+    function renderGenericBody(app, devices, assets) {
+      return `
+        <div class="detail-card">
+          <h2>Overview</h2>
+          <div class="detail-meta-grid">
+            <div class="detail-meta-item"><p class="label">Status</p><p class="value">${app.status}</p></div>
+            <div class="detail-meta-item"><p class="label">Created date</p><p class="value">${app.createdDate}</p></div>
+            <div class="detail-meta-item"><p class="label">Linked devices</p><p class="value">${devices.length}</p></div>
+            <div class="detail-meta-item"><p class="label">Linked assets</p><p class="value">${assets.length}</p></div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <h2>Linked devices</h2>
+          <div class="detail-list">
+            ${devices.length === 0
+              ? '<span class="section-empty">No devices linked to this application</span>'
+              : devices
+                  .map(
+                    (d) => `
+              <a class="detail-list-item" href="device-detail.html#${d.id}">
+                <span>${d.name}</span>
+                <span class="status-pill status-${d.state === 'online' ? 'active' : 'offline'}">${d.state}</span>
+              </a>`,
+                  )
+                  .join('')}
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <h2>Linked assets</h2>
+          <div class="detail-list">
+            ${assets.length === 0
+              ? '<span class="section-empty">No assets linked to this application</span>'
+              : assets
+                  .map(
+                    (a) => `
+              <div class="detail-list-item">
+                <span>${a.name}</span>
+                <span class="status-pill status-${a.status}">${a.status}</span>
+              </div>`,
+                  )
+                  .join('')}
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <h2>Metadata attributes</h2>
+          ${
+            (app.metadata || []).length === 0
+              ? '<span class="section-empty">No metadata attributes</span>'
+              : app.metadata.map((m) => `<div class="detail-metadata-row"><span class="k">${m.key}</span><span>${m.value}</span></div>`).join('')
+          }
+        </div>`
+    }
+
+    // ------------------------------------------------------------- PMS
+    // PMS is the built-in production-monitoring application: its detail
+    // page shows the real system's Production / Shift Report views instead
+    // of the generic device/asset/metadata summary every other application
+    // gets. There's no backend here, so the tables always show zero counts
+    // — the date/machine filters and search buttons just re-render the tab.
+    const PMS_WORK_CENTERS = ['HSGMI3', 'HSGMI4', 'HSGMI5', 'HSGMI6', 'HSGMI7', 'HSGMI1', 'HSGMI2', 'HSGMI8']
+    const PMS_SHIFT_SLOTS = {
+      'Shift 1': ['06:30 AM - 07:30 AM', '07:30 AM - 08:30 AM', '08:30 AM - 09:30 AM', '09:30 AM - 10:30 AM', '10:30 AM - 11:30 AM', '11:30 AM - 12:30 PM', '12:30 PM - 01:30 PM', '01:30 PM - 02:30 PM'],
+      'Shift 2': ['02:30 PM - 03:30 PM', '03:30 PM - 04:30 PM', '04:30 PM - 05:30 PM', '05:30 PM - 06:30 PM', '06:30 PM - 07:30 PM', '07:30 PM - 08:30 PM', '08:30 PM - 09:30 PM', '09:30 PM - 10:30 PM'],
+      'Shift 3': ['10:30 PM - 11:30 PM', '11:30 PM - 12:30 AM', '12:30 AM - 01:30 AM', '01:30 AM - 02:30 AM', '02:30 AM - 03:30 AM', '03:30 AM - 04:30 AM', '04:30 AM - 05:30 AM', '05:30 AM - 06:30 AM'],
+    }
+    let pmsActiveTab = 'production'
+
+    function todayIso() {
+      return new Date().toISOString().slice(0, 10)
+    }
+
+    function pmsSearchIcon() {
+      return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>'
+    }
+
+    function renderPmsProductionPanel() {
+      const rows = PMS_WORK_CENTERS.map((wc) => `<tr><td>${wc}</td><td>0</td><td>0</td><td>0</td><td class="pms-highlight">0</td></tr>`).join('')
+      return `
+        <div class="pms-panel">
+          <div class="pms-panel-header">Production</div>
+          <div class="pms-panel-body">
+            <input type="date" class="pms-date-input" id="pms-production-date" value="${todayIso()}" />
+            <button type="button" class="pms-search-btn" id="pms-production-search" aria-label="Search">${pmsSearchIcon()}</button>
+          </div>
+        </div>
+        <div class="pms-panel">
+          <div class="pms-panel-header">HSGMI</div>
+          <div class="pms-table-wrap">
+            <table class="pms-table">
+              <thead><tr><th>WORK CENTER</th><th>Shift 1</th><th>Shift 2</th><th>Shift 3</th><th>Total</th></tr></thead>
+              <tbody>
+                ${rows}
+                <tr class="pms-total-row"><td>Total</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>`
+    }
+
+    function renderPmsShiftPanel() {
+      const shiftTables = Object.entries(PMS_SHIFT_SLOTS)
+        .map(
+          ([shiftName, slots]) => `
+        <div class="pms-panel">
+          <div class="pms-panel-header">${shiftName}</div>
+          <div class="pms-table-wrap">
+            <table class="pms-table">
+              <thead><tr><th>Time</th><th>Production Count</th><th>Target Count</th><th>Differences</th></tr></thead>
+              <tbody>
+                ${slots.map((slot) => `<tr><td>${slot}</td><td>0</td><td>0</td><td class="pms-highlight">0</td></tr>`).join('')}
+                <tr class="pms-total-row"><td>Total</td><td>0</td><td>0</td><td>0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>`,
+        )
+        .join('')
+
+      return `
+        <div class="pms-panel">
+          <div class="pms-panel-header">Shift Report</div>
+          <div class="pms-panel-body">
+            <select class="pms-select" id="pms-shift-machine">
+              <option value="">Select Machine</option>
+              ${PMS_WORK_CENTERS.map((wc) => `<option value="${wc}">${wc}</option>`).join('')}
+            </select>
+            <input type="date" class="pms-date-input" id="pms-shift-date" value="${todayIso()}" />
+            <button type="button" class="pms-search-btn" id="pms-shift-search" aria-label="Search">${pmsSearchIcon()}</button>
+          </div>
+        </div>
+        ${shiftTables}`
+    }
+
+    function renderPmsBody() {
+      return `
+        <div class="pms-tabs">
+          <button type="button" class="pms-tab-button${pmsActiveTab === 'production' ? ' active' : ''}" data-pms-tab="production">Production</button>
+          <button type="button" class="pms-tab-button${pmsActiveTab === 'shift-report' ? ' active' : ''}" data-pms-tab="shift-report">Shift Report</button>
+        </div>
+        <div id="pms-tab-content">
+          ${pmsActiveTab === 'production' ? renderPmsProductionPanel() : renderPmsShiftPanel()}
+        </div>`
+    }
+
+    function wirePmsBody() {
+      document.querySelectorAll('[data-pms-tab]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          pmsActiveTab = btn.getAttribute('data-pms-tab')
+          renderPage()
+        }),
+      )
+      document.getElementById('pms-production-search')?.addEventListener('click', () => renderPage())
+      document.getElementById('pms-shift-search')?.addEventListener('click', () => renderPage())
+    }
+
+    function renderPage() {
+      const app = getApp()
+      const root = document.getElementById('app-detail-root')
+      if (!app) {
+        root.innerHTML = `
+          <div class="not-found-block">
+            <h2>Application not found</h2>
+            <p>It may have been deleted.</p>
+            <a class="detail-back-link" href="applications.html">Back to Applications</a>
+          </div>`
+        return
+      }
+
+      const isPms = app.name === 'PMS'
+      const data = Store.get()
+      const devices = (app.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
+      const assets = (app.assetIds || []).map((id) => data.assets.find((a) => a.id === id)).filter(Boolean)
+
+      root.innerHTML = `
+        <a class="detail-back-link" href="applications.html">&larr; Back to Applications</a>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">${app.name}${app.isDefault ? ' <span class="default-profile-badge">Default</span>' : ''}</h1>
+            <p class="page-subtitle">${app.description || 'No description provided.'}</p>
+          </div>
+          <div class="page-header-actions">
+            <span class="status-pill status-${app.status}">${app.status}</span>
+            <button type="button" class="modal-button secondary" id="toggle-status-btn">${app.status === 'active' ? 'Suspend' : 'Activate'}</button>
+            <button type="button" class="modal-button secondary" id="edit-app-btn">Edit</button>
+            ${app.isDefault ? '' : '<button type="button" class="modal-button danger" id="delete-app-btn">Delete</button>'}
+          </div>
+        </div>
+
+        ${isPms ? renderPmsBody() : renderGenericBody(app, devices, assets)}`
+
+      document.getElementById('toggle-status-btn').addEventListener('click', () => {
+        Store.toggleApplicationStatus(app.id)
+        UI.toast(`"${app.name}" status updated successfully!`)
+        renderPage()
+      })
+      document.getElementById('edit-app-btn').addEventListener('click', openEdit)
+      document.getElementById('delete-app-btn')?.addEventListener('click', confirmDelete)
+      if (isPms) wirePmsBody()
+    }
+
+    renderPage()
+  </script>
+</body>
+</html>

@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v7'
+const STORAGE_KEY = 'univa-html-demo-v8'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -74,6 +74,7 @@ const DEFAULT_DATA = {
     { id: 'p3', name: 'Generators', description: 'Backup generator telemetry profile.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
   ],
   applications: [
+    { id: 'app0', name: 'PMS', description: 'Built-in system application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], metadata: [], isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], metadata: [], createdDate: '2025-11-02 09:14:00' },
     { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], metadata: [], createdDate: '2025-12-19 14:02:00' },
     { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], metadata: [], createdDate: '2026-01-08 11:47:00' },
@@ -444,6 +445,8 @@ const Store = {
   },
   removeApplication(id) {
     const store = loadData()
+    const app = store.applications.find((a) => a.id === id)
+    if (app?.isDefault) return
     store.applications = store.applications.filter((a) => a.id !== id)
     saveData(store)
   },

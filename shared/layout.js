@@ -5,10 +5,17 @@
 
 const NAV_SECTIONS = [
   { key: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: 'dashboard.html' },
-  { key: 'applications', label: 'Applications', icon: 'app', href: 'applications.html' },
+  {
+    key: 'applications',
+    label: 'Applications',
+    // Sidebar also lists every application the user has created, below the
+    // "All applications" link — see renderSidebar()'s dynamicChildren handling.
+    dynamicChildren: 'applications',
+    children: [{ key: 'applications', label: 'All applications', icon: 'app', href: 'applications.html' }],
+  },
   {
     key: 'device-management',
-    label: 'Device management',
+    label: 'Devices',
     children: [
       { key: 'devices', label: 'Devices', icon: 'device', href: 'devices.html' },
       { key: 'device-profiles', label: 'Device profiles', icon: 'profile', href: 'device-profiles.html' },
@@ -18,7 +25,7 @@ const NAV_SECTIONS = [
   },
   {
     key: 'asset-management',
-    label: 'Asset management',
+    label: 'Assets',
     children: [
       { key: 'assets', label: 'Assets', icon: 'asset', href: 'assets.html' },
       { key: 'asset-groups', label: 'Asset groups', icon: 'group', href: 'asset-groups.html' },
@@ -36,7 +43,7 @@ const NAV_SECTIONS = [
   },
   {
     key: 'user-management',
-    label: 'User management',
+    label: 'Users',
     children: [
       { key: 'users', label: 'Users', icon: 'users', href: 'users.html' },
       { key: 'user-groups', label: 'User groups', icon: 'group', href: 'user-groups.html' },
@@ -98,7 +105,14 @@ function renderSidebar(active) {
       return `<a class="sidebar-link${isActive ? ' active' : ''}" href="${section.href}">${iconSvg(section.icon)}<span>${section.label}</span></a>`
     }
     // Static section — always shows its children, no expand/collapse.
-    const children = section.children
+    let sectionChildren = section.children
+    if (section.dynamicChildren === 'applications') {
+      const apps = (window.Store ? Store.get().applications : []) || []
+      sectionChildren = sectionChildren.concat(
+        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: 'app', href: `application-detail.html#${a.id}` })),
+      )
+    }
+    const children = sectionChildren
       .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}">${iconSvg(child.icon)}<span>${child.label}</span></a>`)
       .join('')
     return `
@@ -165,6 +179,16 @@ function wireSidebarToggle(shell) {
 }
 
 const Layout = {
+  // Pages with dynamic sidebar children (e.g. application-detail.html, one
+  // per application) sit at the same URL path across items — clicking a
+  // sidebar link only changes the hash, which the browser treats as a
+  // same-document navigation and never reloads. Those pages must listen for
+  // 'hashchange' and call this to move the active highlight themselves.
+  setActive(active) {
+    const existing = document.querySelector('.sidebar')
+    if (existing) existing.outerHTML = renderSidebar(active)
+  },
+
   // Mirrors useBreadcrumbSuffix — some pages (e.g. Credentials) append a tab
   // name as a trailing breadcrumb segment that changes without a page reload.
   setBreadcrumbs(breadcrumbs) {

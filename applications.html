@@ -199,8 +199,8 @@
       tbody.innerHTML = apps
         .map(
           (a) => `
-        <tr>
-          <td><div class="group-name-cell">${a.name}${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
+        <tr class="clickable-row" data-open="${a.id}">
+          <td><div class="group-name-cell"><span>${a.name}${a.isDefault ? ' <span class="default-profile-badge">Default</span>' : ''}</span>${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
           <td>${(a.deviceIds || []).length}</td>
           <td>${(a.assetIds || []).length}</td>
           <td><span class="status-pill status-${a.status}">${a.status}</span></td>
@@ -221,10 +221,11 @@
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   Edit
                 </button>
+                ${a.isDefault ? '' : `
                 <button type="button" class="row-menu-item danger" data-delete="${a.id}">
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
                   Delete
-                </button>
+                </button>`}
               </div>
             </div>
           </td>
@@ -232,8 +233,14 @@
         )
         .join('')
 
+      document.querySelectorAll('[data-open]').forEach((row) =>
+        row.addEventListener('click', () => {
+          window.location.href = 'application-detail.html#' + row.getAttribute('data-open')
+        }),
+      )
       document.querySelectorAll('[data-toggle-status]').forEach((btn) =>
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
           const id = btn.getAttribute('data-toggle-status')
           const a = Store.get().applications.find((x) => x.id === id)
           Store.toggleApplicationStatus(id)
@@ -241,8 +248,18 @@
           UI.toast(`"${a.name}" status updated successfully!`)
         }),
       )
-      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
-      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-edit]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          openEdit(btn.getAttribute('data-edit'))
+        }),
+      )
+      document.querySelectorAll('[data-delete]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          confirmDelete(btn.getAttribute('data-delete'))
+        }),
+      )
       document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
         btn.addEventListener('click', (event) => {
           event.stopPropagation()
