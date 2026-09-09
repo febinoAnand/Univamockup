@@ -26,12 +26,15 @@
           </div>
         </div>
 
-        <div class="table-search-wrap">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
-          <input type="text" id="search" placeholder="Search groups" />
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+          <div class="table-search-wrap" style="margin-bottom:0;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+            <input type="text" id="search" placeholder="Search groups" />
+          </div>
+          <div id="view-toggle-slot"></div>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" id="table-scroll">
           <table class="data-table">
             <thead><tr>
               <th><button type="button" class="th-sort-button" data-sort="name">Name<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="name"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
@@ -121,9 +124,9 @@
         .map(
           (g) => `
         <tr>
-          <td><div class="group-name-cell">${g.name}${g.description ? `<p class="group-description">${g.description}</p>` : ''}</div></td>
-          <td>${counts[g.name] ?? 0}</td>
-          <td>${g.createdDate}</td>
+          <td class="card-title-cell"><div class="group-name-cell">${g.name}${g.description ? `<p class="group-description">${g.description}</p>` : ''}</div></td>
+          <td data-label="Members">${counts[g.name] ?? 0}</td>
+          <td data-label="Created Date">${g.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -195,6 +198,9 @@
         },
       })
     }
+
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('user-groups')
+    UI.wireViewToggle('user-groups', document.getElementById('table-scroll'))
 
     document.getElementById('add-btn').addEventListener('click', openAdd)
     document.getElementById('search').addEventListener('input', render)

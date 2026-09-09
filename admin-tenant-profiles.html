@@ -27,12 +27,15 @@
           </div>
         </div>
 
-        <div class="table-search-wrap">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
-          <input type="text" id="search" placeholder="Search tenant profiles" />
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+          <div class="table-search-wrap" style="margin-bottom:0;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+            <input type="text" id="search" placeholder="Search tenant profiles" />
+          </div>
+          <div id="view-toggle-slot"></div>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" id="table-scroll">
           <table class="data-table">
             <thead><tr><th>Name</th><th>Max devices</th><th>Max assets</th><th>Max users</th><th>Max applications</th><th>Max dashboards</th><th>In use</th><th>Default</th><th class="data-table-menu-col"></th></tr></thead>
             <tbody id="tbody"></tbody>
@@ -209,14 +212,14 @@
         .map(
           (p) => `
         <tr>
-          <td><div class="group-name-cell">${p.name}${p.description ? `<p class="group-description">${p.description}</p>` : ''}</div></td>
-          <td>${p.maxDevices}</td>
-          <td>${p.maxAssets}</td>
-          <td>${p.maxUsers}</td>
-          <td>${p.maxApplications}</td>
-          <td>${p.maxDashboards}</td>
-          <td>${counts[p.name] ?? 0}</td>
-          <td>${p.isDefault ? '<span class="default-profile-badge">Default</span>' : ''}</td>
+          <td class="card-title-cell"><div class="group-name-cell">${p.name}${p.description ? `<p class="group-description">${p.description}</p>` : ''}</div></td>
+          <td data-label="Max devices">${p.maxDevices}</td>
+          <td data-label="Max assets">${p.maxAssets}</td>
+          <td data-label="Max users">${p.maxUsers}</td>
+          <td data-label="Max applications">${p.maxApplications}</td>
+          <td data-label="Max dashboards">${p.maxDashboards}</td>
+          <td data-label="In use">${counts[p.name] ?? 0}</td>
+          <td data-label="Default">${p.isDefault ? '<span class="default-profile-badge">Default</span>' : '—'}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -351,6 +354,9 @@
         },
       })
     }
+
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('admin-tenant-profiles')
+    UI.wireViewToggle('admin-tenant-profiles', document.getElementById('table-scroll'))
 
     document.getElementById('add-btn').addEventListener('click', openAdd)
     document.getElementById('search').addEventListener('input', render)

@@ -219,9 +219,10 @@
               <button type="button" class="icon-button" aria-label="Download">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
+              <div id="view-toggle-slot" style="margin-left:auto;"></div>
             </div>
 
-            <div class="devices-table-scroll">
+            <div class="devices-table-scroll" id="devices-table-scroll">
               <table class="devices-table">
                 <thead>
                   <tr>
@@ -243,12 +244,12 @@
                       <td class="devices-table-arrow-col">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l7 6-7 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                       </td>
-                      <td>${d.endpointId}</td>
-                      <td>${d.name}</td>
-                      <td><span class="state-pill state-${d.state}">${d.state}</span></td>
-                      <td>${d.createdDate}</td>
-                      <td>${d.profileName}</td>
-                      <td>${d.metadataUpdatedDate}</td>
+                      <td data-label="Device Id">${d.endpointId}</td>
+                      <td class="card-title-cell">${d.name}</td>
+                      <td data-label="State"><span class="state-pill state-${d.state}">${d.state}</span></td>
+                      <td data-label="Created Date">${d.createdDate}</td>
+                      <td data-label="Device Profile">${d.profileName}</td>
+                      <td data-label="Metadata Updated Date">${d.metadataUpdatedDate}</td>
                       <td class="data-table-menu-col">
                         <div class="row-menu">
                           <button type="button" class="row-menu-button" data-menu-toggle>
@@ -303,6 +304,9 @@
           if (!wasOpen) UI.openRowMenu(btn)
         })
       })
+
+      document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('devices')
+      UI.wireViewToggle('devices', document.getElementById('devices-table-scroll'))
     }
 
     document.addEventListener('click', () => {

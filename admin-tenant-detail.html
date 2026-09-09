@@ -131,13 +131,14 @@
               </div>
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span class="limit-badge" id="users-limit-badge"></span>
+                <div id="users-view-toggle-slot"></div>
                 <button type="button" class="solid-action-button" id="add-user-btn">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
                   Add user
                 </button>
               </div>
             </div>
-            <div class="table-scroll">
+            <div class="table-scroll" id="users-table-scroll">
               <table class="data-table">
                 <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="users-tbody"></tbody>
@@ -154,13 +155,14 @@
               </div>
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span class="limit-badge" id="devices-limit-badge"></span>
+                <div id="devices-view-toggle-slot"></div>
                 <button type="button" class="solid-action-button" id="add-device-btn">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
                   Add device
                 </button>
               </div>
             </div>
-            <div class="table-scroll">
+            <div class="table-scroll" id="devices-table-scroll">
               <table class="data-table">
                 <thead><tr><th>Name</th><th>Profile</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="devices-tbody"></tbody>
@@ -177,13 +179,14 @@
               </div>
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span class="limit-badge" id="assets-limit-badge"></span>
+                <div id="assets-view-toggle-slot"></div>
                 <button type="button" class="solid-action-button" id="add-asset-btn">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
                   Add asset
                 </button>
               </div>
             </div>
-            <div class="table-scroll">
+            <div class="table-scroll" id="assets-table-scroll">
               <table class="data-table">
                 <thead><tr><th>Name</th><th>Group</th><th>Profile</th><th>Location</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="assets-tbody"></tbody>
@@ -200,13 +203,14 @@
               </div>
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span class="limit-badge" id="applications-limit-badge"></span>
+                <div id="applications-view-toggle-slot"></div>
                 <button type="button" class="solid-action-button" id="add-application-btn">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
                   Add application
                 </button>
               </div>
             </div>
-            <div class="table-scroll">
+            <div class="table-scroll" id="applications-table-scroll">
               <table class="data-table">
                 <thead><tr><th>Name</th><th>Devices</th><th>Assets</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="applications-tbody"></tbody>
@@ -578,11 +582,11 @@
         .map(
           (u) => `
         <tr>
-          <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td>${u.role}</td>
-          <td><span class="status-pill status-${u.status}">${u.status}</span></td>
-          <td>${u.createdDate}</td>
+          <td class="card-title-cell">${u.name}</td>
+          <td data-label="Email">${u.email}</td>
+          <td data-label="Role">${u.role}</td>
+          <td data-label="Status"><span class="status-pill status-${u.status}">${u.status}</span></td>
+          <td data-label="Created Date">${u.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -709,10 +713,10 @@
         .map(
           (d) => `
         <tr>
-          <td>${d.name}</td>
-          <td>${d.profileName || '—'}</td>
-          <td><span class="status-pill status-${d.status}">${d.status}</span></td>
-          <td>${d.createdDate}</td>
+          <td class="card-title-cell">${d.name}</td>
+          <td data-label="Profile">${d.profileName || '—'}</td>
+          <td data-label="Status"><span class="status-pill status-${d.status}">${d.status}</span></td>
+          <td data-label="Created Date">${d.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -872,12 +876,12 @@
         .map(
           (a) => `
         <tr>
-          <td>${a.name}</td>
-          <td>${(a.groupNames || []).join(', ') || '—'}</td>
-          <td>${a.profileName || '—'}</td>
-          <td>${a.location || '—'}</td>
-          <td><span class="status-pill status-${a.status}">${a.status}</span></td>
-          <td>${a.createdDate}</td>
+          <td class="card-title-cell">${a.name}</td>
+          <td data-label="Group">${(a.groupNames || []).join(', ') || '—'}</td>
+          <td data-label="Profile">${a.profileName || '—'}</td>
+          <td data-label="Location">${a.location || '—'}</td>
+          <td data-label="Status"><span class="status-pill status-${a.status}">${a.status}</span></td>
+          <td data-label="Created Date">${a.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -1022,11 +1026,11 @@
         .map(
           (a) => `
         <tr>
-          <td><div class="group-name-cell">${a.name}${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
-          <td>${(a.deviceIds || []).length}</td>
-          <td>${(a.assetIds || []).length}</td>
-          <td><span class="status-pill status-${a.status}">${a.status}</span></td>
-          <td>${a.createdDate}</td>
+          <td class="card-title-cell"><div class="group-name-cell">${a.name}${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
+          <td data-label="Devices">${(a.deviceIds || []).length}</td>
+          <td data-label="Assets">${(a.assetIds || []).length}</td>
+          <td data-label="Status"><span class="status-pill status-${a.status}">${a.status}</span></td>
+          <td data-label="Created Date">${a.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -1149,6 +1153,15 @@
       renderDevices()
       renderAssets()
       renderApplications()
+
+      document.getElementById('users-view-toggle-slot').innerHTML = UI.viewToggleHtml('tenant-users')
+      UI.wireViewToggle('tenant-users', document.getElementById('users-table-scroll'))
+      document.getElementById('devices-view-toggle-slot').innerHTML = UI.viewToggleHtml('tenant-devices')
+      UI.wireViewToggle('tenant-devices', document.getElementById('devices-table-scroll'))
+      document.getElementById('assets-view-toggle-slot').innerHTML = UI.viewToggleHtml('tenant-assets')
+      UI.wireViewToggle('tenant-assets', document.getElementById('assets-table-scroll'))
+      document.getElementById('applications-view-toggle-slot').innerHTML = UI.viewToggleHtml('tenant-applications')
+      UI.wireViewToggle('tenant-applications', document.getElementById('applications-table-scroll'))
     }
   </script>
 </body>

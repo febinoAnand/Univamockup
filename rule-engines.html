@@ -27,12 +27,15 @@
           </div>
         </div>
 
-        <div class="table-search-wrap">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
-          <input type="text" id="search" placeholder="Search rule engines" />
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+          <div class="table-search-wrap" style="margin-bottom:0;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+            <input type="text" id="search" placeholder="Search rule engines" />
+          </div>
+          <div id="view-toggle-slot"></div>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" id="table-scroll">
           <table class="data-table">
             <thead><tr><th>Name</th><th>Trigger</th><th>Condition</th><th>Action</th><th>Created time</th><th class="data-table-menu-col"></th></tr></thead>
             <tbody id="tbody"></tbody>
@@ -160,11 +163,11 @@
         .map(
           (e) => `
         <tr>
-          <td>${e.name}</td>
-          <td><span class="rule-summary-pill">${e.triggerType}</span></td>
-          <td>${conditionSummary(e)}</td>
-          <td>${e.actionType}</td>
-          <td>${e.createdDate}</td>
+          <td class="card-title-cell">${e.name}</td>
+          <td data-label="Trigger"><span class="rule-summary-pill">${e.triggerType}</span></td>
+          <td data-label="Condition">${conditionSummary(e)}</td>
+          <td data-label="Action">${e.actionType}</td>
+          <td data-label="Created time">${e.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -277,6 +280,9 @@
         },
       })
     }
+
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('rule-engines')
+    UI.wireViewToggle('rule-engines', document.getElementById('table-scroll'))
 
     document.getElementById('add-btn').addEventListener('click', openAdd)
     document.getElementById('search').addEventListener('input', render)

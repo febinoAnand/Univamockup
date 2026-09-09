@@ -24,8 +24,11 @@
         <div class="admin-stat-grid" id="stat-grid"></div>
 
         <div class="admin-section-card">
-          <p class="admin-section-card-header">Recently created tenants</p>
-          <div class="table-scroll">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <p class="admin-section-card-header">Recently created tenants</p>
+            <div id="view-toggle-slot"></div>
+          </div>
+          <div class="table-scroll" id="table-scroll">
             <table class="data-table">
               <thead><tr><th>Title</th><th>Tenant profile</th><th>Devices</th><th>Status</th><th>Created Date</th></tr></thead>
               <tbody id="tbody"></tbody>
@@ -40,6 +43,7 @@
 
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
   <script>
     Layout.mountAdmin({
       active: 'dashboard',
@@ -61,14 +65,17 @@
       .map(
         (t) => `
       <tr>
-        <td>${t.title}</td>
-        <td>${t.tenantProfileName}</td>
-        <td>${t.deviceCount}</td>
-        <td><span class="status-pill status-${t.status}">${t.status}</span></td>
-        <td>${t.createdDate}</td>
+        <td class="card-title-cell">${t.title}</td>
+        <td data-label="Tenant profile">${t.tenantProfileName}</td>
+        <td data-label="Devices">${t.deviceCount}</td>
+        <td data-label="Status"><span class="status-pill status-${t.status}">${t.status}</span></td>
+        <td data-label="Created Date">${t.createdDate}</td>
       </tr>`,
       )
       .join('')
+
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('admin-dashboard-tenants')
+    UI.wireViewToggle('admin-dashboard-tenants', document.getElementById('table-scroll'))
   </script>
 </body>
 </html>

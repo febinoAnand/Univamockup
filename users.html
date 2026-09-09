@@ -26,12 +26,15 @@
           </div>
         </div>
 
-        <div class="table-search-wrap">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg>
-          <input type="text" id="user-search" placeholder="Search by name or email" />
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+          <div class="table-search-wrap" style="margin-bottom:0;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg>
+            <input type="text" id="user-search" placeholder="Search by name or email" />
+          </div>
+          <div id="view-toggle-slot"></div>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" id="table-scroll">
           <table class="data-table">
             <thead>
               <tr>
@@ -155,12 +158,12 @@
         .map(
           (u) => `
         <tr>
-          <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td>${u.role}</td>
-          <td>${u.groupNames.join(', ') || '—'}</td>
-          <td><span class="status-pill status-${u.status}">${u.status}</span></td>
-          <td>${u.createdDate}</td>
+          <td class="card-title-cell">${u.name}</td>
+          <td data-label="Email">${u.email}</td>
+          <td data-label="Role">${u.role}</td>
+          <td data-label="Group">${u.groupNames.join(', ') || '—'}</td>
+          <td data-label="Status"><span class="status-pill status-${u.status}">${u.status}</span></td>
+          <td data-label="Created Date">${u.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -319,6 +322,9 @@
         },
       })
     }
+
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('users')
+    UI.wireViewToggle('users', document.getElementById('table-scroll'))
 
     document.getElementById('add-user-btn').addEventListener('click', openAddModal)
     document.getElementById('user-search').addEventListener('input', renderUsers)

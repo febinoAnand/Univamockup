@@ -210,6 +210,69 @@ const UI = {
   EYE_OFF_ICON:
     '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3l18 18" stroke-linecap="round"/><path d="M10.6 5.6A10.6 10.6 0 0 1 12 5.5c6.5 0 10 6.5 10 6.5a15.8 15.8 0 0 1-3.4 4.3M6.6 6.6C4 8.3 2 12 2 12s3.5 6.5 10 6.5c1.4 0 2.7-.3 3.9-.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 
+  // ------------------------------------------------------ table/widget view
+  TABLE_VIEW_ICON:
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5V20" stroke-linecap="round"/></svg>',
+  WIDGET_VIEW_ICON:
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="1.5"/><rect x="13" y="13" width="7.5" height="7.5" rx="1.5"/></svg>',
+
+  getViewMode(key) {
+    try {
+      return localStorage.getItem('univa-view-' + key) === 'widget' ? 'widget' : 'table'
+    } catch (e) {
+      return 'table'
+    }
+  },
+
+  setViewMode(key, mode) {
+    try {
+      localStorage.setItem('univa-view-' + key, mode)
+    } catch (e) {}
+  },
+
+  // Renders the table/widget segmented control for `key`. Drop this next to
+  // a table's toolbar/search bar, then call wireViewToggle() at the end of
+  // the page's render function (every render, since most pages rebuild the
+  // toolbar's innerHTML each time).
+  viewToggleHtml(key) {
+    const mode = UI.getViewMode(key)
+    return `
+      <div class="view-toggle" data-view-toggle="${key}">
+        <button type="button" class="view-toggle-btn ${mode === 'table' ? 'active' : ''}" data-view="table" aria-label="Table view" title="Table view">${UI.TABLE_VIEW_ICON}</button>
+        <button type="button" class="view-toggle-btn ${mode === 'widget' ? 'active' : ''}" data-view="widget" aria-label="Widget view" title="Widget view">${UI.WIDGET_VIEW_ICON}</button>
+      </div>`
+  },
+
+  // Applies the persisted view mode to `scrollEl` (the table's scroll
+  // wrapper). Pages that fully rebuild their table markup on every render
+  // (rather than just swapping tbody rows) should call this at the end of
+  // their render function so the mode survives a rebuild.
+  applyViewMode(key, scrollEl) {
+    if (scrollEl) scrollEl.classList.toggle('view-widget', UI.getViewMode(key) === 'widget')
+  },
+
+  // Wires the toggle buttons rendered by viewToggleHtml() for `key`. Call
+  // once — the toggle buttons themselves are assumed static. `scrollElOrFn`
+  // is either the scroll wrapper element (when it's never replaced, e.g. a
+  // page that only swaps its tbody) or a zero-arg function that looks it up
+  // fresh (when the page rebuilds the whole table on every render — pass a
+  // getter so a click after a rebuild still finds the current element).
+  wireViewToggle(key, scrollElOrFn) {
+    const toggle = document.querySelector(`[data-view-toggle="${key}"]`)
+    if (!toggle) return
+    const resolve = () => (typeof scrollElOrFn === 'function' ? scrollElOrFn() : scrollElOrFn)
+    UI.applyViewMode(key, resolve())
+    toggle.querySelectorAll('[data-view]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const next = btn.getAttribute('data-view')
+        UI.setViewMode(key, next)
+        toggle.querySelectorAll('[data-view]').forEach((b) => b.classList.toggle('active', b === btn))
+        const el = resolve()
+        if (el) el.classList.toggle('view-widget', next === 'widget')
+      })
+    })
+  },
+
   wireShowHideToggle(inputId, buttonId) {
     const input = document.getElementById(inputId)
     const button = document.getElementById(buttonId)

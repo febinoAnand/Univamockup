@@ -21,12 +21,15 @@
           </div>
         </div>
 
-        <div class="table-search-wrap">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
-          <input type="text" id="search" placeholder="Search by rule engine name" />
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+          <div class="table-search-wrap" style="margin-bottom:0;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+            <input type="text" id="search" placeholder="Search by rule engine name" />
+          </div>
+          <div id="view-toggle-slot"></div>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" id="table-scroll">
           <table class="data-table">
             <thead><tr><th>Rule engine</th><th>Triggered at</th><th>Trigger</th><th>Condition</th><th>Action</th><th>Outcome</th></tr></thead>
             <tbody id="tbody"></tbody>
@@ -38,6 +41,7 @@
 
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
   <script>
     Layout.mount({
       active: 'rule-engine-reports',
@@ -61,12 +65,12 @@
         .map(
           (e) => `
         <tr>
-          <td>${e.ruleEngineName}</td>
-          <td>${e.triggeredAt}</td>
-          <td><span class="rule-summary-pill">${e.triggerType}</span></td>
-          <td>${e.condition}</td>
-          <td>${e.actionType}</td>
-          <td><span class="outcome-pill outcome-${e.outcome}">${e.outcome}</span></td>
+          <td class="card-title-cell">${e.ruleEngineName}</td>
+          <td data-label="Triggered at">${e.triggeredAt}</td>
+          <td data-label="Trigger"><span class="rule-summary-pill">${e.triggerType}</span></td>
+          <td data-label="Condition">${e.condition}</td>
+          <td data-label="Action">${e.actionType}</td>
+          <td data-label="Outcome"><span class="outcome-pill outcome-${e.outcome}">${e.outcome}</span></td>
         </tr>`,
         )
         .join('')
@@ -74,6 +78,9 @@
 
     document.getElementById('search').addEventListener('input', render)
     render()
+
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('rule-engine-reports')
+    UI.wireViewToggle('rule-engine-reports', document.getElementById('table-scroll'))
   </script>
 </body>
 </html>

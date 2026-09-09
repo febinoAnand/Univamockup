@@ -616,6 +616,198 @@ img {
   background: var(--surface-alt);
 }
 
+/* ------------------------------------------------------- table/widget toggle
+   A small segmented control (see UI.viewToggleHtml in ui.js) that switches
+   any `<table>` inside its wired scroll wrapper between the normal row
+   layout and a card-grid "widget" layout, purely via CSS — `<td>` content
+   (pills, row menus, links) is reused as-is, no separate render path. Pages
+   opt a row's cells in by adding `data-label="Column"` (value shown with a
+   label) or `card-title-cell` (shown as the card's heading, no label) to the
+   relevant `<td>`s; any other cell (arrow/checkbox columns) is hidden
+   automatically in widget mode. */
+
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--surface);
+  border: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.view-toggle-btn + .view-toggle-btn {
+  border-left: 1px solid var(--border-strong);
+}
+
+.view-toggle-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.view-toggle-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+/* devices.html, credentials.html, and software-ota.html each wrap their
+   toolbar+table in their own bordered/shadowed "card" div (.devices-table-
+   card, .credentials-card, .versions-card) — a page-specific wrapper that
+   pages like assets.html don't have. Left alone, the individual widget
+   cards would render nested inside that outer card, showing as a visible
+   background/border behind them. Flatten the wrapper whenever it contains
+   a widget-mode table so those pages match every other page's flat look. */
+.devices-table-card:has(.view-widget),
+.credentials-card:has(.view-widget),
+.versions-card:has(.view-widget) {
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+/* Those same wrappers' toolbars have their own border-bottom separating them
+   from the table below — meaningful inside the card context, a stray line
+   once the wrapper above is flattened for widget mode. */
+.devices-table-card:has(.view-widget) .devices-table-toolbar,
+.versions-card:has(.view-widget) .versions-toolbar {
+  border-bottom: none;
+}
+
+.view-widget table {
+  display: block;
+  width: 100%;
+  border: none !important;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.view-widget thead {
+  display: none;
+}
+
+.view-widget tbody {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.view-widget tr {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.4rem 1.5rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(12, 10, 9, 0.06));
+  transition: box-shadow 0.15s ease;
+}
+
+/* The title cell always reads first regardless of the table's own column
+   order (e.g. devices.html lists Device Id before Name) — flex order lets
+   it lead the card without requiring pages to reorder their <td>s. Cards
+   with an actions menu get extra right padding so no right-aligned
+   data-label value sits under the absolutely-positioned menu button. */
+.view-widget tr:has(> td.data-table-menu-col),
+.view-widget tr:has(> td.row-menu-col) {
+  padding-right: 2.5rem;
+}
+
+.view-widget tr.clickable-row:hover {
+  /* No transform here: it would make this row a new containing block for any
+     position:fixed descendant (the open row-menu-dropdown-portal), so its
+     "fixed" coordinates would resolve against the card instead of the
+     viewport and land in the wrong place. */
+  box-shadow: var(--shadow-md, 0 6px 16px rgba(12, 10, 9, 0.1));
+  background: var(--surface);
+}
+
+.view-widget tr:has(.empty-table-note) {
+  grid-column: 1 / -1;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  background: none;
+}
+
+.view-widget td.empty-table-note {
+  display: block;
+  padding: 3rem 1rem;
+}
+
+.view-widget td {
+  /* !important: pages with their own table stylesheet (devices.css's
+     .devices-table td, etc.) declare border-top at the same specificity and
+     load after app.css, so without this their border wins the cascade and
+     leaves a stray line across every widget-mode field. */
+  border-top: none !important;
+}
+
+.view-widget td[data-label] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.view-widget td[data-label]::before {
+  content: attr(data-label);
+  color: var(--text-faint);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.view-widget td.card-title-cell {
+  display: block;
+  order: -1;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+  padding: 0 0 0.85rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  white-space: normal;
+}
+
+.view-widget td.data-table-menu-col,
+.view-widget td.row-menu-col {
+  display: block;
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  padding: 0;
+  width: auto;
+}
+
+.view-widget td:not([data-label]):not(.card-title-cell):not(.data-table-menu-col):not(.row-menu-col) {
+  display: none;
+}
+
 .default-profile-badge {
   display: inline-flex;
   align-items: center;

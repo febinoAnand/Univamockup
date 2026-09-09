@@ -33,12 +33,15 @@
           </div>
         </div>
 
-        <div class="table-search-wrap">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
-          <input type="text" id="search" placeholder="Search device profiles" />
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+          <div class="table-search-wrap" style="margin-bottom:0;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+            <input type="text" id="search" placeholder="Search device profiles" />
+          </div>
+          <div id="view-toggle-slot"></div>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" id="table-scroll">
           <table class="data-table">
             <thead>
               <tr><th>Name</th><th>Default</th><th>Created time</th><th class="data-table-menu-col"></th></tr>
@@ -148,9 +151,9 @@
         .map(
           (p) => `
         <tr>
-          <td>${p.name}</td>
-          <td>${p.isDefault ? '<span class="default-profile-badge">Default</span>' : ''}</td>
-          <td>${p.createdDate}</td>
+          <td class="card-title-cell">${p.name}</td>
+          <td data-label="Default">${p.isDefault ? '<span class="default-profile-badge">Default</span>' : '—'}</td>
+          <td data-label="Created time">${p.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
@@ -236,6 +239,9 @@
         },
       })
     }
+
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('device-profiles')
+    UI.wireViewToggle('device-profiles', document.getElementById('table-scroll'))
 
     document.getElementById('add-btn').addEventListener('click', openAdd)
     document.getElementById('search').addEventListener('input', render)

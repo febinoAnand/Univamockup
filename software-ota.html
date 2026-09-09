@@ -140,11 +140,12 @@
         return
       }
       card.innerHTML = `
-        <div class="versions-toolbar">
+        <div class="versions-toolbar" style="justify-content:space-between;">
           <div class="table-search-wrap" style="max-width:320px;">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg>
             <input type="text" id="version-search" placeholder="Search" />
           </div>
+          <div id="view-toggle-slot"></div>
         </div>
         <div class="table-scroll">
           <table class="data-table">
@@ -155,6 +156,8 @@
           </table>
         </div>`
       document.getElementById('version-search').addEventListener('input', renderRows)
+      document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('software-ota')
+      UI.wireViewToggle('software-ota', () => document.querySelector('#versions-card .table-scroll'))
       renderRows()
     }
 
@@ -169,11 +172,11 @@
         .map(
           (v) => `
         <tr>
-          <td>${v.version}</td>
-          <td>${v.firmwareFileName}</td>
-          <td>${v.description || '—'}</td>
-          <td>${ROLLOUT_LABELS[v.rollout]}</td>
-          <td>${v.createdDate}</td>
+          <td class="card-title-cell">${v.version}</td>
+          <td data-label="Firmware file">${v.firmwareFileName}</td>
+          <td data-label="Description">${v.description || '—'}</td>
+          <td data-label="Rollout">${ROLLOUT_LABELS[v.rollout]}</td>
+          <td data-label="Created date">${v.createdDate}</td>
           <td class="row-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
