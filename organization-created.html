@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/auth.css" />
+  <link rel="stylesheet" href="shared/signup.css" />
+  <title>Organisation created — Univa</title>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card signup-card">
+      <img src="assets/favicon.png" alt="Univa" class="auth-logo" />
+
+      <div class="success-icon-badge">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <h2 class="login-title">Account Created Successfully!</h2>
+      <p class="login-subtitle">Your organisation is ready. Keep the ID below safe — you'll need it every time you sign in.</p>
+
+      <div class="verify-email-box">
+        <p class="verify-email-box-label">Your organisation ID</p>
+        <p class="verify-email-box-value" id="org-id-value"></p>
+        <button type="button" class="copy-id-button" id="copy-org-id-btn">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Copy ID
+        </button>
+      </div>
+
+      <button type="button" class="login-button" id="return-to-login-btn">Return to Login</button>
+    </div>
+  </div>
+
+  <script>
+    // Kept in sessionStorage so a refresh doesn't hand out a different ID
+    // — there's no backend here to have actually issued and persisted one.
+    const ORG_ID_KEY = 'univa-demo-org-id'
+
+    function generateOrgId() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      let id = ''
+      for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)]
+      return id
+    }
+
+    let orgId = sessionStorage.getItem(ORG_ID_KEY)
+    if (!orgId) {
+      orgId = generateOrgId()
+      sessionStorage.setItem(ORG_ID_KEY, orgId)
+    }
+    document.getElementById('org-id-value').textContent = orgId
+
+    function showLocalToast(message) {
+      const el = document.createElement('div')
+      el.className = 'toast'
+      el.textContent = message
+      document.body.appendChild(el)
+      setTimeout(() => el.remove(), 3000)
+    }
+
+    document.getElementById('copy-org-id-btn').addEventListener('click', () => {
+      navigator.clipboard?.writeText(orgId)
+      showLocalToast('Organisation ID copied successfully!')
+    })
+
+    document.getElementById('return-to-login-btn').addEventListener('click', () => {
+      sessionStorage.removeItem(ORG_ID_KEY)
+      window.location.href = 'login.html'
+    })
+  </script>
+</body>
+</html>

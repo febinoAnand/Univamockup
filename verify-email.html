@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/auth.css" />
+  <link rel="stylesheet" href="shared/signup.css" />
+  <title>Verify email — Univa</title>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card signup-card">
+      <img src="assets/favicon.png" alt="Univa" class="auth-logo" />
+
+      <div class="verify-icon-badge">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="m4 6.5 8 6.5 8-6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <h2 class="login-title">Check Your Inbox</h2>
+      <p class="login-subtitle">We've sent a verification link to the address below. Open it to finish creating your organisation.</p>
+
+      <div class="verify-email-box">
+        <p class="verify-email-box-label">Verification sent to</p>
+        <p class="verify-email-box-value" id="verify-email-value"></p>
+      </div>
+
+      <p class="resend-row">Didn't get it? <button type="button" class="resend-button" id="resend-email-btn">Resend email</button></p>
+
+      <button type="button" class="login-button" id="clicked-verification-btn">I've Clicked the Verification Link</button>
+      <button type="button" class="secondary-button" id="edit-email-btn">Edit Email Address</button>
+
+      <p class="signup-row">Already have an organisation? <a href="login.html" class="link">Sign in</a></p>
+    </div>
+  </div>
+
+  <script>
+    // The email travels in the URL hash rather than a query string — see
+    // device-detail.html for why (a hash survives a static-file server in
+    // a way a query string used with clean-URL rewriting might not).
+    const verifyEmail = decodeURIComponent(window.location.hash.slice(1) || '')
+    if (!verifyEmail) {
+      window.location.href = 'signup.html'
+    }
+    document.getElementById('verify-email-value').textContent = verifyEmail
+
+    function showLocalToast(message) {
+      const el = document.createElement('div')
+      el.className = 'toast'
+      el.textContent = message
+      document.body.appendChild(el)
+      setTimeout(() => el.remove(), 3000)
+    }
+
+    document.getElementById('resend-email-btn').addEventListener('click', () => {
+      showLocalToast('Verification email resent successfully!')
+    })
+
+    document.getElementById('edit-email-btn').addEventListener('click', () => {
+      window.location.href = 'signup.html'
+    })
+
+    document.getElementById('clicked-verification-btn').addEventListener('click', () => {
+      window.location.href = 'organization-created.html'
+    })
+  </script>
+</body>
+</html>
