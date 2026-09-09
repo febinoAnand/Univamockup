@@ -38,6 +38,7 @@
                 <th><button type="button" class="th-sort-button" data-sort="name">Name<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="name"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
                 <th>Devices</th>
                 <th>Assets</th>
+                <th>Asset Groups</th>
                 <th>Status</th>
                 <th><button type="button" class="th-sort-button" data-sort="createdDate">Created Date<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="createdDate"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
                 <th class="data-table-menu-col"></th>
@@ -82,6 +83,15 @@
               <input type="text" id="app-assets-search" placeholder="Search assets" />
             </div>
             <div class="group-checkbox-list" id="app-assets-list"></div>
+          </div>
+
+          <div class="modal-field">
+            <label>Asset groups</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="app-groups-search" placeholder="Search asset groups" />
+            </div>
+            <div class="group-checkbox-list" id="app-groups-list"></div>
           </div>
 
           <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="metadata-fields"></div></div>
@@ -197,6 +207,7 @@
 
     document.getElementById('app-devices-search').addEventListener('input', (e) => filterChecklist('app-devices-list', e.target.value))
     document.getElementById('app-assets-search').addEventListener('input', (e) => filterChecklist('app-assets-list', e.target.value))
+    document.getElementById('app-groups-search').addEventListener('input', (e) => filterChecklist('app-groups-list', e.target.value))
 
     function render() {
       const data = Store.get()
@@ -211,7 +222,7 @@
 
       const tbody = document.getElementById('tbody')
       if (apps.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-table-note">No applications match your search.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-table-note">No applications match your search.</td></tr>'
         return
       }
       tbody.innerHTML = apps
@@ -221,6 +232,7 @@
           <td><div class="group-name-cell"><span>${a.name}${a.isDefault ? ' <span class="default-profile-badge">Default</span>' : ''}</span>${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
           <td>${(a.deviceIds || []).length}</td>
           <td>${(a.assetIds || []).length}</td>
+          <td>${(a.groupNames || []).length}</td>
           <td><span class="status-pill status-${a.status}">${a.status}</span></td>
           <td>${a.createdDate}</td>
           <td class="data-table-menu-col">
@@ -306,6 +318,14 @@
           : data.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
     }
 
+    function renderGroupsList(selectedNames) {
+      const data = Store.get()
+      document.getElementById('app-groups-list').innerHTML =
+        data.assetGroups.length === 0
+          ? '<span class="section-empty">No asset groups available</span>'
+          : data.assetGroups.map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${g.name}" ${selectedNames.includes(g.name) ? 'checked' : ''}/> ${g.name}</label>`).join('')
+    }
+
     function openAdd() {
       editingId = null
       metadataRows = []
@@ -317,9 +337,11 @@
       document.getElementById('app-description').value = ''
       document.getElementById('app-devices-search').value = ''
       document.getElementById('app-assets-search').value = ''
+      document.getElementById('app-groups-search').value = ''
       renderIconPicker()
       renderDevicesList([])
       renderAssetsList([])
+      renderGroupsList([])
       renderMetadata()
       UI.openModal('app-modal')
     }
@@ -337,9 +359,11 @@
       document.getElementById('app-description').value = a.description || ''
       document.getElementById('app-devices-search').value = ''
       document.getElementById('app-assets-search').value = ''
+      document.getElementById('app-groups-search').value = ''
       renderIconPicker()
       renderDevicesList(a.deviceIds || [])
       renderAssetsList(a.assetIds || [])
+      renderGroupsList(a.groupNames || [])
       renderMetadata()
       UI.openModal('app-modal')
     }
@@ -368,13 +392,14 @@
       const description = document.getElementById('app-description').value.trim()
       const deviceIds = Array.from(document.querySelectorAll('#app-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
       const assetIds = Array.from(document.querySelectorAll('#app-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
+      const groupNames = Array.from(document.querySelectorAll('#app-groups-list input:checked')).map((el) => el.getAttribute('data-group'))
       const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
 
       if (editingId) {
-        Store.updateApplication(editingId, { name, description, deviceIds, assetIds, metadata, icon: selectedIcon })
+        Store.updateApplication(editingId, { name, description, deviceIds, assetIds, groupNames, metadata, icon: selectedIcon })
         UI.toast(`"${name}" updated successfully!`)
       } else {
-        Store.addApplication({ name, description, deviceIds, assetIds, metadata, icon: selectedIcon })
+        Store.addApplication({ name, description, deviceIds, assetIds, groupNames, metadata, icon: selectedIcon })
         UI.toast(`"${name}" application created successfully!`)
       }
       UI.closeModal('app-modal')

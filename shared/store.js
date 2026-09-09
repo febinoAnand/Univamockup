@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v9'
+const STORAGE_KEY = 'univa-html-demo-v10'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -74,10 +74,10 @@ const DEFAULT_DATA = {
     { id: 'p3', name: 'Generators', description: 'Backup generator telemetry profile.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
   ],
   applications: [
-    { id: 'app0', name: 'PMS', description: 'Built-in system application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], metadata: [], icon: 'dashboard', isDefault: true, createdDate: '2025-11-01 08:00:00' },
-    { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
-    { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], metadata: [], icon: 'users', createdDate: '2025-12-19 14:02:00' },
-    { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], metadata: [], icon: 'cloud-ota', createdDate: '2026-01-08 11:47:00' },
+    { id: 'app0', name: 'PMS', description: 'Built-in system application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'dashboard', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], groupNames: ['Vehicles'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
+    { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], groupNames: ['HVAC units'], metadata: [], icon: 'users', createdDate: '2025-12-19 14:02:00' },
+    { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], groupNames: [], metadata: [], icon: 'cloud-ota', createdDate: '2026-01-08 11:47:00' },
   ],
   assets: [
     { id: 'a1', name: 'Forklift Unit 3', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'operational', location: 'North Yard', deviceIds: [], metadata: [], createdDate: '2025-11-05 10:00:00' },
@@ -426,7 +426,7 @@ const Store = {
   // -------------------------------------------------------- applications
   addApplication(data) {
     const store = loadData()
-    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], metadata: data.metadata ?? [], icon: data.icon || 'app', createdDate: nowStamp() }
+    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? [], icon: data.icon || 'app', createdDate: nowStamp() }
     store.applications.push(record)
     saveData(store)
     return record
@@ -434,7 +434,7 @@ const Store = {
   updateApplication(id, data) {
     const store = loadData()
     const app = store.applications.find((a) => a.id === id)
-    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], metadata: data.metadata ?? app.metadata, icon: data.icon || app.icon })
+    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? app.metadata, icon: data.icon || app.icon })
     saveData(store)
   },
   toggleApplicationStatus(id) {
