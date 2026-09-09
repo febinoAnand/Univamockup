@@ -52,6 +52,11 @@ const NAV_SECTIONS = [
   },
 ]
 
+// Icon choices offered when creating/editing an application (applications.html,
+// application-detail.html) — the one picked is what shows next to that
+// application's entry under the sidebar's Applications section.
+const APPLICATION_ICON_OPTIONS = ['app', 'dashboard', 'device', 'asset', 'users', 'shield', 'cloud-ota', 'report']
+
 function iconSvg(name) {
   const icons = {
     dashboard:
@@ -109,7 +114,7 @@ function renderSidebar(active) {
     if (section.dynamicChildren === 'applications') {
       const apps = (window.Store ? Store.get().applications : []) || []
       sectionChildren = sectionChildren.concat(
-        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: 'app', href: `application-detail.html#${a.id}` })),
+        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: `application-detail.html#${a.id}` })),
       )
     }
     const children = sectionChildren

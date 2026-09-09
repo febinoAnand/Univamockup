@@ -62,6 +62,11 @@
           <div class="modal-field"><label for="app-description">Description</label><textarea id="app-description" rows="3"></textarea></div>
 
           <div class="modal-field">
+            <label>Sidebar icon</label>
+            <div class="icon-picker" id="app-icon-picker"></div>
+          </div>
+
+          <div class="modal-field">
             <label>Devices</label>
             <div class="checklist-search-wrap">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
@@ -104,11 +109,24 @@
     let editingId = null
     let metadataRows = []
     let metadataNextId = 1
+    let selectedIcon = 'app'
     let sort = { key: null, direction: 'asc' }
 
     function compareValues(a, b, direction) {
       const result = String(a).localeCompare(String(b))
       return direction === 'asc' ? result : -result
+    }
+
+    function renderIconPicker() {
+      document.getElementById('app-icon-picker').innerHTML = APPLICATION_ICON_OPTIONS.map(
+        (key) => `<button type="button" class="icon-picker-option${key === selectedIcon ? ' selected' : ''}" data-icon="${key}" aria-label="${key} icon">${iconSvg(key)}</button>`,
+      ).join('')
+      document.querySelectorAll('#app-icon-picker [data-icon]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          selectedIcon = btn.getAttribute('data-icon')
+          renderIconPicker()
+        }),
+      )
     }
 
     document.querySelectorAll('[data-sort]').forEach((btn) => {
@@ -292,12 +310,14 @@
       editingId = null
       metadataRows = []
       metadataNextId = 1
+      selectedIcon = 'app'
       document.getElementById('modal-title').textContent = 'Add application'
       document.getElementById('save-btn').textContent = 'Create'
       document.getElementById('app-name').value = ''
       document.getElementById('app-description').value = ''
       document.getElementById('app-devices-search').value = ''
       document.getElementById('app-assets-search').value = ''
+      renderIconPicker()
       renderDevicesList([])
       renderAssetsList([])
       renderMetadata()
@@ -310,12 +330,14 @@
       editingId = id
       metadataRows = (a.metadata || []).map((f, i) => ({ id: i + 1, key: f.key, value: f.value }))
       metadataNextId = metadataRows.length + 1
+      selectedIcon = a.icon || 'app'
       document.getElementById('modal-title').textContent = 'Edit application'
       document.getElementById('save-btn').textContent = 'Save changes'
       document.getElementById('app-name').value = a.name
       document.getElementById('app-description').value = a.description || ''
       document.getElementById('app-devices-search').value = ''
       document.getElementById('app-assets-search').value = ''
+      renderIconPicker()
       renderDevicesList(a.deviceIds || [])
       renderAssetsList(a.assetIds || [])
       renderMetadata()
@@ -330,6 +352,7 @@
         onConfirm: () => {
           Store.removeApplication(id)
           render()
+          Layout.setActive('applications')
           UI.toast(`"${a.name}" deleted successfully!`)
         },
       })
@@ -348,14 +371,15 @@
       const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
 
       if (editingId) {
-        Store.updateApplication(editingId, { name, description, deviceIds, assetIds, metadata })
+        Store.updateApplication(editingId, { name, description, deviceIds, assetIds, metadata, icon: selectedIcon })
         UI.toast(`"${name}" updated successfully!`)
       } else {
-        Store.addApplication({ name, description, deviceIds, assetIds, metadata })
+        Store.addApplication({ name, description, deviceIds, assetIds, metadata, icon: selectedIcon })
         UI.toast(`"${name}" application created successfully!`)
       }
       UI.closeModal('app-modal')
       render()
+      Layout.setActive('applications')
     })
 
     render()

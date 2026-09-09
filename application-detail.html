@@ -219,6 +219,11 @@
           <div class="modal-field"><label for="app-description">Description</label><textarea id="app-description" rows="3"></textarea></div>
 
           <div class="modal-field">
+            <label>Sidebar icon</label>
+            <div class="icon-picker" id="app-icon-picker"></div>
+          </div>
+
+          <div class="modal-field">
             <label>Devices</label>
             <div class="checklist-search-wrap">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
@@ -294,6 +299,19 @@
 
     let metadataRows = []
     let metadataNextId = 1
+    let selectedIcon = 'app'
+
+    function renderIconPicker() {
+      document.getElementById('app-icon-picker').innerHTML = APPLICATION_ICON_OPTIONS.map(
+        (key) => `<button type="button" class="icon-picker-option${key === selectedIcon ? ' selected' : ''}" data-icon="${key}" aria-label="${key} icon">${iconSvg(key)}</button>`,
+      ).join('')
+      document.querySelectorAll('#app-icon-picker [data-icon]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          selectedIcon = btn.getAttribute('data-icon')
+          renderIconPicker()
+        }),
+      )
+    }
 
     function renderMetadataEditor() {
       document.getElementById('metadata-fields').innerHTML = metadataRows
@@ -377,10 +395,12 @@
       if (!app) return
       metadataRows = (app.metadata || []).map((f, i) => ({ id: i + 1, key: f.key, value: f.value }))
       metadataNextId = metadataRows.length + 1
+      selectedIcon = app.icon || 'app'
       document.getElementById('app-name').value = app.name
       document.getElementById('app-description').value = app.description || ''
       document.getElementById('app-devices-search').value = ''
       document.getElementById('app-assets-search').value = ''
+      renderIconPicker()
       renderDevicesChecklist(app.deviceIds || [])
       renderAssetsChecklist(app.assetIds || [])
       renderMetadataEditor()
@@ -397,10 +417,11 @@
       const deviceIds = Array.from(document.querySelectorAll('#app-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
       const assetIds = Array.from(document.querySelectorAll('#app-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
       const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
-      Store.updateApplication(app.id, { name, description, deviceIds, assetIds, metadata })
+      Store.updateApplication(app.id, { name, description, deviceIds, assetIds, metadata, icon: selectedIcon })
       UI.toast(`"${name}" updated successfully!`)
       UI.closeModal('app-modal')
       renderPage()
+      Layout.setActive(`application-${app.id}`)
     })
 
     function confirmDelete() {
