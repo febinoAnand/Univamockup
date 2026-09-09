@@ -15,7 +15,7 @@ const NAV_SECTIONS = [
   },
   {
     key: 'device-management',
-    label: 'Devices',
+    label: 'Devices management',
     children: [
       { key: 'devices', label: 'Devices', icon: 'device', href: 'devices.html' },
       { key: 'device-profiles', label: 'Device profiles', icon: 'profile', href: 'device-profiles.html' },
@@ -25,7 +25,7 @@ const NAV_SECTIONS = [
   },
   {
     key: 'asset-management',
-    label: 'Assets',
+    label: 'Assets management',
     children: [
       { key: 'assets', label: 'Assets', icon: 'asset', href: 'assets.html' },
       { key: 'asset-groups', label: 'Asset groups', icon: 'group', href: 'asset-groups.html' },
@@ -43,7 +43,7 @@ const NAV_SECTIONS = [
   },
   {
     key: 'user-management',
-    label: 'Users',
+    label: 'Users & permissions',
     children: [
       { key: 'users', label: 'Users', icon: 'users', href: 'users.html' },
       { key: 'user-groups', label: 'User groups', icon: 'group', href: 'user-groups.html' },
