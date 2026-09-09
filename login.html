@@ -15,7 +15,7 @@
       <img src="assets/favicon.png" alt="Univa" class="auth-logo" />
 
       <p class="demo-users-note">
-        Demo login — Org <strong>DEMO-ORG</strong>, user <strong>admin</strong> / admin
+        Demo logins: <strong>admin</strong> / admin (approved) or <strong>adminapprove</strong> / admin (pending approval)
       </p>
 
       <form id="login-form" novalidate>
@@ -51,6 +51,7 @@
         </div>
 
         <p class="form-error hidden" id="login-error">Invalid username or password</p>
+        <p class="form-notice hidden" id="login-notice">Your account is awaiting approval from the organization administrator.</p>
 
         <div class="row-between">
           <label class="checkbox-label">
@@ -66,32 +67,24 @@
       <div class="divider"></div>
 
       <p class="signup-row">Don't have an account? <a href="signup.html" class="link">Sign up</a></p>
-      <p class="signup-row">Curious about pending accounts? <a href="awaiting-approval-preview.html" class="link">Preview the Awaiting Approval screen</a></p>
       <p class="login-footer">© 2026 All rights reserved.</p>
     </div>
   </div>
 
   <script src="shared/store.js"></script>
   <script>
-    const DEMO_ORG_ID = 'DEMO-ORG'
-
     if (Store.isLoggedIn()) {
       window.location.href = 'dashboard.html'
     }
 
     document.getElementById('login-form').addEventListener('submit', function (event) {
       event.preventDefault()
-      const organizationId = document.getElementById('organizationId').value.trim()
       const username = document.getElementById('username').value
       const password = document.getElementById('password').value
       const errorEl = document.getElementById('login-error')
+      const noticeEl = document.getElementById('login-notice')
       errorEl.classList.add('hidden')
-
-      if (organizationId.toUpperCase() !== DEMO_ORG_ID) {
-        errorEl.textContent = 'Invalid organization ID'
-        errorEl.classList.remove('hidden')
-        return
-      }
+      noticeEl.classList.add('hidden')
 
       const result = Store.login(username, password)
       if (result.ok) {
@@ -99,10 +92,9 @@
         return
       }
       if (result.pendingApproval) {
-        window.location.href = 'awaiting-approval.html'
+        noticeEl.classList.remove('hidden')
         return
       }
-      errorEl.textContent = 'Invalid username or password'
       errorEl.classList.remove('hidden')
     })
   </script>
