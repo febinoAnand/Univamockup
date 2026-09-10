@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v10'
+const STORAGE_KEY = 'univa-html-demo-v11'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -80,10 +80,10 @@ const DEFAULT_DATA = {
     { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], groupNames: [], metadata: [], icon: 'cloud-ota', createdDate: '2026-01-08 11:47:00' },
   ],
   assets: [
-    { id: 'a1', name: 'Forklift Unit 3', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'operational', location: 'North Yard', deviceIds: [], metadata: [], createdDate: '2025-11-05 10:00:00' },
-    { id: 'a2', name: 'HVAC Compressor A', groupNames: ['HVAC units'], profileName: 'Rooftop HVAC unit', status: 'maintenance', location: 'Building 2 Roof', deviceIds: [], metadata: [], createdDate: '2025-12-20 09:30:00' },
-    { id: 'a3', name: 'Generator 12', groupNames: ['Generators'], profileName: 'Diesel generator', status: 'operational', location: 'East Depot', deviceIds: [], metadata: [], createdDate: '2026-01-09 13:15:00' },
-    { id: 'a4', name: 'Forklift Unit 7', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'offline', location: 'Harbor Dock', deviceIds: [], metadata: [], createdDate: '2026-03-22 08:45:00' },
+    { id: 'a1', name: 'Forklift Unit 3', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'operational', location: 'North Yard', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2025-11-05 10:00:00' },
+    { id: 'a2', name: 'HVAC Compressor A', groupNames: ['HVAC units'], profileName: 'Rooftop HVAC unit', status: 'maintenance', location: 'Building 2 Roof', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2025-12-20 09:30:00' },
+    { id: 'a3', name: 'Generator 12', groupNames: ['Generators'], profileName: 'Diesel generator', status: 'operational', location: 'East Depot', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2026-01-09 13:15:00' },
+    { id: 'a4', name: 'Forklift Unit 7', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'offline', location: 'Harbor Dock', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2026-03-22 08:45:00' },
   ],
   assetGroups: [
     { id: 'ag1', name: 'Vehicles', description: 'Forklifts, mobile cranes, and site transport.', createdDate: '2025-11-02 09:14:00' },
@@ -454,7 +454,7 @@ const Store = {
   // ------------------------------------------------------------- assets
   addAsset(data) {
     const store = loadData()
-    const record = { id: uid('a'), name: data.name, groupNames: data.groupNames ?? [], profileName: data.profileName, status: 'operational', location: data.location, deviceIds: data.deviceIds ?? [], metadata: data.metadata ?? [], createdDate: nowStamp() }
+    const record = { id: uid('a'), name: data.name, groupNames: data.groupNames ?? [], profileName: data.profileName, status: 'operational', location: data.location, deviceIds: data.deviceIds ?? [], metadata: data.metadata ?? [], metrics: DEVICE_DEFAULT_METRICS, createdDate: nowStamp() }
     store.assets.push(record)
     saveData(store)
     return record
@@ -474,6 +474,27 @@ const Store = {
   removeAsset(id) {
     const store = loadData()
     store.assets = store.assets.filter((a) => a.id !== id)
+    saveData(store)
+  },
+  // Asset metadata fields have no persistent id (unlike a device's), so
+  // these are addressed by array index instead — asset-detail.html always
+  // recomputes indices from the current array before calling these.
+  addAssetMetadataField(assetId, key, value) {
+    const store = loadData()
+    const asset = store.assets.find((a) => a.id === assetId)
+    if (asset) { asset.metadata = asset.metadata || []; asset.metadata.push({ key, value }) }
+    saveData(store)
+  },
+  updateAssetMetadataFieldAt(assetId, index, value) {
+    const store = loadData()
+    const asset = store.assets.find((a) => a.id === assetId)
+    if (asset && asset.metadata[index]) asset.metadata[index].value = value
+    saveData(store)
+  },
+  removeAssetMetadataFieldAt(assetId, index) {
+    const store = loadData()
+    const asset = store.assets.find((a) => a.id === assetId)
+    if (asset) asset.metadata.splice(index, 1)
     saveData(store)
   },
 
