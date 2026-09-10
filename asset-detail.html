@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <title>Asset — Univa</title>
+  <style>
+    .detail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .detail-card h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin: 0 0 1.1rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .section-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1.1rem 1rem;
+    }
+    .detail-meta-item .label {
+      margin: 0 0 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .detail-meta-item .value {
+      margin: 0;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      text-transform: capitalize;
+    }
+    .detail-meta-item .value.no-transform {
+      text-transform: none;
+    }
+    .detail-overview-row {
+      display: flex;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+      align-items: stretch;
+    }
+    .detail-overview-card,
+    .detail-overview-stats {
+      flex: 1 1 0;
+      min-width: 0;
+      margin-bottom: 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent-soft-border);
+    }
+    .detail-overview-card::before,
+    .detail-overview-stats::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    }
+    @media (max-width: 720px) {
+      .detail-overview-row {
+        flex-direction: column;
+      }
+      .detail-overview-card,
+      .detail-overview-stats {
+        flex: 1 1 auto;
+      }
+    }
+    .count-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.85rem;
+    }
+    .count-tile {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.95rem 1rem;
+      border-radius: 14px;
+      background: var(--tile-bg);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .count-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .count-tile-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--tile-icon-bg);
+      color: var(--tile-icon-color);
+      flex-shrink: 0;
+    }
+    .count-tile-value {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .count-tile-label {
+      margin: 0.15rem 0 0;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-subtle);
+    }
+    .count-tile-breakdown {
+      margin: 0.2rem 0 0;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-faint);
+    }
+    .detail-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.85rem;
+    }
+    .detail-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      aspect-ratio: 1 / 1;
+      padding: 1rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      text-align: center;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    a.detail-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+      border-color: var(--accent-soft-border);
+    }
+    .detail-tile-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .detail-tile-name {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-word;
+    }
+    .detail-tile-sub {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--text-subtle);
+      word-break: break-word;
+    }
+    .detail-tabs {
+      display: flex;
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin: 0 0 1.25rem;
+    }
+    .detail-tab-button {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 0.1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-faint);
+      cursor: pointer;
+    }
+    .detail-tab-button.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+    .group-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .group-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent-strong-text);
+      background: var(--accent-soft);
+      text-transform: none;
+    }
+    .detail-back-link {
+      display: inline-block;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .detail-back-link:hover {
+      text-decoration: underline;
+    }
+    .not-found-block {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-subtle);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div id="asset-detail-root"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="asset-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Edit asset</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('asset-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="asset-form">
+          <div class="modal-field"><label for="asset-name">Asset name*</label><input id="asset-name" type="text" required /></div>
+          <div class="modal-field">
+            <label>Asset groups</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="asset-groups-search" placeholder="Search asset groups" />
+            </div>
+            <div class="group-checkbox-list" id="asset-groups-list"></div>
+          </div>
+          <div class="modal-field"><label for="asset-profile">Asset profile</label><select id="asset-profile"></select></div>
+          <div class="modal-field"><label for="asset-location">Location</label><input id="asset-location" type="text" /></div>
+          <div class="modal-field">
+            <label>Devices</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="asset-devices-search" placeholder="Search devices" />
+            </div>
+            <div class="group-checkbox-list" id="asset-devices-list"></div>
+          </div>
+          <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="metadata-fields"></div></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('asset-modal')">Cancel</button>
+        <button type="submit" form="asset-form" class="modal-button primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    // The asset id travels in the URL hash — see device-detail.html for why.
+    // 'hashchange' below handles navigating from one asset tile to another
+    // without a full page reload (same pattern as application-detail.html).
+    let assetId = window.location.hash.slice(1)
+
+    function getAsset() {
+      return Store.get().assets.find((a) => a.id === assetId)
+    }
+
+    function breadcrumbsForAsset(asset) {
+      return asset
+        ? [
+            { label: 'Home', href: 'dashboard.html' },
+            { label: 'Assets', href: 'assets.html' },
+            { label: asset.name },
+          ]
+        : [
+            { label: 'Home', href: 'dashboard.html' },
+            { label: 'Assets', href: 'assets.html' },
+          ]
+    }
+
+    const initialAsset = getAsset()
+    Layout.mount({
+      active: 'assets',
+      breadcrumbs: breadcrumbsForAsset(initialAsset),
+    })
+
+    window.addEventListener('hashchange', () => {
+      assetId = window.location.hash.slice(1)
+      Layout.setBreadcrumbs(breadcrumbsForAsset(getAsset()))
+      renderPage()
+    })
+
+    let metadataRows = []
+    let metadataNextId = 1
+    let activeTab = 'devices'
+
+    function renderMetadataEditor() {
+      document.getElementById('metadata-fields').innerHTML = metadataRows
+        .map(
+          (row) => `
+        <div class="metadata-row">
+          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+          </button>
+          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>
+          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${row.value}" /></div>
+        </div>`,
+        )
+        .join('') + `<button type="button" class="metadata-add" id="metadata-add-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+          Add
+        </button>`
+      document.getElementById('metadata-add-btn').addEventListener('click', () => {
+        metadataRows.push({ id: metadataNextId++, key: '', value: '' })
+        renderMetadataEditor()
+      })
+      document.querySelectorAll('[data-remove]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          metadataRows = metadataRows.filter((r) => r.id !== Number(btn.getAttribute('data-remove')))
+          renderMetadataEditor()
+        }),
+      )
+      document.querySelectorAll('[data-key]').forEach((input) =>
+        input.addEventListener('input', () => { metadataRows.find((r) => r.id === Number(input.getAttribute('data-key'))).key = input.value }),
+      )
+      document.querySelectorAll('[data-value]').forEach((input) =>
+        input.addEventListener('input', () => { metadataRows.find((r) => r.id === Number(input.getAttribute('data-value'))).value = input.value }),
+      )
+    }
+
+    function filterChecklist(listId, term) {
+      const container = document.getElementById(listId)
+      if (!container) return
+      const t = term.trim().toLowerCase()
+      const labels = Array.from(container.querySelectorAll('.modal-checkbox'))
+      let visibleCount = 0
+      labels.forEach((label) => {
+        const match = !t || label.textContent.trim().toLowerCase().includes(t)
+        label.style.display = match ? '' : 'none'
+        if (match) visibleCount++
+      })
+      let emptyNote = container.querySelector('.checklist-no-match')
+      if (labels.length > 0 && visibleCount === 0) {
+        if (!emptyNote) {
+          emptyNote = document.createElement('p')
+          emptyNote.className = 'section-empty checklist-no-match'
+          emptyNote.textContent = 'No matches found.'
+          container.appendChild(emptyNote)
+        }
+      } else if (emptyNote) {
+        emptyNote.remove()
+      }
+    }
+
+    document.getElementById('asset-groups-search').addEventListener('input', (e) => filterChecklist('asset-groups-list', e.target.value))
+    document.getElementById('asset-devices-search').addEventListener('input', (e) => filterChecklist('asset-devices-list', e.target.value))
+
+    function populateForm(groupNames, profileName, deviceIds) {
+      const data = Store.get()
+      document.getElementById('asset-groups-list').innerHTML = data.assetGroups
+        .map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${g.name}" ${groupNames.includes(g.name) ? 'checked' : ''}/> ${g.name}</label>`)
+        .join('')
+      document.getElementById('asset-profile').innerHTML = data.assetProfiles.map((p) => `<option value="${p.name}">${p.name}</option>`).join('')
+      document.getElementById('asset-profile').value = profileName
+      document.getElementById('asset-devices-list').innerHTML =
+        data.devices.length === 0
+          ? '<span class="section-empty">No devices available</span>'
+          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${deviceIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+    }
+
+    function openEdit() {
+      const asset = getAsset()
+      if (!asset) return
+      metadataRows = (asset.metadata || []).map((f, i) => ({ id: i + 1, key: f.key, value: f.value }))
+      metadataNextId = metadataRows.length + 1
+      document.getElementById('asset-name').value = asset.name
+      document.getElementById('asset-location').value = asset.location || ''
+      document.getElementById('asset-groups-search').value = ''
+      document.getElementById('asset-devices-search').value = ''
+      populateForm(asset.groupNames || [], asset.profileName, asset.deviceIds || [])
+      renderMetadataEditor()
+      UI.openModal('asset-modal')
+    }
+
+    document.getElementById('asset-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const asset = getAsset()
+      if (!asset) return
+      const name = document.getElementById('asset-name').value.trim()
+      if (!name) return
+      const groupNames = Array.from(document.querySelectorAll('#asset-groups-list input:checked')).map((el) => el.getAttribute('data-group'))
+      const profileName = document.getElementById('asset-profile').value
+      const location = document.getElementById('asset-location').value.trim()
+      const deviceIds = Array.from(document.querySelectorAll('#asset-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
+      const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
+      Store.updateAsset(asset.id, { name, groupNames, profileName, location, deviceIds, metadata })
+      UI.toast(`"${name}" updated successfully!`)
+      UI.closeModal('asset-modal')
+      renderPage()
+    })
+
+    function confirmDelete() {
+      const asset = getAsset()
+      if (!asset) return
+      UI.confirm({
+        message: `Delete <strong>${asset.name}</strong>? This can't be undone.`,
+        onConfirm: () => {
+          Store.removeAsset(asset.id)
+          UI.toast(`"${asset.name}" deleted successfully!`)
+          window.location.href = 'assets.html'
+        },
+      })
+    }
+
+    const DETAIL_TABS = [
+      { key: 'devices', label: 'Linked devices', icon: 'device' },
+      { key: 'metadata', label: 'Metadata attributes', icon: 'credentials' },
+    ]
+
+    function renderTabPanel(tab, devices, metadata) {
+      if (tab === 'devices') {
+        return devices.length === 0
+          ? '<span class="section-empty">No devices linked to this asset</span>'
+          : `<div class="detail-tile-grid">${devices
+              .map(
+                (d) => `
+              <a class="detail-tile" href="device-detail.html#${d.id}">
+                <span class="detail-tile-icon">${iconSvg('device')}</span>
+                <p class="detail-tile-name">${d.name}</p>
+                <span class="status-pill status-${d.state === 'online' ? 'active' : 'offline'}">${d.state}</span>
+              </a>`,
+              )
+              .join('')}</div>`
+      }
+      return metadata.length === 0
+        ? '<span class="section-empty">No metadata attributes</span>'
+        : `<div class="detail-tile-grid">${metadata
+            .map(
+              (m) => `
+              <div class="detail-tile">
+                <p class="detail-tile-name">${m.key}</p>
+                <p class="detail-tile-sub">${m.value}</p>
+              </div>`,
+            )
+            .join('')}</div>`
+    }
+
+    function wireTabs() {
+      document.querySelectorAll('[data-detail-tab]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          activeTab = btn.getAttribute('data-detail-tab')
+          renderPage()
+        }),
+      )
+    }
+
+    function renderPage() {
+      const asset = getAsset()
+      const root = document.getElementById('asset-detail-root')
+      if (!asset) {
+        root.innerHTML = `
+          <div class="not-found-block">
+            <h2>Asset not found</h2>
+            <p>It may have been deleted.</p>
+            <a class="detail-back-link" href="assets.html">Back to Assets</a>
+          </div>`
+        return
+      }
+
+      const data = Store.get()
+      const groupNames = asset.groupNames || []
+      const metadata = asset.metadata || []
+      const devices = (asset.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
+      const onlineDevices = devices.filter((d) => d.state === 'online').length
+      const offlineDevices = devices.length - onlineDevices
+
+      const countTiles = [
+        { label: 'Linked devices', value: devices.length, icon: 'device', bg: 'var(--accent-soft)', iconBg: 'var(--accent-soft-strong)', iconColor: 'var(--accent)', breakdown: `${onlineDevices} online · ${offlineDevices} offline` },
+        { label: 'Asset groups', value: groupNames.length, icon: 'group', bg: 'var(--warning-bg)', iconBg: '#fde68a', iconColor: 'var(--warning)' },
+        { label: 'Metadata attributes', value: metadata.length, icon: 'report', bg: '#e0f2fe', iconBg: '#bae6fd', iconColor: '#0369a1' },
+      ]
+
+      root.innerHTML = `
+        <a class="detail-back-link" href="assets.html">&larr; Back to Assets</a>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">${asset.name}</h1>
+            <p class="page-subtitle">${asset.location || 'No location provided.'}</p>
+          </div>
+          <div class="page-header-actions">
+            <span class="status-pill status-${asset.status}">${asset.status}</span>
+            <button type="button" class="modal-button secondary" id="toggle-status-btn">${asset.status === 'operational' ? 'Mark offline' : 'Mark operational'}</button>
+            <button type="button" class="modal-button secondary" id="edit-asset-btn">Edit</button>
+            <button type="button" class="modal-button danger" id="delete-asset-btn">Delete</button>
+          </div>
+        </div>
+
+        <div class="detail-overview-row">
+          <div class="detail-card detail-overview-card">
+            <h2><span class="section-icon">${iconSvg('profile')}</span>Overview</h2>
+            <div class="detail-meta-grid">
+              <div class="detail-meta-item"><p class="label">Status</p><p class="value"><span class="status-pill status-${asset.status}">${asset.status}</span></p></div>
+              <div class="detail-meta-item"><p class="label">Asset profile</p><p class="value">${asset.profileName || '—'}</p></div>
+              <div class="detail-meta-item"><p class="label">Location</p><p class="value no-transform">${asset.location || '—'}</p></div>
+              <div class="detail-meta-item"><p class="label">Asset ID</p><p class="value no-transform">${asset.id}</p></div>
+              <div class="detail-meta-item"><p class="label">Created date</p><p class="value">${asset.createdDate}</p></div>
+              <div class="detail-meta-item">
+                <p class="label">Asset groups</p>
+                <p class="value no-transform">
+                  ${groupNames.length === 0 ? '—' : `<span class="group-pill-row">${groupNames.map((n) => `<span class="group-pill">${n}</span>`).join('')}</span>`}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="detail-card detail-overview-stats">
+            <h2><span class="section-icon">${iconSvg('report')}</span>Count</h2>
+            <div class="count-tile-grid">
+              ${countTiles
+                .map(
+                  (t) => `
+              <div class="count-tile" style="--tile-bg: ${t.bg}; --tile-icon-bg: ${t.iconBg}; --tile-icon-color: ${t.iconColor};">
+                <span class="count-tile-icon">${iconSvg(t.icon)}</span>
+                <span>
+                  <p class="count-tile-value">${t.value}</p>
+                  <p class="count-tile-label">${t.label}</p>
+                  ${t.breakdown ? `<p class="count-tile-breakdown">${t.breakdown}</p>` : ''}
+                </span>
+              </div>`,
+                )
+                .join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-tabs">
+          ${DETAIL_TABS.map(
+            (t) => `<button type="button" class="detail-tab-button${activeTab === t.key ? ' active' : ''}" data-detail-tab="${t.key}">${iconSvg(t.icon)}${t.label}</button>`,
+          ).join('')}
+        </div>
+        <div class="detail-card">
+          ${renderTabPanel(activeTab, devices, metadata)}
+        </div>`
+
+      document.getElementById('toggle-status-btn').addEventListener('click', () => {
+        Store.toggleAssetStatus(asset.id)
+        UI.toast(`"${asset.name}" status updated successfully!`)
+        renderPage()
+      })
+      document.getElementById('edit-asset-btn').addEventListener('click', openEdit)
+      document.getElementById('delete-asset-btn').addEventListener('click', confirmDelete)
+      wireTabs()
+    }
+
+    renderPage()
+  </script>
+</body>
+</html>

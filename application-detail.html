@@ -680,9 +680,9 @@
     }
 
     const GENERIC_TABS = [
-      { key: 'devices', label: 'Linked devices', icon: 'device' },
-      { key: 'assets', label: 'Assets', icon: 'asset' },
       { key: 'metadata', label: 'Metadata attributes', icon: 'credentials' },
+      { key: 'assets', label: 'Assets', icon: 'asset' },
+      { key: 'devices', label: 'Linked devices', icon: 'device' },
     ]
     let genericActiveTab = 'devices'
 
@@ -709,11 +709,11 @@
           : `<div class="detail-tile-grid">${assets
               .map(
                 (a) => `
-              <div class="detail-tile">
+              <a class="detail-tile" href="asset-detail.html#${a.id}">
                 <span class="detail-tile-icon">${iconSvg('asset')}</span>
                 <p class="detail-tile-name">${a.name}</p>
                 <span class="status-pill status-${a.status}">${a.status}</span>
-              </div>`,
+              </a>`,
               )
               .join('')}</div>`
         const groupTiles = groupNames.length === 0

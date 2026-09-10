@@ -183,7 +183,7 @@
       tbody.innerHTML = assets
         .map(
           (a) => `
-        <tr>
+        <tr class="clickable-row" data-open="${a.id}">
           <td class="card-title-cell">${a.name}</td>
           <td data-label="Group">${a.groupNames.length > 0 ? a.groupNames.join(', ') : '—'}</td>
           <td data-label="Profile">${a.profileName}</td>
@@ -218,7 +218,8 @@
         .join('')
 
       document.querySelectorAll('[data-toggle-status]').forEach((btn) =>
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
           const id = btn.getAttribute('data-toggle-status')
           const a = Store.get().assets.find((x) => x.id === id)
           Store.toggleAssetStatus(id)
@@ -226,8 +227,18 @@
           UI.toast(`"${a.name}" status updated successfully!`)
         }),
       )
-      document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
-      document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-delete'))))
+      document.querySelectorAll('[data-edit]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          openEdit(btn.getAttribute('data-edit'))
+        }),
+      )
+      document.querySelectorAll('[data-delete]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          confirmDelete(btn.getAttribute('data-delete'))
+        }),
+      )
       document.querySelectorAll('[data-menu-toggle]').forEach((btn) =>
         btn.addEventListener('click', (event) => {
           event.stopPropagation()
@@ -235,6 +246,11 @@
           const wasOpen = menu.classList.contains('open')
           UI.closeRowMenus()
           if (!wasOpen) UI.openRowMenu(btn)
+        }),
+      )
+      document.querySelectorAll('[data-open]').forEach((row) =>
+        row.addEventListener('click', () => {
+          window.location.href = 'asset-detail.html#' + row.getAttribute('data-open')
         }),
       )
     }
