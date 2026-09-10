@@ -1,6 +1,23 @@
 .signup-card {
-  max-width: 600px;
-  box-shadow: 0 1px 2px rgba(12, 10, 9, 0.04), 0 6px 16px rgba(12, 10, 9, 0.06);
+  max-width: 700px;
+  padding-top: 2.1rem;
+  padding-bottom: 1.75rem;
+}
+
+.signup-card .login-title {
+  font-size: 1.5rem;
+}
+
+.signup-card .login-subtitle {
+  margin: 0.3rem 0 1.35rem;
+}
+
+.signup-card .field {
+  margin-bottom: 0.85rem;
+}
+
+.signup-card .signup-row {
+  margin: 0.9rem 0 0.75rem;
 }
 
 .form-grid {
@@ -18,18 +35,19 @@
   padding: 0.65rem 0.85rem;
   font-size: 0.9rem;
   font-family: inherit;
-  border: 1px solid #d6d3d1;
-  border-radius: 14px;
+  border: 1.5px solid #e6e4f7;
+  border-radius: 12px;
   color: #1c1917;
-  background: #ffffff;
+  background: #fbfaff;
   outline: none;
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .select-field:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
 @media (max-width: 560px) {
@@ -56,7 +74,7 @@
 }
 
 .suffix-button:hover {
-  color: #78716c;
+  color: #6366f1;
 }
 
 .field-error {
@@ -77,15 +95,15 @@
   padding: 0.35rem 0.7rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #8b5cf6;
-  background: #f5f3ff;
+  color: #4338ca;
+  background: #eef2ff;
   border: none;
   border-radius: 10px;
   cursor: pointer;
 }
 
 .check-availability-button:hover:not(:disabled) {
-  background: #ede9fe;
+  background: #e0e7ff;
 }
 
 .check-availability-button:disabled {
@@ -111,15 +129,15 @@
 }
 
 .requirements-box {
-  margin: 0.25rem 0 1.25rem;
-  padding: 1rem 1.1rem;
-  background: #f5f5f4;
-  border: 1px solid #e7e5e4;
+  margin: 0.15rem 0 1rem;
+  padding: 0.75rem 1rem;
+  background: #f5f3ff;
+  border: 1px solid #e9e4fb;
   border-radius: 14px;
 }
 
 .requirements-title {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
   font-size: 0.85rem;
   font-weight: 700;
   color: #1c1917;
@@ -137,7 +155,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
   break-inside: avoid;
   font-size: 0.8rem;
   color: #57534e;
@@ -201,7 +219,7 @@
 
 .return-link {
   font-size: 0.85rem;
-  color: #8b5cf6;
+  color: #18181b;
   text-decoration: underline;
 }
 
@@ -213,16 +231,16 @@
   height: 64px;
   margin: 0 auto 1.25rem;
   border-radius: 50%;
-  background: #ede9fe;
-  color: #7c3aed;
+  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  color: #6366f1;
 }
 
 .verify-email-box {
   margin: 0.5rem 0 1.25rem;
   padding: 1rem 1.1rem;
   text-align: center;
-  background: #f5f3ff;
-  border: 1.5px dashed #c4b5fd;
+  background: #f4f4f5;
+  border: 1.5px dashed #d4d4d8;
   border-radius: 14px;
 }
 
@@ -239,7 +257,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #7c3aed;
+  color: #27272a;
   word-break: break-all;
 }
 
@@ -256,7 +274,7 @@
   padding: 0;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #8b5cf6;
+  color: #4f46e5;
   cursor: pointer;
 }
 
@@ -270,16 +288,16 @@
   padding: 0.75rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1c1917;
+  color: #4338ca;
   background: #ffffff;
-  border: 1px solid #d6d3d1;
+  border: 1.5px solid #e0e7ff;
   border-radius: 14px;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .secondary-button:hover {
-  background: #f5f5f4;
+  background: #eef2ff;
 }
 
 .success-icon-badge {
@@ -302,13 +320,13 @@
   padding: 0.5rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #7c3aed;
+  color: #4338ca;
   background: #ffffff;
-  border: 1px solid #d6d3d1;
+  border: 1.5px solid #e0e7ff;
   border-radius: 10px;
   cursor: pointer;
 }
 
 .copy-id-button:hover {
-  background: #f5f5f4;
+  background: #eef2ff;
 }

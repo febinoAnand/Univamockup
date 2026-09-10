@@ -10,9 +10,13 @@
   <title>Login — Univa</title>
 </head>
 <body>
-  <div class="login-page">
+  <div class="auth-shell">
+    <main class="auth-main">
     <div class="login-card">
       <img src="assets/favicon.png" alt="Univa" class="auth-logo" />
+
+      <h1 class="login-title">Welcome back</h1>
+      <p class="login-subtitle">Sign in to your Univa workspace</p>
 
       <p class="demo-users-note">
         Demo logins: <strong>admin</strong> / admin (approved) or <strong>adminapprove</strong> / admin (pending approval)
@@ -69,8 +73,10 @@
       <p class="signup-row">Don't have an account? <a href="signup.html" class="link">Sign up</a></p>
       <p class="login-footer">© 2026 All rights reserved.</p>
     </div>
+    </main>
   </div>
 
+  <script src="shared/ui.js"></script>
   <script src="shared/store.js"></script>
   <script>
     if (Store.isLoggedIn()) {
@@ -79,6 +85,7 @@
 
     document.getElementById('login-form').addEventListener('submit', function (event) {
       event.preventDefault()
+      const submitBtn = event.target.querySelector('.login-button')
       const username = document.getElementById('username').value
       const password = document.getElementById('password').value
       const errorEl = document.getElementById('login-error')
@@ -86,16 +93,19 @@
       errorEl.classList.add('hidden')
       noticeEl.classList.add('hidden')
 
-      const result = Store.login(username, password)
-      if (result.ok) {
-        window.location.href = 'dashboard.html'
-        return
-      }
-      if (result.pendingApproval) {
-        noticeEl.classList.remove('hidden')
-        return
-      }
-      errorEl.classList.remove('hidden')
+      UI.runWithLoading(submitBtn, () => {
+        const result = Store.login(username, password)
+        if (result.ok) {
+          window.location.href = 'dashboard.html'
+          return
+        }
+        if (result.pendingApproval) {
+          noticeEl.classList.remove('hidden')
+          return
+        }
+        errorEl.classList.remove('hidden')
+        UI.shakeField(document.getElementById('password').closest('.field'))
+      })
     })
   </script>
 </body>

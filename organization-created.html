@@ -11,7 +11,8 @@
   <title>Organisation created — Univa</title>
 </head>
 <body>
-  <div class="login-page">
+  <div class="auth-shell">
+    <main class="auth-main">
     <div class="login-card signup-card">
       <img src="assets/favicon.png" alt="Univa" class="auth-logo" />
 
@@ -33,6 +34,7 @@
 
       <button type="button" class="login-button" id="return-to-login-btn">Return to Login</button>
     </div>
+    </main>
   </div>
 
   <script>
@@ -53,6 +55,10 @@
       sessionStorage.setItem(ORG_ID_KEY, orgId)
     }
     document.getElementById('org-id-value').textContent = orgId
+
+    // Signup is complete at this point — drop the draft so a future signup
+    // doesn't get pre-filled with this run's details.
+    sessionStorage.removeItem('univa-signup-draft')
 
     function showLocalToast(message) {
       const el = document.createElement('div')

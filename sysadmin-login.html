@@ -11,7 +11,8 @@
   <title>System administrator — Univa</title>
 </head>
 <body>
-  <div class="login-page sysadmin-login-page">
+  <div class="auth-shell">
+    <main class="auth-main sysadmin-main">
     <div class="login-card sysadmin-login-card">
       <img src="assets/favicon.png" alt="Univa" class="auth-logo" />
       <span class="sysadmin-badge">
@@ -50,6 +51,7 @@
       <p class="signup-row">Not an administrator? <a href="login.html" class="link">Back to sign in</a></p>
       <p class="login-footer">© 2026 All rights reserved.</p>
     </div>
+    </main>
   </div>
 
   <script src="shared/ui.js"></script>
@@ -66,7 +68,9 @@
 
     document.getElementById('sysadmin-form').addEventListener('submit', function (event) {
       event.preventDefault()
-      window.location.href = 'admin-dashboard.html'
+      UI.runWithLoading(submitButton, () => {
+        window.location.href = 'admin-dashboard.html'
+      })
     })
   </script>
 </body>

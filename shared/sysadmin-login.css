@@ -1,10 +1,63 @@
-.sysadmin-login-page {
-  background: linear-gradient(180deg, #0c0a09 0%, #1c1917 100%);
+.sysadmin-main {
+  background: radial-gradient(60% 50% at 30% 20%, rgba(139, 92, 246, 0.14), transparent 100%),
+    radial-gradient(55% 45% at 80% 85%, rgba(14, 165, 233, 0.12), transparent 100%), #0c0a09;
 }
 
 .sysadmin-login-card {
   position: relative;
-  box-shadow: 0 1px 2px rgba(12, 10, 9, 0.04), 0 6px 16px rgba(12, 10, 9, 0.06);
+  padding: 2.5rem 2.25rem 2rem;
+  background: rgba(28, 25, 23, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2), 0 24px 60px -16px rgba(0, 0, 0, 0.6);
+}
+
+.sysadmin-login-card .auth-logo {
+  filter: brightness(0) invert(1);
+}
+
+.sysadmin-login-card .login-title {
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: #f4f4f5;
+}
+
+.sysadmin-login-card .field label {
+  color: #f4f4f5;
+}
+
+.sysadmin-login-card .login-subtitle {
+  color: #a8a29e;
+}
+
+.sysadmin-login-card .input-wrap input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f4f4f5;
+}
+
+.sysadmin-login-card .input-wrap input::placeholder {
+  color: #78716c;
+}
+
+.sysadmin-login-card .input-wrap input:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #8b5cf6;
+}
+
+.sysadmin-login-card .divider {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sysadmin-login-card .signup-row {
+  color: #d6d3d1;
+}
+
+.sysadmin-login-card .login-footer {
+  color: #78716c;
 }
 
 .sysadmin-badge {
@@ -14,18 +67,20 @@
   margin-bottom: 1rem;
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
-  background: #0c0a09;
-  color: #e7e5e4;
+  background: rgba(139, 92, 246, 0.15);
+  color: #ddd6fe;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 .sysadmin-login-button {
-  background: #0c0a09;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
 }
 
-.sysadmin-login-button:hover {
-  background: #1c1917;
+.sysadmin-login-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  box-shadow: 0 10px 24px -6px rgba(124, 58, 237, 0.5);
 }

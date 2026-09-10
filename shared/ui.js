@@ -282,7 +282,43 @@ const UI = {
       input.type = showing ? 'password' : 'text'
       button.innerHTML = showing ? UI.EYE_ICON : UI.EYE_OFF_ICON
       button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password')
+      button.classList.remove('suffix-icon-pop')
+      void button.offsetWidth
+      button.classList.add('suffix-icon-pop')
     })
+  },
+
+  // Briefly disables a submit button and swaps in a spinner (there's no
+  // real network call here, just a short delay so the loading state reads
+  // as a genuine action instead of an instant flash).
+  setButtonLoading(button, loading) {
+    if (!button) return
+    button.disabled = loading
+    button.classList.toggle('is-loading', loading)
+  },
+
+  runWithLoading(button, action, delay) {
+    UI.setButtonLoading(button, true)
+    window.setTimeout(() => {
+      UI.setButtonLoading(button, false)
+      action()
+    }, delay || 550)
+  },
+
+  shakeField(fieldEl) {
+    if (!fieldEl) return
+    fieldEl.classList.remove('is-shaking')
+    void fieldEl.offsetWidth
+    fieldEl.classList.add('is-shaking')
+    window.setTimeout(() => fieldEl.classList.remove('is-shaking'), 420)
+  },
+
+  showToast(message) {
+    const el = document.createElement('div')
+    el.className = 'toast'
+    el.textContent = message
+    document.body.appendChild(el)
+    window.setTimeout(() => el.remove(), 3000)
   },
 }
 
