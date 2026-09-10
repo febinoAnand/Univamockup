@@ -682,6 +682,7 @@
     const GENERIC_TABS = [
       { key: 'metadata', label: 'Metadata attributes', icon: 'credentials' },
       { key: 'assets', label: 'Assets', icon: 'asset' },
+      { key: 'groups', label: 'Groups', icon: 'group' },
       { key: 'devices', label: 'Linked devices', icon: 'device' },
     ]
     let genericActiveTab = 'devices'
@@ -701,10 +702,8 @@
               )
               .join('')}</div>`
       }
-      // Assets and asset groups both describe an application's physical
-      // footprint, so they share one tab instead of two near-identical ones.
       if (tab === 'assets') {
-        const assetTiles = assets.length === 0
+        return assets.length === 0
           ? '<span class="section-empty">No assets linked to this application</span>'
           : `<div class="detail-tile-grid">${assets
               .map(
@@ -716,22 +715,29 @@
               </a>`,
               )
               .join('')}</div>`
-        const groupTiles = groupNames.length === 0
-          ? '<span class="section-empty">No asset groups linked to this application</span>'
-          : `<div class="detail-tile-grid">${groupNames
-              .map(
-                (name) => `
-              <div class="detail-tile">
-                <span class="detail-tile-icon">${iconSvg('group')}</span>
-                <p class="detail-tile-name">${name}</p>
-              </div>`,
-              )
-              .join('')}</div>`
-        return `
-          <h3 class="detail-subheading">Linked assets</h3>
-          ${assetTiles}
-          <h3 class="detail-subheading">Asset groups</h3>
-          ${groupTiles}`
+      }
+      if (tab === 'groups') {
+        if (groupNames.length === 0) return '<span class="section-empty">No asset groups linked to this application</span>'
+        const allAssets = Store.get().assets
+        return groupNames
+          .map((name) => {
+            const groupAssets = allAssets.filter((a) => (a.groupNames || []).includes(name))
+            return `
+          <h3 class="detail-subheading">${name}</h3>
+          ${groupAssets.length === 0
+            ? '<span class="section-empty">No assets in this group</span>'
+            : `<div class="detail-tile-grid">${groupAssets
+                .map(
+                  (a) => `
+              <a class="detail-tile" href="asset-detail.html#${a.id}">
+                <span class="detail-tile-icon">${iconSvg('asset')}</span>
+                <p class="detail-tile-name">${a.name}</p>
+                <span class="status-pill status-${a.status}">${a.status}</span>
+              </a>`,
+                )
+                .join('')}</div>`}`
+          })
+          .join('')
       }
       return metadata.length === 0
         ? '<span class="section-empty">No metadata attributes</span>'
