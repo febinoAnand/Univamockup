@@ -189,12 +189,17 @@
         { key: 'actionDetail', label: 'Action detail' },
       ] },
       { key: 'ruleEngineReports', label: 'Reports', iconFamily: 'ruleEngine', fields: [] },
-      { key: 'shiftManagement', label: 'Shift management', iconFamily: 'shift', fields: [
+      { key: 'shifts', label: 'Shift', iconFamily: 'shift', fields: [
         { key: 'name', label: 'Shift name' },
-        { key: 'startTime', label: 'Start time' },
-        { key: 'endTime', label: 'End time' },
-        { key: 'days', label: 'Days of week' },
-        { key: 'userIds', label: 'Assigned users' },
+        { key: 'startTime', label: 'From' },
+        { key: 'endTime', label: 'To' },
+        { key: 'midnightCrossed', label: 'Midnight crossed' },
+      ] },
+      { key: 'shiftInstances', label: 'Shift instance', iconFamily: 'shift', fields: [] },
+      { key: 'shiftSchedules', label: 'Shift schedule', iconFamily: 'shift', fields: [
+        { key: 'name', label: 'Schedule name' },
+        { key: 'description', label: 'Description' },
+        { key: 'assignments', label: 'Day assignments' },
       ] },
     ]
 
