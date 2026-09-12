@@ -112,7 +112,7 @@ const UI = {
     })
   },
 
-  confirm({ title = 'Confirm delete', message, confirmLabel = 'Delete', danger = true, onConfirm }) {
+  confirm({ title = 'Confirm delete', message, confirmLabel = 'Delete', danger = true, onConfirm, onCancel }) {
     let root = document.getElementById('confirm-dialog-root')
     if (!root) {
       root = document.createElement('div')
@@ -140,8 +140,8 @@ const UI = {
       root.innerHTML = ''
     }
 
-    document.getElementById('confirm-dialog-close').addEventListener('click', close)
-    document.getElementById('confirm-dialog-cancel').addEventListener('click', close)
+    document.getElementById('confirm-dialog-close').addEventListener('click', () => { close(); onCancel && onCancel() })
+    document.getElementById('confirm-dialog-cancel').addEventListener('click', () => { close(); onCancel && onCancel() })
     document.getElementById('confirm-dialog-confirm').addEventListener('click', () => {
       close()
       onConfirm && onConfirm()

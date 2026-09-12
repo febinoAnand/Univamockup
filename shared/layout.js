@@ -193,6 +193,28 @@ function wireSidebarToggle(shell) {
   if (toggleBtn) toggleBtn.addEventListener('click', () => shell.classList.toggle('sidebar-open'))
 }
 
+// Loads the floating AI assistant widget's assets on demand rather than
+// requiring a <link>/<script> tag on every one of this app's pages — see
+// shared/chatbot.js. NAV_SECTIONS is passed in so the widget's navigate
+// tool always matches the real sidebar without duplicating the page list.
+function loadChatbot() {
+  if (!document.querySelector('link[data-chatbot-css]')) {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'shared/chatbot.css'
+    link.setAttribute('data-chatbot-css', '')
+    document.head.appendChild(link)
+  }
+  if (window.Chatbot) {
+    window.Chatbot.mount(NAV_SECTIONS)
+    return
+  }
+  const script = document.createElement('script')
+  script.src = 'shared/chatbot.js'
+  script.onload = () => window.Chatbot.mount(NAV_SECTIONS)
+  document.body.appendChild(script)
+}
+
 const Layout = {
   // Pages with dynamic sidebar children (e.g. application-detail.html, one
   // per application) sit at the same URL path across items — clicking a
@@ -240,6 +262,7 @@ const Layout = {
 
     ensureSidebarBackdrop(shell)
     wireSidebarToggle(shell)
+    loadChatbot()
   },
 
   // Mirrors src/core/layouts/AdminSidebar.jsx + AdminLayout.jsx — a
