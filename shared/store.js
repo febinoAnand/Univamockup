@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v11'
+const STORAGE_KEY = 'univa-html-demo-v13'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -154,9 +154,29 @@ const DEFAULT_DATA = {
     { id: 'g3', name: 'Viewers', description: 'Read-only access to dashboards and device data.', createdDate: '2026-01-08 11:47:00' },
   ],
   shifts: [
-    { id: 'sh1', name: 'Morning shift', startTime: '06:00', endTime: '14:00', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], userIds: ['u1', 'u3'], status: 'active', createdDate: '2025-11-02 09:14:00' },
-    { id: 'sh2', name: 'Evening shift', startTime: '14:00', endTime: '22:00', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], userIds: ['u2'], status: 'active', createdDate: '2025-12-19 14:02:00' },
-    { id: 'sh3', name: 'Night shift', startTime: '22:00', endTime: '06:00', days: ['Sat', 'Sun'], userIds: [], status: 'suspended', createdDate: '2026-01-08 11:47:00' },
+    { id: 'sh1', name: 'Morning shift', startTime: '06:00', endTime: '14:00', midnightCrossed: false, status: 'active', createdDate: '2025-11-02 09:14:00' },
+    { id: 'sh2', name: 'Evening shift', startTime: '14:00', endTime: '22:00', midnightCrossed: false, status: 'active', createdDate: '2025-12-19 14:02:00' },
+    { id: 'sh3', name: 'Night shift', startTime: '22:00', endTime: '06:00', midnightCrossed: true, status: 'suspended', createdDate: '2026-01-08 11:47:00' },
+  ],
+  // Maps each weekday to the shift(s) covering it (an array of shift ids —
+  // a day can be covered by more than one shift, e.g. overlapping coverage
+  // — or [] when the day is off) — mirrors ShiftSchedule.jsx's weekly
+  // rotation editor.
+  shiftSchedules: [
+    { id: 'ss1', name: 'Standard rotation', description: 'Default weekday/weekend rotation for warehouse staff.', assignments: { Mon: ['sh1'], Tue: ['sh1'], Wed: ['sh1'], Thu: ['sh1'], Fri: ['sh1'], Sat: ['sh1', 'sh2', 'sh3'], Sun: ['sh3'] }, createdDate: '2025-11-02 09:14:00' },
+    { id: 'ss2', name: 'Evening coverage', description: 'Evening shift coverage for the facilities team.', assignments: { Mon: ['sh2'], Tue: ['sh2'], Wed: ['sh2'], Thu: ['sh2'], Fri: ['sh2', 'sh3'], Sat: [], Sun: [] }, createdDate: '2025-12-19 14:02:00' },
+  ],
+  // Generated occurrences of a shift on a specific date — read-only history,
+  // like ruleEngineExecutions above; not hand-edited, only removable.
+  shiftInstances: [
+    { id: 'si1', shiftName: 'Morning shift', scheduleName: 'Standard rotation', date: '2026-03-20', day: 'Fri', startTime: '06:00', endTime: '14:00', status: 'completed' },
+    // Saturday is covered by all three shifts on this schedule — one
+    // instance per shift, same date, back-to-back round-the-clock coverage.
+    { id: 'si2', shiftName: 'Morning shift', scheduleName: 'Standard rotation', date: '2026-03-21', day: 'Sat', startTime: '06:00', endTime: '14:00', status: 'completed' },
+    { id: 'si3', shiftName: 'Evening shift', scheduleName: 'Standard rotation', date: '2026-03-21', day: 'Sat', startTime: '14:00', endTime: '22:00', status: 'completed' },
+    { id: 'si4', shiftName: 'Night shift', scheduleName: 'Standard rotation', date: '2026-03-21', day: 'Sat', startTime: '22:00', endTime: '06:00', status: 'completed' },
+    { id: 'si5', shiftName: 'Evening shift', scheduleName: 'Evening coverage', date: '2026-03-23', day: 'Mon', startTime: '14:00', endTime: '22:00', status: 'upcoming' },
+    { id: 'si6', shiftName: 'Morning shift', scheduleName: 'Standard rotation', date: '2026-03-24', day: 'Tue', startTime: '06:00', endTime: '14:00', status: 'upcoming' },
   ],
 }
 
@@ -801,7 +821,7 @@ const Store = {
   // ------------------------------------------------------------- shifts
   addShift(data) {
     const store = loadData()
-    const record = { id: uid('sh'), name: data.name, startTime: data.startTime, endTime: data.endTime, days: data.days ?? [], userIds: data.userIds ?? [], status: 'active', createdDate: nowStamp() }
+    const record = { id: uid('sh'), name: data.name, startTime: data.startTime, endTime: data.endTime, midnightCrossed: !!data.midnightCrossed, status: 'active', createdDate: nowStamp() }
     store.shifts.push(record)
     saveData(store)
     return record
@@ -809,7 +829,7 @@ const Store = {
   updateShift(id, data) {
     const store = loadData()
     const shift = store.shifts.find((s) => s.id === id)
-    if (shift) Object.assign(shift, { name: data.name, startTime: data.startTime, endTime: data.endTime, days: data.days ?? [], userIds: data.userIds ?? [] })
+    if (shift) Object.assign(shift, { name: data.name, startTime: data.startTime, endTime: data.endTime, midnightCrossed: !!data.midnightCrossed })
     saveData(store)
   },
   toggleShiftStatus(id) {
@@ -818,9 +838,43 @@ const Store = {
     if (shift) shift.status = shift.status === 'active' ? 'suspended' : 'active'
     saveData(store)
   },
+  // Blocked (rather than cascade-clearing) when a shift schedule still
+  // assigns this shift to a day — mirrors handleRemove()'s in-use guard on
+  // asset-profiles.html so a schedule never ends up pointing at a dangling id.
+  shiftInUseBy(id) {
+    const store = loadData()
+    return store.shiftSchedules.filter((s) => Object.values(s.assignments).some((ids) => ids.includes(id))).map((s) => s.name)
+  },
   removeShift(id) {
     const store = loadData()
     store.shifts = store.shifts.filter((s) => s.id !== id)
+    saveData(store)
+  },
+
+  // ---------------------------------------------------- shift schedules
+  addShiftSchedule(data) {
+    const store = loadData()
+    const record = { id: uid('ss'), name: data.name, description: data.description || '', assignments: data.assignments ?? {}, createdDate: nowStamp() }
+    store.shiftSchedules.push(record)
+    saveData(store)
+    return record
+  },
+  updateShiftSchedule(id, data) {
+    const store = loadData()
+    const schedule = store.shiftSchedules.find((s) => s.id === id)
+    if (schedule) Object.assign(schedule, { name: data.name, description: data.description || '', assignments: data.assignments ?? {} })
+    saveData(store)
+  },
+  removeShiftSchedule(id) {
+    const store = loadData()
+    store.shiftSchedules = store.shiftSchedules.filter((s) => s.id !== id)
+    saveData(store)
+  },
+
+  // ---------------------------------------------------- shift instances
+  removeShiftInstance(id) {
+    const store = loadData()
+    store.shiftInstances = store.shiftInstances.filter((s) => s.id !== id)
     saveData(store)
   },
 }

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
-  <title>Shift — Univa</title>
+  <title>Shift schedule — Univa</title>
 </head>
 <body>
   <div class="app-shell" id="app-shell">
@@ -15,13 +15,13 @@
       <div class="app-content" id="app-content">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Shift</h1>
-            <p class="page-subtitle">Define reusable shift time windows</p>
+            <h1 class="page-title">Shift schedule</h1>
+            <p class="page-subtitle">Assign one shift to each day of the week</p>
           </div>
           <div class="page-header-actions">
             <button type="button" class="solid-action-button" id="add-btn">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
-              Add shift
+              Add schedule
             </button>
           </div>
         </div>
@@ -29,7 +29,7 @@
         <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
           <div class="table-search-wrap" style="margin-bottom:0;">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
-            <input type="text" id="search" placeholder="Search shifts" />
+            <input type="text" id="search" placeholder="Search schedules" />
           </div>
           <div id="view-toggle-slot"></div>
         </div>
@@ -38,11 +38,8 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th><button type="button" class="th-sort-button" data-sort="name">Name<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="name"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
-                <th>From</th>
-                <th>To</th>
-                <th>Midnight crossed</th>
-                <th>Status</th>
+                <th><button type="button" class="th-sort-button" data-sort="name">Schedule name<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="name"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+                <th>Days</th>
                 <th><button type="button" class="th-sort-button" data-sort="createdDate">Created Date<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" class="sort-icon" data-sort-icon="createdDate"><path d="M12 5v14M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
                 <th class="data-table-menu-col"></th>
               </tr>
@@ -54,30 +51,25 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="shift-modal">
+  <div class="modal-overlay" id="schedule-modal">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 id="modal-title">Add shift</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('shift-modal')" aria-label="Close">&times;</button>
+        <h2 id="modal-title">Add schedule</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('schedule-modal')" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="shift-form">
-          <div class="modal-field"><label for="shift-name">Shift name*</label><input id="shift-name" type="text" required /></div>
-          <div class="modal-field-grid">
-            <div class="modal-field"><label for="shift-start">From*</label><input id="shift-start" type="time" required /></div>
-            <div class="modal-field"><label for="shift-end">To*</label><input id="shift-end" type="time" required /></div>
-          </div>
+        <form id="schedule-form">
+          <div class="modal-field"><label for="schedule-name">Schedule name*</label><input id="schedule-name" type="text" required /></div>
+          <div class="modal-field"><label for="schedule-description">Description</label><textarea id="schedule-description" rows="2"></textarea></div>
           <div class="modal-field">
-            <label class="checkbox-label">
-              <input type="checkbox" id="shift-midnight-crossed" style="width:15px; height:15px;" />
-              This shift crosses midnight (e.g. 22:00 – 06:00)
-            </label>
+            <label>Day assignments</label>
+            <div class="schedule-day-grid" id="schedule-days-list"></div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="modal-button secondary" onclick="UI.closeModal('shift-modal')">Cancel</button>
-        <button type="submit" form="shift-form" class="modal-button primary" id="save-btn">Create</button>
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('schedule-modal')">Cancel</button>
+        <button type="submit" form="schedule-form" class="modal-button primary" id="save-btn">Create</button>
       </div>
     </div>
   </div>
@@ -87,13 +79,15 @@
   <script src="shared/ui.js"></script>
   <script>
     Layout.mount({
-      active: 'shift-management',
+      active: 'shift-schedules',
       breadcrumbs: [
         { label: 'Home', href: 'dashboard.html' },
         { label: 'Shift management', href: 'shift-management.html' },
-        { label: 'Shift' },
+        { label: 'Shift schedule' },
       ],
     })
+
+    const DAY_OPTIONS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     let editingId = null
     let sort = { key: null, direction: 'asc' }
@@ -103,14 +97,9 @@
       return direction === 'asc' ? result : -result
     }
 
-    function formatTime(t) {
-      if (!t) return '—'
-      const [hStr, mStr] = t.split(':')
-      let h = parseInt(hStr, 10)
-      const period = h >= 12 ? 'PM' : 'AM'
-      h = h % 12
-      if (h === 0) h = 12
-      return `${h}:${mStr} ${period}`
+    function shiftNamesForDay(ids) {
+      const shifts = Store.get().shifts
+      return (ids || []).map((id) => shifts.find((s) => s.id === id)?.name).filter(Boolean)
     }
 
     document.querySelectorAll('[data-sort]').forEach((btn) => {
@@ -124,8 +113,8 @@
     function render() {
       const data = Store.get()
       const term = document.getElementById('search').value.trim().toLowerCase()
-      let shifts = term ? data.shifts.filter((s) => s.name.toLowerCase().includes(term)) : data.shifts
-      if (sort.key) shifts = [...shifts].sort((a, b) => compareValues(a[sort.key], b[sort.key], sort.direction))
+      let schedules = term ? data.shiftSchedules.filter((s) => s.name.toLowerCase().includes(term)) : data.shiftSchedules
+      if (sort.key) schedules = [...schedules].sort((a, b) => compareValues(a[sort.key], b[sort.key], sort.direction))
 
       document.querySelectorAll('[data-sort-icon]').forEach((icon) => {
         const key = icon.getAttribute('data-sort-icon')
@@ -133,19 +122,21 @@
       })
 
       const tbody = document.getElementById('tbody')
-      if (shifts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-table-note">No shifts match your search.</td></tr>'
+      if (schedules.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-table-note">No shift schedules match your search.</td></tr>'
         return
       }
-      tbody.innerHTML = shifts
+      tbody.innerHTML = schedules
         .map(
           (s) => `
         <tr>
-          <td class="card-title-cell">${s.name}</td>
-          <td data-label="From">${formatTime(s.startTime)}</td>
-          <td data-label="To">${formatTime(s.endTime)}</td>
-          <td data-label="Midnight crossed">${s.midnightCrossed ? '<span class="day-chip">Crosses midnight</span>' : '—'}</td>
-          <td data-label="Status"><span class="status-pill status-${s.status}">${s.status}</span></td>
+          <td class="card-title-cell"><div class="group-name-cell">${s.name}${s.description ? `<p class="group-description">${s.description}</p>` : ''}</div></td>
+          <td data-label="Days"><div class="day-chip-row">${DAY_OPTIONS.map((d) => {
+            const names = shiftNamesForDay(s.assignments[d])
+            if (names.length === 0) return `<span class="day-chip off">${d}</span>`
+            const suffix = names.length > 1 ? ` ×${names.length}` : ''
+            return `<span class="day-chip" title="${names.join(', ')}">${d}${suffix}</span>`
+          }).join('')}</div></td>
           <td data-label="Created Date">${s.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
@@ -153,11 +144,9 @@
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
               </button>
               <div class="row-menu-dropdown">
-                <button type="button" class="row-menu-item" data-toggle-status="${s.id}">
-                  ${s.status === 'active'
-                    ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
-                    : '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 5l12 7-12 7V5Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
-                  ${s.status === 'active' ? 'Suspend' : 'Activate'}
+                <button type="button" class="row-menu-item" data-report="${s.id}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 13v4M12 9.5v7.5M16 11.5v5.5" stroke-linecap="round"/></svg>
+                  View report
                 </button>
                 <button type="button" class="row-menu-item" data-edit="${s.id}">
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -174,14 +163,8 @@
         )
         .join('')
 
-      document.querySelectorAll('[data-toggle-status]').forEach((btn) =>
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-toggle-status')
-          const s = Store.get().shifts.find((x) => x.id === id)
-          Store.toggleShiftStatus(id)
-          render()
-          UI.toast(`"${s.name}" status updated successfully!`)
-        }),
+      document.querySelectorAll('[data-report]').forEach((btn) =>
+        btn.addEventListener('click', () => { window.location.href = 'shift-instances.html#' + btn.getAttribute('data-report') }),
       )
       document.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.getAttribute('data-edit'))))
       document.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-delete'))))
@@ -197,70 +180,87 @@
     }
     document.addEventListener('click', () => UI.closeRowMenus())
 
+    function renderDaysList(assignments) {
+      const shifts = Store.get().shifts
+      document.getElementById('schedule-days-list').innerHTML = DAY_OPTIONS
+        .map(
+          (d) => `
+        <div class="schedule-day-row">
+          <span class="schedule-day-label">${d}</span>
+          <div class="day-toggle-row">
+            ${shifts.length === 0
+              ? '<span class="section-empty">No shifts defined yet</span>'
+              : shifts.map((sh) => `<label class="day-toggle"><input type="checkbox" data-schedule-shift="${d}" value="${sh.id}" ${(assignments[d] || []).includes(sh.id) ? 'checked' : ''}/> ${sh.name}</label>`).join('')}
+          </div>
+        </div>`,
+        )
+        .join('')
+    }
+
+    function readAssignments() {
+      const assignments = {}
+      DAY_OPTIONS.forEach((d) => {
+        assignments[d] = Array.from(document.querySelectorAll(`[data-schedule-shift="${d}"]:checked`)).map((el) => el.value)
+      })
+      return assignments
+    }
+
     function openAdd() {
       editingId = null
-      document.getElementById('modal-title').textContent = 'Add shift'
+      document.getElementById('modal-title').textContent = 'Add schedule'
       document.getElementById('save-btn').textContent = 'Create'
-      document.getElementById('shift-name').value = ''
-      document.getElementById('shift-start').value = '09:00'
-      document.getElementById('shift-end').value = '17:00'
-      document.getElementById('shift-midnight-crossed').checked = false
-      UI.openModal('shift-modal')
+      document.getElementById('schedule-name').value = ''
+      document.getElementById('schedule-description').value = ''
+      renderDaysList({})
+      UI.openModal('schedule-modal')
     }
 
     function openEdit(id) {
-      const s = Store.get().shifts.find((x) => x.id === id)
+      const s = Store.get().shiftSchedules.find((x) => x.id === id)
       if (!s) return
       editingId = id
-      document.getElementById('modal-title').textContent = 'Edit shift'
+      document.getElementById('modal-title').textContent = 'Edit schedule'
       document.getElementById('save-btn').textContent = 'Save changes'
-      document.getElementById('shift-name').value = s.name
-      document.getElementById('shift-start').value = s.startTime
-      document.getElementById('shift-end').value = s.endTime
-      document.getElementById('shift-midnight-crossed').checked = !!s.midnightCrossed
-      UI.openModal('shift-modal')
+      document.getElementById('schedule-name').value = s.name
+      document.getElementById('schedule-description').value = s.description || ''
+      renderDaysList(s.assignments)
+      UI.openModal('schedule-modal')
     }
 
     function confirmDelete(id) {
-      const s = Store.get().shifts.find((x) => x.id === id)
+      const s = Store.get().shiftSchedules.find((x) => x.id === id)
       if (!s) return
-      const inUseBy = Store.shiftInUseBy(id)
-      if (inUseBy.length > 0) {
-        UI.toast(`Remove "${s.name}" from ${inUseBy.join(', ')} before deleting it.`)
-        return
-      }
       UI.confirm({
         message: `Delete <strong>${s.name}</strong>? This can't be undone.`,
         onConfirm: () => {
-          Store.removeShift(id)
+          Store.removeShiftSchedule(id)
           render()
           UI.toast(`"${s.name}" deleted successfully!`)
         },
       })
     }
 
-    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('shift-management')
-    UI.wireViewToggle('shift-management', document.getElementById('table-scroll'))
+    document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('shift-schedules')
+    UI.wireViewToggle('shift-schedules', document.getElementById('table-scroll'))
 
     document.getElementById('add-btn').addEventListener('click', openAdd)
     document.getElementById('search').addEventListener('input', render)
 
-    document.getElementById('shift-form').addEventListener('submit', function (event) {
+    document.getElementById('schedule-form').addEventListener('submit', function (event) {
       event.preventDefault()
-      const name = document.getElementById('shift-name').value.trim()
+      const name = document.getElementById('schedule-name').value.trim()
       if (!name) return
-      const startTime = document.getElementById('shift-start').value
-      const endTime = document.getElementById('shift-end').value
-      const midnightCrossed = document.getElementById('shift-midnight-crossed').checked
+      const description = document.getElementById('schedule-description').value.trim()
+      const assignments = readAssignments()
 
       if (editingId) {
-        Store.updateShift(editingId, { name, startTime, endTime, midnightCrossed })
+        Store.updateShiftSchedule(editingId, { name, description, assignments })
         UI.toast(`"${name}" updated successfully!`)
       } else {
-        Store.addShift({ name, startTime, endTime, midnightCrossed })
-        UI.toast(`"${name}" shift created successfully!`)
+        Store.addShiftSchedule({ name, description, assignments })
+        UI.toast(`"${name}" schedule created successfully!`)
       }
-      UI.closeModal('shift-modal')
+      UI.closeModal('schedule-modal')
       render()
     })
 

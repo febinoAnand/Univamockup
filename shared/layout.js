@@ -32,7 +32,15 @@ const NAV_SECTIONS = [
       { key: 'asset-profiles', label: 'Asset profiles', icon: 'profile', href: 'asset-profiles.html' },
     ],
   },
-  { key: 'shift-management', label: 'Shifts', icon: 'shift', href: 'shift-management.html' },
+  {
+    key: 'shift-management',
+    label: 'Shift management',
+    children: [
+      { key: 'shift-management', label: 'Shift', icon: 'shift', href: 'shift-management.html' },
+      { key: 'shift-instances', label: 'Shift instance', icon: 'report', href: 'shift-instances.html' },
+      { key: 'shift-schedules', label: 'Shift schedule', icon: 'calendar', href: 'shift-schedules.html' },
+    ],
+  },
   {
     key: 'rule-engines',
     label: 'Rule engines',
@@ -73,6 +81,8 @@ function iconSvg(name) {
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7 5h6a4 4 0 0 1 4 4v0M7 19h6a4 4 0 0 0 4-4v0" stroke-linecap="round"/></svg>',
     shift:
       '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    calendar:
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke-linecap="round"/></svg>',
     profile:
       '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6.5 15.5c.6-1.4 1.5-2 2.5-2s1.9.6 2.5 2" stroke-linecap="round"/><path d="M14.5 9.5h3M14.5 12.5h3" stroke-linecap="round"/></svg>',
     credentials:
