@@ -37,8 +37,8 @@ const NAV_SECTIONS = [
     label: 'Shift management',
     children: [
       { key: 'shift-management', label: 'Shift', icon: 'shift', href: 'shift-management.html' },
-      { key: 'shift-instances', label: 'Shift instance', icon: 'report', href: 'shift-instances.html' },
-      { key: 'shift-schedules', label: 'Shift schedule', icon: 'calendar', href: 'shift-schedules.html' },
+      { key: 'shift-schedules', label: 'Schedule', icon: 'calendar', href: 'shift-schedules.html' },
+      { key: 'shift-instances', label: 'Instance', icon: 'report', href: 'shift-instances.html' },
     ],
   },
   {
