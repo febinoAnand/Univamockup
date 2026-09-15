@@ -39,6 +39,25 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="execution-detail-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Execution details</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('execution-detail-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="execution-detail-grid" id="execution-detail-grid"></div>
+        <div class="execution-fail-box hidden" id="execution-fail-box">
+          <strong>Failure reason</strong>
+          <p id="execution-fail-reason"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('execution-detail-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
@@ -64,7 +83,7 @@
       tbody.innerHTML = rows
         .map(
           (e) => `
-        <tr>
+        <tr class="clickable-row" data-open="${e.id}">
           <td class="card-title-cell">${e.ruleEngineName}</td>
           <td data-label="Triggered at">${e.triggeredAt}</td>
           <td data-label="Trigger"><span class="rule-summary-pill">${e.triggerType}</span></td>
@@ -74,6 +93,30 @@
         </tr>`,
         )
         .join('')
+      document.querySelectorAll('[data-open]').forEach((tr) => tr.addEventListener('click', () => openDetail(tr.getAttribute('data-open'))))
+    }
+
+    function openDetail(id) {
+      const e = Store.get().ruleEngineExecutions.find((x) => x.id === id)
+      if (!e) return
+      const rows = [
+        ['Rule engine', e.ruleEngineName],
+        ['Triggered at', e.triggeredAt],
+        ['Trigger', e.triggerType],
+        ['Device', e.deviceName || 'All devices'],
+        ['Condition', e.condition],
+        ['Action', e.actionType],
+        ['Action detail', e.actionDetail || '—'],
+        ['Duration', e.durationMs != null ? `${e.durationMs} ms` : '—'],
+        ['Outcome', `<span class="outcome-pill outcome-${e.outcome}">${e.outcome}</span>`],
+      ]
+      document.getElementById('execution-detail-grid').innerHTML = rows
+        .map(([label, value]) => `<div class="execution-detail-row"><span class="execution-detail-label">${label}</span><span class="execution-detail-value">${value}</span></div>`)
+        .join('')
+      const failBox = document.getElementById('execution-fail-box')
+      failBox.classList.toggle('hidden', e.outcome !== 'failed')
+      if (e.outcome === 'failed') document.getElementById('execution-fail-reason').textContent = e.failReason || 'No additional details recorded.'
+      UI.openModal('execution-detail-modal')
     }
 
     document.getElementById('search').addEventListener('input', render)

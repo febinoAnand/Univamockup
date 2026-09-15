@@ -81,6 +81,17 @@
                   <option>Schedule</option>
                 </select>
               </div>
+              <div class="modal-field">
+                <label for="engine-scope">Scope</label>
+                <select id="engine-scope">
+                  <option>All devices</option>
+                  <option>Specific device</option>
+                </select>
+              </div>
+              <div class="modal-field" id="engine-device-field">
+                <label for="engine-device">Device</label>
+                <select id="engine-device"></select>
+              </div>
             </div>
           </div>
 
@@ -175,6 +186,17 @@
       return conditions.map((c) => `${c.metric} ${c.operator} ${c.value}`).join(joiner)
     }
 
+    function populateDeviceOptions() {
+      const devices = Store.get().devices
+      document.getElementById('engine-device').innerHTML = devices.map((d) => `<option value="${d.id}">${d.name}</option>`).join('')
+    }
+
+    function setEngineScope(scope) {
+      document.getElementById('engine-scope').value = scope
+      document.getElementById('engine-device-field').classList.toggle('hidden', scope !== 'Specific device')
+    }
+    document.getElementById('engine-scope').addEventListener('change', (event) => setEngineScope(event.target.value))
+
     function setConditionMode(mode) {
       conditionModeDraft = mode
       document.querySelectorAll('[data-condition-mode]').forEach((btn) => btn.classList.toggle('active', btn.getAttribute('data-condition-mode') === mode))
@@ -229,6 +251,11 @@
       conditionLogicDraft = event.target.value
     })
 
+    function deviceNameById(id) {
+      const device = Store.get().devices.find((d) => d.id === id)
+      return device ? device.name : 'Unknown device'
+    }
+
     function render() {
       const data = Store.get()
       const term = document.getElementById('search').value.trim().toLowerCase()
@@ -243,7 +270,10 @@
           (e) => `
         <tr>
           <td class="card-title-cell">${e.name}</td>
-          <td data-label="Trigger"><span class="rule-summary-pill">${e.triggerType}</span></td>
+          <td data-label="Trigger">
+            <span class="rule-summary-pill">${e.triggerType}</span>
+            <div class="rule-scope-note">${e.scope === 'Specific device' ? deviceNameById(e.deviceId) : 'All devices'}</div>
+          </td>
           <td data-label="Condition">${conditionSummary(e)}</td>
           <td data-label="Action">${e.actionType}</td>
           <td data-label="Status"><span class="status-pill status-${e.status}">${e.status}</span></td>
@@ -336,6 +366,8 @@
       document.getElementById('engine-name').value = ''
       document.getElementById('engine-description').value = ''
       document.getElementById('engine-trigger').value = 'Telemetry received'
+      populateDeviceOptions()
+      setEngineScope('All devices')
       conditionsDraft = [{ metric: '', operator: '>', value: '' }]
       conditionLogicDraft = 'AND'
       document.getElementById('engine-condition-logic').value = 'AND'
@@ -356,6 +388,9 @@
       document.getElementById('engine-name').value = e.name
       document.getElementById('engine-description').value = e.description || ''
       document.getElementById('engine-trigger').value = e.triggerType
+      populateDeviceOptions()
+      setEngineScope(e.scope || 'All devices')
+      if (e.deviceId) document.getElementById('engine-device').value = e.deviceId
       conditionsDraft = (e.conditions && e.conditions.length ? e.conditions : [{ metric: '', operator: '>', value: '' }]).map((c) => Object.assign({}, c))
       conditionLogicDraft = e.conditionLogic || 'AND'
       document.getElementById('engine-condition-logic').value = conditionLogicDraft
@@ -395,6 +430,8 @@
       const payload = {
         name,
         description: document.getElementById('engine-description').value.trim(),
+        scope: document.getElementById('engine-scope').value,
+        deviceId: document.getElementById('engine-scope').value === 'Specific device' ? document.getElementById('engine-device').value : '',
         conditionMode: conditionModeDraft,
         conditions:
           conditionModeDraft === 'builder'

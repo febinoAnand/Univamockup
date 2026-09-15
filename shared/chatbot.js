@@ -53,8 +53,8 @@ You can read and act on this data via tools. Field names by entity (only the fie
 - devices: name, endpointId, state ("online"/"offline"), profileName
 - deviceProfiles, assetProfiles, tenantProfiles, userGroups, assetGroups: name, description
 - applications, assets, tenants, users, shifts: name (tenants use "title" instead of "name"), status ("active"/"suspended", except users which also has "invited")
-- ruleEngines: name, description, status ("active"/"suspended" — a suspended rule engine never fires), triggerType, actionType, conditionMode ("builder" uses conditions + conditionLogic; "formula" uses conditionFormula instead), conditions (array of {metric, operator, value}, only when conditionMode is "builder"), conditionLogic ("AND"/"OR" — how the conditions combine), conditionFormula (free-typed expression string, only when conditionMode is "formula"). Empty conditions / blank conditionFormula means the action always runs.
-- ruleEngineExecutions: ruleEngineName, triggeredAt, triggerType, outcome ("success"/"failed") — read-only history
+- ruleEngines: name, description, status ("active"/"suspended" — a suspended rule engine never fires), triggerType, scope ("All devices"/"Specific device"), deviceId (a devices.id, only set when scope is "Specific device"), actionType, conditionMode ("builder" uses conditions + conditionLogic; "formula" uses conditionFormula instead), conditions (array of {metric, operator, value}, only when conditionMode is "builder"), conditionLogic ("AND"/"OR" — how the conditions combine), conditionFormula (free-typed expression string, only when conditionMode is "formula"). Empty conditions / blank conditionFormula means the action always runs.
+- ruleEngineExecutions: ruleEngineName, triggeredAt, triggerType, deviceName, condition, actionType, actionDetail, durationMs, outcome ("success"/"failed"), failReason (set only when outcome is "failed") — read-only history
 - shiftSchedules: name, description, assignments (an object keyed Mon..Sun, each value an array of shift ids covering that day)
 - shiftInstances: shiftName, scheduleName, date, day, status ("completed"/"upcoming") — read-only, generated occurrences
 
