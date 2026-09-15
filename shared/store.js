@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v13'
+const STORAGE_KEY = 'univa-html-demo-v16'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -96,8 +96,12 @@ const DEFAULT_DATA = {
     { id: 'ap3', name: 'Diesel generator', category: 'Power equipment', description: 'Backup generator telemetry profile.', metadata: [], createdDate: '2026-01-08 11:50:00' },
   ],
   ruleEngines: [
-    { id: 're1', name: 'High temperature alert', description: 'Raises an alarm when a device reports an unusually high temperature.', conditionMetric: 'temperature', conditionOperator: '>', conditionValue: '30', triggerType: 'Telemetry received', actionType: 'Create alarm', actionDetail: 'Critical', createdDate: '2025-11-02 09:14:00' },
-    { id: 're2', name: 'Device offline notice', description: 'Notifies the operations team when a device disconnects.', conditionMetric: '', conditionOperator: '>', conditionValue: '', triggerType: 'Device disconnected', actionType: 'Send email', actionDetail: 'ops@monitoring.example', createdDate: '2026-02-11 15:40:00' },
+    { id: 're1', name: 'High temperature alert', description: 'Raises an alarm when a device reports an unusually high temperature.', status: 'active', conditionMode: 'builder', conditions: [{ metric: 'temperature', operator: '>', value: '30' }], conditionLogic: 'AND', conditionFormula: '', triggerType: 'Telemetry received', actionType: 'Create alarm', actionDetail: 'Critical', createdDate: '2025-11-02 09:14:00' },
+    { id: 're2', name: 'Device offline notice', description: 'Notifies the operations team when a device disconnects.', status: 'suspended', conditionMode: 'builder', conditions: [], conditionLogic: 'AND', conditionFormula: '', triggerType: 'Device disconnected', actionType: 'Send email', actionDetail: 'ops@monitoring.example', createdDate: '2026-02-11 15:40:00' },
+    // Multiple conditions joined by OR — demonstrates the AND/OR condition builder.
+    { id: 're3', name: 'Environmental combo alert', description: 'Warns facilities when either humidity or temperature drifts out of range.', status: 'active', conditionMode: 'builder', conditions: [{ metric: 'humidity', operator: '>', value: '70' }, { metric: 'temperature', operator: '>', value: '35' }], conditionLogic: 'OR', conditionFormula: '', triggerType: 'Telemetry received', actionType: 'Send notification', actionDetail: 'Humidity or temperature out of range', createdDate: '2026-03-05 10:20:00' },
+    // Free-typed formula instead of the row builder — demonstrates the "Write formula" mode.
+    { id: 're4', name: 'Pressure drop with hot/humid combo', description: 'Custom expression combining three metrics beyond a simple AND/OR row.', status: 'active', conditionMode: 'formula', conditions: [], conditionLogic: 'AND', conditionFormula: '(temperature > 30 AND humidity > 70) OR pressure < 950', triggerType: 'Telemetry received', actionType: 'Send notification', actionDetail: 'Formula condition matched', createdDate: '2026-03-10 08:35:00' },
   ],
   ruleEngineExecutions: [
     { id: 'rx1', ruleEngineName: 'High temperature alert', triggeredAt: '2026-03-20 09:12:44', triggerType: 'Telemetry received', condition: 'temperature > 30', actionType: 'Create alarm', outcome: 'success' },
@@ -569,7 +573,7 @@ const Store = {
   // -------------------------------------------------------- rule engines
   addRuleEngine(data) {
     const store = loadData()
-    const record = { id: uid('re'), ...data, createdDate: nowStamp() }
+    const record = { id: uid('re'), status: 'active', ...data, createdDate: nowStamp() }
     store.ruleEngines.push(record)
     saveData(store)
     return record
@@ -578,6 +582,12 @@ const Store = {
     const store = loadData()
     const record = store.ruleEngines.find((r) => r.id === id)
     if (record) Object.assign(record, data)
+    saveData(store)
+  },
+  toggleRuleEngineStatus(id) {
+    const store = loadData()
+    const record = store.ruleEngines.find((r) => r.id === id)
+    if (record) record.status = record.status === 'active' ? 'suspended' : 'active'
     saveData(store)
   },
   removeRuleEngine(id) {

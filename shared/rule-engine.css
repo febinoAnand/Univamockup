@@ -44,15 +44,113 @@
   font-size: 0.78rem;
   color: #a8a29e;
 }
+.condition-mode-toggle {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.25rem;
+  background: #f5f5f4;
+  border-radius: 10px;
+  width: fit-content;
+}
+.condition-mode-btn {
+  padding: 0.4rem 0.85rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #78716c;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.condition-mode-btn.active {
+  background: #ffffff;
+  color: #7c3aed;
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.08);
+}
+#condition-builder-wrap,
+#condition-formula-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+#engine-condition-formula {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  resize: vertical;
+}
 .condition-field-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 0.75rem;
 }
 .condition-field-row .modal-field {
   flex: 1;
   min-width: 120px;
   margin-bottom: 0;
+}
+#condition-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.condition-remove-button {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  background: #fafaf9;
+  color: #78716c;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.condition-remove-button:hover {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+.condition-logic-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b21b6;
+}
+.condition-logic-row select {
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b21b6;
+  background: #ffffff;
+}
+.add-condition-button {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px dashed #a78bfa;
+  border-radius: 8px;
+  background: #faf5ff;
+  color: #7c3aed;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-condition-button:hover {
+  background: #f3e8ff;
 }
 .rule-summary-pill {
   display: inline-flex;

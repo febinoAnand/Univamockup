@@ -36,7 +36,7 @@ const CHATBOT_ENTITIES = {
   assets: { nameField: 'name', remove: 'removeAsset', toggleStatus: 'toggleAssetStatus' },
   assetGroups: { nameField: 'name', remove: 'removeAssetGroup' },
   assetProfiles: { nameField: 'name', remove: 'removeAssetProfile' },
-  ruleEngines: { nameField: 'name', remove: 'removeRuleEngine' },
+  ruleEngines: { nameField: 'name', remove: 'removeRuleEngine', toggleStatus: 'toggleRuleEngineStatus' },
   ruleEngineExecutions: { nameField: 'ruleEngineName' },
   tenants: { nameField: 'title', remove: 'removeTenant', toggleStatus: 'toggleTenantStatus' },
   tenantProfiles: { nameField: 'name', remove: 'removeTenantProfile' },
@@ -53,7 +53,7 @@ You can read and act on this data via tools. Field names by entity (only the fie
 - devices: name, endpointId, state ("online"/"offline"), profileName
 - deviceProfiles, assetProfiles, tenantProfiles, userGroups, assetGroups: name, description
 - applications, assets, tenants, users, shifts: name (tenants use "title" instead of "name"), status ("active"/"suspended", except users which also has "invited")
-- ruleEngines: name, description, conditionMetric, conditionOperator, conditionValue, triggerType, actionType
+- ruleEngines: name, description, status ("active"/"suspended" — a suspended rule engine never fires), triggerType, actionType, conditionMode ("builder" uses conditions + conditionLogic; "formula" uses conditionFormula instead), conditions (array of {metric, operator, value}, only when conditionMode is "builder"), conditionLogic ("AND"/"OR" — how the conditions combine), conditionFormula (free-typed expression string, only when conditionMode is "formula"). Empty conditions / blank conditionFormula means the action always runs.
 - ruleEngineExecutions: ruleEngineName, triggeredAt, triggerType, outcome ("success"/"failed") — read-only history
 - shiftSchedules: name, description, assignments (an object keyed Mon..Sun, each value an array of shift ids covering that day)
 - shiftInstances: shiftName, scheduleName, date, day, status ("completed"/"upcoming") — read-only, generated occurrences
