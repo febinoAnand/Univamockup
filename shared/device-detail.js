@@ -105,6 +105,7 @@ const TABS = [
   { key: 'relations', label: 'Relations' },
   { key: 'dataPublish', label: 'Data publish' },
   { key: 'dataLogs', label: 'Data logs' },
+  { key: 'widgets', label: 'Custom widgets' },
 ]
 
 function refreshDevice() {
@@ -192,6 +193,11 @@ function renderRoot() {
     ])
   }
 
+  // The palette FAB lives outside #device-detail-root (see device-detail.html)
+  // so it survives the innerHTML rewrite above — only show it while the
+  // Custom widgets tab is actually the one on screen.
+  document.getElementById('widget-palette-fab').classList.toggle('hidden', activeTab !== 'widgets')
+
   renderTabBody()
 }
 
@@ -203,6 +209,16 @@ function renderTabBody() {
   else if (activeTab === 'relations') renderRelationsTab(body)
   else if (activeTab === 'dataPublish') renderDataPublishTab(body)
   else if (activeTab === 'dataLogs') renderDataLogsTab(body)
+  else if (activeTab === 'widgets') renderWidgetsTab(body)
+}
+
+function renderWidgetsTab(body) {
+  body.innerHTML = `
+    <div class="dashboard-page" style="padding:0;">
+      <div class="dashboard-toolbar" id="dashboard-toolbar"></div>
+      <div class="dashboard-canvas" id="dashboard-canvas"></div>
+    </div>`
+  bootDashboard({ scopeId: 'device-' + device.id, title: device.name + ' — Custom widgets', emptyDefault: true })
 }
 
 /* Generic local (non-auto-dismissing? no — matches shared Toast: 3s auto dismiss) */

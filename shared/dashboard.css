@@ -570,6 +570,10 @@
   background: #6d28d9;
 }
 
+.widget-palette-fab.hidden {
+  display: none;
+}
+
 .widget-palette-backdrop {
   position: fixed;
   inset: 0;

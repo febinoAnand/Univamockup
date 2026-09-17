@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v18'
+const STORAGE_KEY = 'univa-html-demo-v20'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -59,6 +59,39 @@ function deviceSeed(base) {
   })
 }
 
+// Derives an EMS meter's electrical-parameter simulation config (same
+// {key,label,unit,baseline,amplitude,decimals} shape as a device's own
+// .metrics — see DEVICE_DEFAULT_METRICS) from the meter's configured
+// min/max spec fields, so shared/dashboard.js's existing device-telemetry
+// engine can simulate live VR/VY/VB/IR/IY/IB/kW/kVA/Freq/PF readings for a
+// meter with zero changes to that engine.
+function emsMeterMetrics(m) {
+  const range = (min, max, fallbackBaseline, fallbackAmplitude) => {
+    if (typeof min === 'number' && typeof max === 'number' && max > min) return { baseline: (min + max) / 2, amplitude: (max - min) / 2 }
+    return { baseline: fallbackBaseline, amplitude: fallbackAmplitude }
+  }
+  const v = range(m.vpnMin, m.vpnMax, 230, 10)
+  const i = range(m.iMin, m.iMax, 40, 15)
+  const kw = range(m.kwMin, m.kwMax, 120, 60)
+  const kva = range(m.kvaMin, m.kvaMax, 140, 60)
+  const freq = range(m.freqMin, m.freqMax, 50, 0.3)
+  return [
+    { key: 'vr', label: 'VR', unit: 'V', baseline: v.baseline, amplitude: v.amplitude, decimals: 1 },
+    { key: 'vy', label: 'VY', unit: 'V', baseline: v.baseline, amplitude: v.amplitude, decimals: 1 },
+    { key: 'vb', label: 'VB', unit: 'V', baseline: v.baseline, amplitude: v.amplitude, decimals: 1 },
+    { key: 'ir', label: 'IR', unit: 'A', baseline: i.baseline, amplitude: i.amplitude, decimals: 1 },
+    { key: 'iy', label: 'IY', unit: 'A', baseline: i.baseline, amplitude: i.amplitude, decimals: 1 },
+    { key: 'ib', label: 'IB', unit: 'A', baseline: i.baseline, amplitude: i.amplitude, decimals: 1 },
+    { key: 'kw', label: 'Active power', unit: 'kW', baseline: kw.baseline, amplitude: kw.amplitude, decimals: 2 },
+    { key: 'kva', label: 'Apparent power', unit: 'kVA', baseline: kva.baseline, amplitude: kva.amplitude, decimals: 2 },
+    { key: 'freq', label: 'Frequency', unit: 'Hz', baseline: freq.baseline, amplitude: freq.amplitude, decimals: 2 },
+    { key: 'pf', label: 'Power factor', unit: '', baseline: 0.92, amplitude: 0.05, decimals: 2 },
+  ]
+}
+function emsMeterSeed(base) {
+  return Object.assign({}, base, { metrics: emsMeterMetrics(base) })
+}
+
 const DEFAULT_DATA = {
   auth: { loggedIn: false, username: '', pendingApproval: false },
   devices: [
@@ -75,6 +108,7 @@ const DEFAULT_DATA = {
   ],
   applications: [
     { id: 'app0', name: 'PMS', description: 'Built-in system application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'dashboard', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    { id: 'app_ems', name: 'EMS', description: 'Built-in energy management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], groupNames: ['Vehicles'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
     { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], groupNames: ['HVAC units'], metadata: [], icon: 'users', createdDate: '2025-12-19 14:02:00' },
     { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], groupNames: [], metadata: [], icon: 'cloud-ota', createdDate: '2026-01-08 11:47:00' },
@@ -183,6 +217,46 @@ const DEFAULT_DATA = {
     { id: 'si4', shiftName: 'Night shift', scheduleName: 'Standard rotation', date: '2026-03-21', day: 'Sat', startTime: '22:00', endTime: '06:00', status: 'completed' },
     { id: 'si5', shiftName: 'Evening shift', scheduleName: 'Evening coverage', date: '2026-03-23', day: 'Mon', startTime: '14:00', endTime: '22:00', status: 'upcoming' },
     { id: 'si6', shiftName: 'Morning shift', scheduleName: 'Standard rotation', date: '2026-03-24', day: 'Tue', startTime: '06:00', endTime: '14:00', status: 'upcoming' },
+  ],
+
+  // ---------------------------------------------------------- EMS (built-in app)
+  emsTodReadings: [
+    { id: 'tod1', meterId: 'meter1', date: '2026-03-09', t1: 6, t2: 5, t3: 4, t4: 5, t5: 4, totalHours: 142.8 },
+    { id: 'tod2', meterId: 'meter1', date: '2026-03-10', t1: 6, t2: 5, t3: 4, t4: 5, t5: 4, totalHours: 138.4 },
+    { id: 'tod3', meterId: 'meter1', date: '2026-03-11', t1: 5, t2: 6, t3: 4, t4: 4, t5: 5, totalHours: 151.2 },
+    { id: 'tod4', meterId: 'meter1', date: '2026-03-12', t1: 6, t2: 5, t3: 5, t4: 4, t5: 4, totalHours: 146.6 },
+    { id: 'tod5', meterId: 'meter1', date: '2026-03-13', t1: 6, t2: 6, t3: 4, t4: 4, t5: 4, totalHours: 149.0 },
+    { id: 'tod6', meterId: 'meter1', date: '2026-03-14', t1: 5, t2: 5, t3: 5, t4: 5, t5: 4, totalHours: 140.3 },
+    { id: 'tod7', meterId: 'meter1', date: '2026-03-15', t1: 6, t2: 5, t3: 4, t4: 5, t5: 4, totalHours: 144.7 },
+    { id: 'tod8', meterId: 'meter1', date: '2026-03-16', t1: 6, t2: 5, t3: 4, t4: 4, t5: 5, totalHours: 137.9 },
+    { id: 'tod9', meterId: 'meter1', date: '2026-03-17', t1: 5, t2: 6, t3: 5, t4: 4, t5: 4, totalHours: 152.5 },
+    { id: 'tod10', meterId: 'meter1', date: '2026-03-18', t1: 6, t2: 5, t3: 4, t4: 5, t5: 4, totalHours: 148.1 },
+    { id: 'tod11', meterId: 'meter1', date: '2026-03-19', t1: 6, t2: 6, t3: 4, t4: 4, t5: 4, totalHours: 145.0 },
+    { id: 'tod12', meterId: 'meter1', date: '2026-03-20', t1: 5, t2: 5, t3: 5, t4: 5, t5: 4, totalHours: 139.6 },
+    { id: 'tod13', meterId: 'meter2', date: '2026-03-15', t1: 8, t2: 7, t3: 6, t4: 7, t5: 6, totalHours: 210.4 },
+    { id: 'tod14', meterId: 'meter2', date: '2026-03-16', t1: 8, t2: 8, t3: 6, t4: 6, t5: 6, totalHours: 218.9 },
+    { id: 'tod15', meterId: 'meter2', date: '2026-03-17', t1: 7, t2: 8, t3: 7, t4: 6, t5: 6, totalHours: 205.2 },
+    { id: 'tod16', meterId: 'meter2', date: '2026-03-18', t1: 8, t2: 7, t3: 6, t4: 7, t5: 7, totalHours: 224.6 },
+    { id: 'tod17', meterId: 'meter2', date: '2026-03-19', t1: 8, t2: 8, t3: 7, t4: 6, t5: 6, totalHours: 212.0 },
+    { id: 'tod18', meterId: 'meter2', date: '2026-03-20', t1: 7, t2: 7, t3: 7, t4: 7, t5: 6, totalHours: 216.8 },
+  ],
+  emsMeters: [
+    emsMeterSeed({
+      id: 'meter1', name: 'Demo', meterId: 'Demo', location: 'Main Panel', partNumber: 'EM-3120', model: 'ElMeasure', modelNumber: 'EM6400', unit: 'Peak Timing',
+      vpnMin: 220, vpnMax: 240, vppMin: 380, vppMax: 415, iMin: 0, iMax: 100, kwMin: 0, kwMax: 500, kvaMin: 0, kvaMax: 600, freqMin: 49, freqMax: 51,
+    }),
+    emsMeterSeed({
+      id: 'meter2', name: 'GT1_EMS1', meterId: 'GT1_EMS1', location: 'Generator Room', partNumber: 'EM-3121', model: 'ElMeasure', modelNumber: 'EM6400', unit: 'Peak Timing',
+      vpnMin: 220, vpnMax: 240, vppMin: 380, vppMax: 415, iMin: 0, iMax: 150, kwMin: 0, kwMax: 750, kvaMin: 0, kvaMax: 900, freqMin: 49, freqMax: 51,
+    }),
+  ],
+  emsEnergyData: [
+    { id: 'energy1', meterId: 'meter1', year: 2026, month: 'January', renewable: 3200, nonRenewable: 8400, renewablePercent: 27.6, nonRenewablePercent: 72.4 },
+    { id: 'energy2', meterId: 'meter1', year: 2026, month: 'February', renewable: 3400, nonRenewable: 7900, renewablePercent: 30.1, nonRenewablePercent: 69.9 },
+    { id: 'energy3', meterId: 'meter1', year: 2026, month: 'March', renewable: 3100, nonRenewable: 8100, renewablePercent: 27.7, nonRenewablePercent: 72.3 },
+    { id: 'energy4', meterId: 'meter2', year: 2026, month: 'January', renewable: 4100, nonRenewable: 11200, renewablePercent: 26.8, nonRenewablePercent: 73.2 },
+    { id: 'energy5', meterId: 'meter2', year: 2026, month: 'February', renewable: 4400, nonRenewable: 10600, renewablePercent: 29.3, nonRenewablePercent: 70.7 },
+    { id: 'energy6', meterId: 'meter2', year: 2026, month: 'March', renewable: 4250, nonRenewable: 10950, renewablePercent: 27.9, nonRenewablePercent: 72.1 },
   ],
 }
 
@@ -887,6 +961,65 @@ const Store = {
   removeShiftInstance(id) {
     const store = loadData()
     store.shiftInstances = store.shiftInstances.filter((s) => s.id !== id)
+    saveData(store)
+  },
+
+  // ------------------------------------------------------- EMS (built-in app)
+  addEmsTodReading(data) {
+    const store = loadData()
+    const record = { id: uid('tod'), ...data }
+    store.emsTodReadings.push(record)
+    saveData(store)
+    return record
+  },
+  updateEmsTodReading(id, data) {
+    const store = loadData()
+    const record = store.emsTodReadings.find((r) => r.id === id)
+    if (record) Object.assign(record, data)
+    saveData(store)
+  },
+  removeEmsTodReadings(ids) {
+    const store = loadData()
+    store.emsTodReadings = store.emsTodReadings.filter((r) => !ids.includes(r.id))
+    saveData(store)
+  },
+  addEmsMeter(data) {
+    const store = loadData()
+    const record = emsMeterSeed({ id: uid('meter'), ...data })
+    store.emsMeters.push(record)
+    saveData(store)
+    return record
+  },
+  updateEmsMeter(id, data) {
+    const store = loadData()
+    const record = store.emsMeters.find((m) => m.id === id)
+    if (record) {
+      Object.assign(record, data)
+      record.metrics = emsMeterMetrics(record)
+    }
+    saveData(store)
+  },
+  removeEmsMeters(ids) {
+    const store = loadData()
+    store.emsMeters = store.emsMeters.filter((m) => !ids.includes(m.id))
+    saveData(store)
+  },
+  addEmsEnergyData(data) {
+    const store = loadData()
+    const record = { id: uid('energy'), ...data }
+    store.emsEnergyData.push(record)
+    saveData(store)
+    return record
+  },
+  updateEmsEnergyData(id, data) {
+    const store = loadData()
+    const record = store.emsEnergyData.find((e) => e.id === id)
+    if (record) Object.assign(record, data)
+    saveData(store)
+  },
+  removeEmsEnergyData(ids) {
+    const store = loadData()
+    store.emsEnergyData = store.emsEnergyData.filter((e) => !ids.includes(e.id))
     saveData(store)
   },
 }

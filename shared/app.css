@@ -419,6 +419,16 @@ img {
 .solid-action-button:hover {
   background: #6d28d9;
 }
+.solid-action-button.danger {
+  background: #dc2626;
+}
+.solid-action-button.danger:hover {
+  background: #b91c1c;
+}
+.solid-action-button:disabled {
+  background: var(--text-faint);
+  cursor: not-allowed;
+}
 
 .outline-action-button {
   display: flex;
@@ -570,6 +580,51 @@ img {
   text-align: center;
   font-size: 0.88rem;
   color: #78716c;
+}
+
+.detail-back-link {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.detail-back-link:hover {
+  text-decoration: underline;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1rem 0 0.25rem;
+  flex-wrap: wrap;
+}
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.6rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent-strong-text);
+}
+.page-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+}
+.page-btn:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
 }
 
 .status-pill {

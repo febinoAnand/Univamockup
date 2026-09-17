@@ -6,7 +6,16 @@
    same widget registry/variant catalog, same telemetry algorithm, same
    ApexCharts config (the real app renders charts via react-apexcharts,
    a thin wrapper around the same vanilla ApexCharts library loaded here).
+
+   Wrapped in an IIFE and exposing only bootDashboard on window: this file
+   is now loaded alongside device-detail.js/asset-detail.html/
+   application-detail.html's own inline scripts (each embeds a "Custom
+   widgets" canvas), and those files already declare their own same-named
+   helpers (BUCKET_MS, SEARCH_SVG, telemetryValueAt, etc.) for their own
+   telemetry panels — leaving all of this at the top level would collide
+   with theirs as soon as both scripts loaded on one page.
    ========================================================================== */
+(function () {
 
 /* --------------------------------------------------- telemetry algorithm */
 /* Exact port of src/modules/devices/deviceFactory.js */
@@ -291,6 +300,10 @@ const widgetRegistry = {
   'co2-gauge': gaugeEntry('co2-gauge', 'CO2 gauge', 'CO2 concentration reading.', 'ppm', 2000),
   'uptime-gauge': gaugeEntry('uptime-gauge', 'Uptime gauge', 'Rolling uptime percentage.', '%', 100),
   'message-rate-gauge': gaugeEntry('message-rate-gauge', 'Message rate gauge', 'Inbound message rate.', 'msg/min', 120),
+  'voltage-gauge': gaugeEntry('voltage-gauge', 'Voltage gauge', 'Live phase voltage for an EMS meter.', 'V', 260),
+  'current-gauge': gaugeEntry('current-gauge', 'Current gauge', 'Live phase current for an EMS meter.', 'A', 150),
+  'power-gauge': gaugeEntry('power-gauge', 'Power gauge', 'Live active power (kW) for an EMS meter.', 'kW', 800),
+  'frequency-gauge': gaugeEntry('frequency-gauge', 'Frequency gauge', 'Live line frequency for an EMS meter.', 'Hz', 55),
 
   'trend-chart': chartEntry('trend-chart', 'Telemetry trend', 'Time series for a device metric.'),
   'uptime-chart': chartEntry('uptime-chart', 'Uptime chart', 'Uptime percentage over time.'),
@@ -305,6 +318,10 @@ const widgetRegistry = {
   'load-chart': chartEntry('load-chart', 'Load chart', 'Utilization/load over time.'),
   'comparison-chart': chartEntry('comparison-chart', 'Comparison chart', 'Two devices compared over time.'),
   'actual-vs-target-chart': chartEntry('actual-vs-target-chart', 'Actual vs target chart', 'Metric against a target line.'),
+  'voltage-chart': chartEntry('voltage-chart', 'Voltage trend', 'Phase voltage over time for an EMS meter.'),
+  'current-chart': chartEntry('current-chart', 'Current trend', 'Phase current over time for an EMS meter.'),
+  'ems-tod-chart': chartEntry('ems-tod-chart', 'TOD grid trend', "Total hours per day from a meter's TOD grid readings."),
+  'ems-energy-chart': chartEntry('ems-energy-chart', 'Energy mix chart', "Renewable energy percentage over time for a meter."),
 
   metric: {
     type: 'metric', label: 'Metric card', icon: 'metric', description: 'A single live value with optional trend.',
@@ -365,8 +382,20 @@ function buildCatalog() {
 /* ------------------------------------------------------- default layout */
 /* Exact port of src/modules/dashboard/useDashboardLayout.js */
 
-const DASHBOARD_STORAGE_KEY = 'univa_dashboard_layout_v1'
-const SELECTED_DEVICE_STORAGE_KEY = 'univa_dashboard_device_id'
+// Overridable by bootDashboard(scopeId) — lets a second page (e.g. an EMS
+// meter's own dashboard) reuse every dashboard function against its own
+// independently-saved layout instead of the main dashboard's.
+let DASHBOARD_STORAGE_KEY = 'univa_dashboard_layout_v1'
+let SELECTED_DEVICE_STORAGE_KEY = 'univa_dashboard_device_id'
+let DASHBOARD_TITLE = 'Dashboard'
+// Set via bootDashboard({meterId}) — when present, a fresh or reset-to-default
+// dashboard seeds EMS-relevant widgets (electrical parameters, TOD grid,
+// energy mix) instead of the generic device fleet set.
+let DASHBOARD_METER_ID = null
+// Set via bootDashboard({emptyDefault: true}) — an embedded "add your own
+// widgets" canvas (device/asset/application detail pages) starts with no
+// widgets at all instead of the generic device fleet showcase.
+let DASHBOARD_EMPTY_DEFAULT = false
 const NEW_WIDGET_SORT_Y = 9999
 let widgetIdCounter = 0
 
@@ -434,7 +463,37 @@ function buildDefaultWidgetsRaw() {
   ]
 }
 
+// Default widget set for an EMS meter's own dashboard (see DASHBOARD_METER_ID
+// above) — electrical-parameter gauges/charts pointed at the meter itself
+// (dataSource.deviceId = meterId, see findDevice()'s EMS-meter fallback),
+// plus the meter's TOD grid and energy-mix history.
+function buildEmsMeterDefaultWidgetsRaw(meterId) {
+  const meter = getEmsMeters().find((m) => m.id === meterId) || {}
+  const meterDataSource = (metricKey) => ({ deviceId: meterId, metricKey: metricKey })
+  return [
+    fromRegistry('voltage-gauge', 0, 0, 'w-ems-vr', 'speedometer', { title: 'VR', dataSource: meterDataSource('vr'), settings: { max: meter.vpnMax || 260 } }),
+    fromRegistry('voltage-gauge', 2, 0, 'w-ems-vy', 'speedometer', { title: 'VY', dataSource: meterDataSource('vy'), settings: { max: meter.vpnMax || 260 } }),
+    fromRegistry('voltage-gauge', 4, 0, 'w-ems-vb', 'speedometer', { title: 'VB', dataSource: meterDataSource('vb'), settings: { max: meter.vpnMax || 260 } }),
+    fromRegistry('current-gauge', 6, 0, 'w-ems-ir', 'speedometer', { title: 'IR', dataSource: meterDataSource('ir'), settings: { max: meter.iMax || 150 } }),
+    fromRegistry('current-gauge', 8, 0, 'w-ems-iy', 'speedometer', { title: 'IY', dataSource: meterDataSource('iy'), settings: { max: meter.iMax || 150 } }),
+    fromRegistry('current-gauge', 10, 0, 'w-ems-ib', 'speedometer', { title: 'IB', dataSource: meterDataSource('ib'), settings: { max: meter.iMax || 150 } }),
+
+    fromRegistry('power-gauge', 0, 3, 'w-ems-kw', 'speedometer', { title: 'Active power', dataSource: meterDataSource('kw'), settings: { max: meter.kwMax || 800 } }),
+    fromRegistry('frequency-gauge', 2, 3, 'w-ems-freq', 'speedometer', { title: 'Frequency', dataSource: meterDataSource('freq'), settings: { max: meter.freqMax || 55 } }),
+    fromRegistry('metric', 4, 3, 'w-ems-kva', 'big-number', { title: 'Apparent power', dataSource: meterDataSource('kva'), layout: { w: 2, h: 3 } }),
+    fromRegistry('metric', 6, 3, 'w-ems-pf', 'big-number', { title: 'Power factor', dataSource: meterDataSource('pf'), layout: { w: 2, h: 3 } }),
+
+    fromRegistry('voltage-chart', 0, 6, 'w-ems-voltage-chart', 'line', { title: 'Voltage trend (VR)', dataSource: Object.assign(meterDataSource('vr'), { range: '1h' }), layout: { w: 6, h: 4 } }),
+    fromRegistry('current-chart', 6, 6, 'w-ems-current-chart', 'line', { title: 'Current trend (IR)', dataSource: Object.assign(meterDataSource('ir'), { range: '1h' }), layout: { w: 6, h: 4 } }),
+
+    fromRegistry('ems-tod-chart', 0, 10, 'w-ems-tod-chart', 'column', { title: 'TOD grid — total hours', dataSource: { meterId: meterId }, layout: { w: 6, h: 4 } }),
+    fromRegistry('ems-energy-chart', 6, 10, 'w-ems-energy-chart', 'line', { title: 'Energy mix — renewable %', dataSource: { meterId: meterId }, layout: { w: 6, h: 4 } }),
+  ]
+}
+
 function getDefaultWidgets() {
+  if (DASHBOARD_METER_ID) return compactWidgets(buildEmsMeterDefaultWidgetsRaw(DASHBOARD_METER_ID), GRID_COLS)
+  if (DASHBOARD_EMPTY_DEFAULT) return []
   return compactWidgets(buildDefaultWidgetsRaw(), GRID_COLS)
 }
 
@@ -459,6 +518,7 @@ function getDevices() { return Store.get().devices || [] }
 function getAssets() { return Store.get().assets || [] }
 function getRuleEngines() { return Store.get().ruleEngines || [] }
 function getRuleEngineExecutions() { return Store.get().ruleEngineExecutions || [] }
+function getEmsMeters() { return Store.get().emsMeters || [] }
 
 function resolveMetric(device, metricKey) {
   const metrics = device && device.metrics && device.metrics.length ? device.metrics : DEFAULT_METRICS
@@ -468,9 +528,13 @@ function resolveMetric(device, metricKey) {
 const EXAMPLE_DEVICE_ID = 'example-device'
 const EXAMPLE_METRIC = DEFAULT_METRICS[0]
 
+// An EMS meter has the same shape a gauge/chart/metric widget needs (an id
+// plus a .metrics array — see emsMeterMetrics() in store.js), so a meter
+// dashboard can point dataSource.deviceId at a meter id and reuse every one
+// of these widgets unmodified.
 function findDevice(deviceId) {
   if (!deviceId) return null
-  return getDevices().find((d) => d.id === deviceId) || null
+  return getDevices().find((d) => d.id === deviceId) || getAssets().find((a) => a.id === deviceId) || getEmsMeters().find((m) => m.id === deviceId) || null
 }
 
 function widgetValue(device, metricKey, salt) {
@@ -944,10 +1008,12 @@ function renderExtraContent(config) {
 
 const CHART_PALETTE = ['#7c3aed', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 const CHART_LABEL_ONLY_TYPES = new Set(['pie', 'donut', 'polarArea', 'radialBar'])
-const CHART_CATEGORICAL_TYPES = new Set(['alarm-chart', 'rule-execution-chart', 'asset-count-chart', 'device-status-chart'])
+const CHART_CATEGORICAL_TYPES = new Set(['alarm-chart', 'rule-execution-chart', 'asset-count-chart', 'device-status-chart', 'ems-tod-chart', 'ems-energy-chart'])
 const CHART_BUCKETED_TYPES = new Set(['pie', 'donut', 'polarArea', 'radialBar', 'heatmap'])
+const EMS_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-function categoricalCounts(type) {
+function categoricalCounts(config) {
+  const type = config.type
   const devices = getDevices()
   const assets = getAssets()
   const executions = getRuleEngineExecutions()
@@ -965,6 +1031,24 @@ function categoricalCounts(type) {
     const counts = {}
     executions.forEach((e) => { counts[e.outcome] = (counts[e.outcome] || 0) + 1 })
     return { categories: Object.keys(counts), values: Object.values(counts) }
+  }
+  if (type === 'ems-tod-chart') {
+    const meterId = config.dataSource && config.dataSource.meterId
+    const readings = (Store.get().emsTodReadings || [])
+      .filter((r) => !meterId || r.meterId === meterId)
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+      .slice(-10)
+    return { categories: readings.map((r) => r.date.slice(5)), values: readings.map((r) => r.totalHours) }
+  }
+  if (type === 'ems-energy-chart') {
+    const meterId = config.dataSource && config.dataSource.meterId
+    const rows = (Store.get().emsEnergyData || [])
+      .filter((e) => !meterId || e.meterId === meterId)
+      .slice()
+      .sort((a, b) => (a.year !== b.year ? a.year - b.year : EMS_MONTHS.indexOf(a.month) - EMS_MONTHS.indexOf(b.month)))
+      .slice(-8)
+    return { categories: rows.map((e) => e.month.slice(0, 3) + ' ' + e.year), values: rows.map((e) => e.renewablePercent) }
   }
   const counts = {}
   devices.forEach((d) => (d.alerts || []).forEach((a) => { counts[a.severity] = (counts[a.severity] || 0) + 1 }))
@@ -1036,9 +1120,11 @@ function renderChartContent(config, hostId) {
 
   let categories = [], values = [], unit = ''
   if (isCategorical) {
-    const counts = categoricalCounts(config.type)
+    const counts = categoricalCounts(config)
     categories = counts.categories
     values = counts.values
+    if (config.type === 'ems-tod-chart') unit = ' hrs'
+    if (config.type === 'ems-energy-chart') unit = '%'
   } else {
     const series = widgetSeries(device, config.dataSource && config.dataSource.metricKey, config.dataSource && config.dataSource.range, config.type)
     if (series.points.length === 0) return { html: '<div class="widget-empty-note">No telemetry yet.</div>' }
@@ -1213,7 +1299,7 @@ function renderToolbar() {
   const count = widgets.length
   document.getElementById('dashboard-toolbar').innerHTML = `
     <div class="dashboard-toolbar-left">
-      <h1 class="dashboard-title">Dashboard</h1>
+      <h1 class="dashboard-title">${escapeHtml(DASHBOARD_TITLE)}</h1>
       <span class="dashboard-widget-count">${count} widget${count === 1 ? '' : 's'}</span>
     </div>
     <div class="dashboard-toolbar-right">
@@ -1653,7 +1739,9 @@ function openWidgetSettings(id) {
   const variants = VARIANT_FAMILIES[meta.variantFamily] || []
   const supportsDevice = meta.defaultDataSource && ('deviceId' in meta.defaultDataSource)
   const supportsRange = meta.variantFamily === 'chart'
-  const devices = getDevices()
+  // Concat assets and EMS meters here too — they resolve through the same
+  // findDevice() fallback as real devices, so they belong in this picker too.
+  const devices = getDevices().concat(getAssets(), getEmsMeters())
   const deviceId = (config.dataSource && config.dataSource.deviceId) || ''
   const selectedDevice = devices.find((d) => d.id === deviceId)
   const availableMetrics = selectedDevice && selectedDevice.metrics && selectedDevice.metrics.length ? selectedDevice.metrics : DEFAULT_METRICS
@@ -1878,11 +1966,31 @@ function initWidgetPalette() {
    Boot
    ============================================================ */
 
-function bootDashboard() {
+// Safe to call more than once (e.g. a tab whose content — and so its
+// #dashboard-canvas/#widget-palette-fab elements — gets rebuilt every time
+// the tab is reselected): state reloads and the DOM re-wires against the
+// fresh elements each time, but the window resize listener only attaches
+// once ever, so repeated calls never stack up duplicate listeners.
+let dashboardResizeListenerAttached = false
+function bootDashboard(options) {
+  options = options || {}
+  if (options.scopeId) {
+    DASHBOARD_STORAGE_KEY = 'univa_dashboard_layout_v1__' + options.scopeId
+    SELECTED_DEVICE_STORAGE_KEY = 'univa_dashboard_device_id__' + options.scopeId
+  }
+  if (options.title) DASHBOARD_TITLE = options.title
+  DASHBOARD_METER_ID = options.meterId || null
+  DASHBOARD_EMPTY_DEFAULT = Boolean(options.emptyDefault)
   initDashboardState()
   renderDashboard()
   initWidgetPalette()
-  window.addEventListener('resize', function () {
-    if (widgets.length > 0) renderCanvas()
-  })
+  if (!dashboardResizeListenerAttached) {
+    dashboardResizeListenerAttached = true
+    window.addEventListener('resize', function () {
+      if (widgets.length > 0) renderCanvas()
+    })
+  }
 }
+
+window.bootDashboard = bootDashboard
+})()

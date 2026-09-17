@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/dashboard.css" />
   <title>Application — Univa</title>
   <style>
     .detail-card {
@@ -184,17 +185,6 @@
     .detail-subheading:not(:first-child) {
       margin-top: 1.5rem;
     }
-    .detail-back-link {
-      display: inline-block;
-      margin-bottom: 0.75rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--accent);
-      text-decoration: none;
-    }
-    .detail-back-link:hover {
-      text-decoration: underline;
-    }
     .not-found-block {
       padding: 3rem 1rem;
       text-align: center;
@@ -360,6 +350,52 @@
       font-weight: 700;
       color: #2a7ab5;
     }
+
+    /* ------------------------------------------------------------- EMS
+       Reuses the page's existing .detail-tabs / .data-table / .table-scroll
+       components (same ones the generic tabs above use) — these rules only
+       cover the bits those components don't already provide. */
+    .ems-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .ems-toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .ems-cell-btn {
+      border: none;
+      background: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      color: var(--accent-strong-text);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ems-cell-btn:hover {
+      background: var(--accent-soft);
+    }
+    .ems-row-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .ems-row-action-btn:hover {
+      background: var(--surface-alt);
+      color: var(--accent-strong-text);
+    }
   </style>
 </head>
 <body>
@@ -424,9 +460,183 @@
     </div>
   </div>
 
+  <!-- EMS: Add/edit a TOD grid reading -->
+  <div class="modal-overlay" id="ems-tod-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="ems-tod-modal-title">Add New Actual Reading</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-tod-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="ems-tod-form">
+          <div class="modal-field"><label for="ems-tod-date">Date*</label><input id="ems-tod-date" type="date" required /></div>
+          <div class="modal-field"><label for="ems-tod-t1">T1 ()</label><input id="ems-tod-t1" type="number" step="any" /></div>
+          <div class="modal-field"><label for="ems-tod-t2">T2 ()</label><input id="ems-tod-t2" type="number" step="any" /></div>
+          <div class="modal-field"><label for="ems-tod-t3">T3 ()</label><input id="ems-tod-t3" type="number" step="any" /></div>
+          <div class="modal-field"><label for="ems-tod-t4">T4 ()</label><input id="ems-tod-t4" type="number" step="any" /></div>
+          <div class="modal-field"><label for="ems-tod-t5">T5 ()</label><input id="ems-tod-t5" type="number" step="any" /></div>
+          <div class="modal-field"><label for="ems-tod-total">Total Hours (12AM to 12PM)</label><input id="ems-tod-total" type="number" step="any" /></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('ems-tod-modal')">Cancel</button>
+        <button type="submit" form="ems-tod-form" class="modal-button primary" id="ems-tod-save-btn">Add Reading</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMS: Update a single T-slot value on a reading -->
+  <div class="modal-overlay" id="ems-tod-slot-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="ems-tod-slot-title">Update T1 ()</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-tod-slot-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="ems-tod-slot-form">
+          <div class="modal-field"><label for="ems-tod-slot-date">Date:</label><input id="ems-tod-slot-date" type="text" disabled /></div>
+          <div class="modal-field"><label for="ems-tod-slot-value" id="ems-tod-slot-value-label">Value:</label><input id="ems-tod-slot-value" type="number" step="any" /></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('ems-tod-slot-modal')">Cancel</button>
+        <button type="submit" form="ems-tod-slot-form" class="modal-button primary">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMS: Add/edit a meter -->
+  <div class="modal-overlay" id="ems-meter-modal">
+    <div class="modal-card" style="max-width:680px;">
+      <div class="modal-header">
+        <h2 id="ems-meter-modal-title">Add New Meter</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-meter-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="ems-meter-form">
+          <div class="modal-field-grid">
+            <div class="modal-field"><label for="ems-meter-name">Meter Name*</label><input id="ems-meter-name" type="text" placeholder="Enter Meter Name" required /></div>
+            <div class="modal-field">
+              <label for="ems-meter-model">Meter Model</label>
+              <select id="ems-meter-model">
+                <option value="">Select Meter Model</option>
+                <option>ElMeasure</option>
+                <option>Schneider</option>
+                <option>L&amp;T</option>
+                <option>Secure</option>
+              </select>
+            </div>
+            <div class="modal-field"><label for="ems-meter-id">Meter ID*</label><input id="ems-meter-id" type="text" placeholder="Enter Meter ID" required /></div>
+            <div class="modal-field"><label for="ems-meter-model-number">Model Number</label><input id="ems-meter-model-number" type="text" placeholder="Enter Model Number" /></div>
+            <div class="modal-field"><label for="ems-meter-location">Meter Location</label><input id="ems-meter-location" type="text" placeholder="Enter Meter Location" /></div>
+            <div class="modal-field">
+              <label for="ems-meter-unit">Unit select</label>
+              <select id="ems-meter-unit">
+                <option value="">Select Unit</option>
+                <option>Peak Timing</option>
+                <option>Off Peak</option>
+                <option>Normal</option>
+              </select>
+            </div>
+            <div class="modal-field"><label for="ems-meter-part-number">Part Number</label><input id="ems-meter-part-number" type="text" placeholder="Enter Part Number" /></div>
+            <div class="modal-field"><label for="ems-meter-vpn-min">Vpn min</label><input id="ems-meter-vpn-min" type="number" step="any" placeholder="Enter Vpn min" /></div>
+            <div class="modal-field"><label for="ems-meter-vpn-max">Vpn max</label><input id="ems-meter-vpn-max" type="number" step="any" placeholder="Enter Vpn max" /></div>
+            <div class="modal-field"><label for="ems-meter-vpp-min">Vpp min</label><input id="ems-meter-vpp-min" type="number" step="any" placeholder="Enter Vpp min" /></div>
+            <div class="modal-field"><label for="ems-meter-vpp-max">Vpp max</label><input id="ems-meter-vpp-max" type="number" step="any" placeholder="Enter Vpp max" /></div>
+            <div class="modal-field"><label for="ems-meter-i-min">I min</label><input id="ems-meter-i-min" type="number" step="any" placeholder="Enter I min" /></div>
+            <div class="modal-field"><label for="ems-meter-i-max">I max</label><input id="ems-meter-i-max" type="number" step="any" placeholder="Enter I max" /></div>
+            <div class="modal-field"><label for="ems-meter-kw-min">Kw min</label><input id="ems-meter-kw-min" type="number" step="any" placeholder="Enter Kw min" /></div>
+            <div class="modal-field"><label for="ems-meter-kw-max">Kw max</label><input id="ems-meter-kw-max" type="number" step="any" placeholder="Enter Kw max" /></div>
+            <div class="modal-field"><label for="ems-meter-kva-min">Kva min</label><input id="ems-meter-kva-min" type="number" step="any" placeholder="Enter Kva min" /></div>
+            <div class="modal-field"><label for="ems-meter-kva-max">Kva max</label><input id="ems-meter-kva-max" type="number" step="any" placeholder="Enter Kva max" /></div>
+            <div class="modal-field"><label for="ems-meter-freq-min">Freq min</label><input id="ems-meter-freq-min" type="number" step="any" placeholder="Enter Freq min" /></div>
+            <div class="modal-field"><label for="ems-meter-freq-max">Freq max</label><input id="ems-meter-freq-max" type="number" step="any" placeholder="Enter Freq max" /></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('ems-meter-modal')">Cancel</button>
+        <button type="submit" form="ems-meter-form" class="modal-button primary" id="ems-meter-save-btn">Add Meter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMS: Add/edit energy data -->
+  <div class="modal-overlay" id="ems-energy-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="ems-energy-modal-title">Add Energy Data</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-energy-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="ems-energy-form">
+          <div class="modal-field-grid">
+            <div class="modal-field">
+              <label for="ems-energy-year">Year*</label>
+              <select id="ems-energy-year" required></select>
+            </div>
+            <div class="modal-field">
+              <label for="ems-energy-month">Month*</label>
+              <select id="ems-energy-month" required>
+                <option value="">Select Month</option>
+                <option>January</option><option>February</option><option>March</option><option>April</option>
+                <option>May</option><option>June</option><option>July</option><option>August</option>
+                <option>September</option><option>October</option><option>November</option><option>December</option>
+              </select>
+            </div>
+            <div class="modal-field"><label for="ems-energy-renewable">Renewable Units*</label><input id="ems-energy-renewable" type="number" step="any" required /></div>
+            <div class="modal-field"><label for="ems-energy-non-renewable">Non-Renewable Units*</label><input id="ems-energy-non-renewable" type="number" step="any" required /></div>
+            <div class="modal-field"><label for="ems-energy-renewable-pct">Renewable Percentage*</label><input id="ems-energy-renewable-pct" type="number" step="any" required /></div>
+            <div class="modal-field"><label for="ems-energy-non-renewable-pct">Non-Renewable Percentage*</label><input id="ems-energy-non-renewable-pct" type="number" step="any" required /></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('ems-energy-modal')">Cancel</button>
+        <button type="submit" form="ems-energy-form" class="modal-button primary" id="ems-energy-save-btn">Add Energy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom widgets tab (generic apps only): same floating palette used on the main dashboard -->
+  <button type="button" class="widget-palette-fab hidden" id="widget-palette-fab" aria-label="Add widget">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+  </button>
+  <div class="widget-palette-backdrop" id="widget-palette-backdrop"></div>
+  <aside class="widget-palette-drawer" id="widget-palette-drawer">
+    <div class="widget-palette-header">
+      <div id="widget-palette-header-title"><span class="widget-palette-title">Widget library</span></div>
+      <button type="button" class="widget-palette-close" id="widget-palette-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="widget-palette-search" id="widget-palette-search">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg>
+      <input type="search" id="widget-palette-search-input" placeholder="Search widgets…" />
+    </div>
+    <div class="widget-palette-body" id="widget-palette-body"></div>
+  </aside>
+
+  <!-- Widget settings modal -->
+  <div class="modal-overlay" id="widget-settings-modal">
+    <div class="modal-card" style="max-width:560px;">
+      <div class="modal-header">
+        <h2>Widget settings</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('widget-settings-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="widget-settings-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('widget-settings-modal')">Cancel</button>
+        <button type="submit" form="widget-settings-form" class="modal-button primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.49.1/apexcharts.min.js"></script>
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
+  <script src="shared/dashboard.js"></script>
   <script>
     // The application id travels in the URL hash — see device-detail.html
     // for why (a hash survives a static-file server in a way a query string
@@ -437,7 +647,12 @@
     // same-document navigation and never reloads. 'hashchange' below is
     // what makes clicking from one application to another actually update
     // the page instead of requiring a manual refresh.
-    let applicationId = window.location.hash.slice(1)
+    // The hash can also carry an EMS sub-tab after a colon (e.g.
+    // "app_ems:meters"), so a link back from a meter's own dashboard page
+    // lands on the Meter List tab instead of always resetting to TOD Grid.
+    const initialHashParts = window.location.hash.slice(1).split(':')
+    let applicationId = initialHashParts[0]
+    let pendingEmsTab = initialHashParts[1] || null
 
     function getApp() {
       return Store.get().applications.find((a) => a.id === applicationId)
@@ -463,7 +678,9 @@
     })
 
     window.addEventListener('hashchange', () => {
-      applicationId = window.location.hash.slice(1)
+      const hashParts = window.location.hash.slice(1).split(':')
+      applicationId = hashParts[0]
+      if (hashParts[1] && EMS_TABS.some((t) => t.key === hashParts[1])) emsActiveTab = hashParts[1]
       const app = getApp()
       Layout.setBreadcrumbs(breadcrumbsForApp(app))
       Layout.setActive(app ? `application-${app.id}` : 'applications')
@@ -675,7 +892,7 @@
           ).join('')}
         </div>
         <div class="detail-card">
-          ${renderGenericTabPanel(genericActiveTab, devices, assets, groupNames, metadata)}
+          ${renderGenericTabPanel(genericActiveTab, app, devices, assets, groupNames, metadata)}
         </div>`
     }
 
@@ -684,10 +901,18 @@
       { key: 'assets', label: 'Assets', icon: 'asset' },
       { key: 'groups', label: 'Groups', icon: 'group' },
       { key: 'devices', label: 'Linked devices', icon: 'device' },
+      { key: 'widgets', label: 'Custom widgets', icon: 'dashboard' },
     ]
     let genericActiveTab = 'devices'
 
-    function renderGenericTabPanel(tab, devices, assets, groupNames, metadata) {
+    function renderGenericTabPanel(tab, app, devices, assets, groupNames, metadata) {
+      if (tab === 'widgets') {
+        return `
+          <div class="dashboard-page" style="padding:0;">
+            <div class="dashboard-toolbar" id="dashboard-toolbar"></div>
+            <div class="dashboard-canvas" id="dashboard-canvas"></div>
+          </div>`
+      }
       if (tab === 'devices') {
         return devices.length === 0
           ? '<span class="section-empty">No devices linked to this application</span>'
@@ -759,6 +984,10 @@
           renderPage()
         }),
       )
+      if (genericActiveTab === 'widgets') {
+        const app = getApp()
+        bootDashboard({ scopeId: 'app-' + app.id, title: app.name + ' — Custom widgets', emptyDefault: true })
+      }
     }
 
     // ------------------------------------------------------------- PMS
@@ -863,6 +1092,492 @@
       document.getElementById('pms-shift-search')?.addEventListener('click', () => renderPage())
     }
 
+    // ------------------------------------------------------------- EMS
+    // EMS is the other built-in system application (alongside PMS above):
+    // its detail page shows TOD grid readings, a meter list, and monthly
+    // energy data instead of the generic device/asset/metadata summary.
+    const EMS_PER_PAGE = 10
+    const EMS_TOD_SLOTS = ['t1', 't2', 't3', 't4', 't5']
+    const EMS_TAB_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    const EMS_TABS = [
+      { key: 'meters', label: 'Meter List' },
+      { key: 'todgrid', label: 'TOD Grid' },
+      { key: 'energy', label: 'Energy Data' },
+    ]
+    const EMS_METER_FIELD_IDS = {
+      name: 'ems-meter-name',
+      meterId: 'ems-meter-id',
+      location: 'ems-meter-location',
+      partNumber: 'ems-meter-part-number',
+      model: 'ems-meter-model',
+      modelNumber: 'ems-meter-model-number',
+      unit: 'ems-meter-unit',
+      vpnMin: 'ems-meter-vpn-min',
+      vpnMax: 'ems-meter-vpn-max',
+      vppMin: 'ems-meter-vpp-min',
+      vppMax: 'ems-meter-vpp-max',
+      iMin: 'ems-meter-i-min',
+      iMax: 'ems-meter-i-max',
+      kwMin: 'ems-meter-kw-min',
+      kwMax: 'ems-meter-kw-max',
+      kvaMin: 'ems-meter-kva-min',
+      kvaMax: 'ems-meter-kva-max',
+      freqMin: 'ems-meter-freq-min',
+      freqMax: 'ems-meter-freq-max',
+    }
+    const EMS_METER_NUMERIC_FIELDS = ['vpnMin', 'vpnMax', 'vppMin', 'vppMax', 'iMin', 'iMax', 'kwMin', 'kwMax', 'kvaMin', 'kvaMax', 'freqMin', 'freqMax']
+
+    let emsActiveTab = EMS_TABS.some((t) => t.key === pendingEmsTab) ? pendingEmsTab : 'todgrid'
+    let emsTodPage = 1
+    let emsTodSearch = ''
+    let emsMeterPage = 1
+    let emsMeterSearch = ''
+    let emsMeterSelected = new Set()
+    let emsEnergyPage = 1
+    let emsEnergySearch = ''
+    let emsEnergySelected = new Set()
+
+    function emsSearchIcon() {
+      return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>'
+    }
+    function emsAddIcon() {
+      return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>'
+    }
+    function emsDeleteIcon() {
+      return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>'
+    }
+    function emsEditIcon() {
+      return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    }
+    function emsViewIcon() {
+      return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/></svg>'
+    }
+
+    function emsPaginate(rows, page, perPage) {
+      const totalPages = Math.max(1, Math.ceil(rows.length / perPage))
+      const clampedPage = Math.min(Math.max(1, page), totalPages)
+      const start = (clampedPage - 1) * perPage
+      return { pageRows: rows.slice(start, start + perPage), totalPages, page: clampedPage }
+    }
+
+    function emsPaginationHtml(page, totalPages, prefix) {
+      const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+      return `
+        <div class="pagination">
+          <button type="button" class="page-btn" data-ems-page="${prefix}:${page - 1}" ${page <= 1 ? 'disabled' : ''}>Previous</button>
+          ${pages.map((p) => `<button type="button" class="page-btn${p === page ? ' active' : ''}" data-ems-page="${prefix}:${p}">${p}</button>`).join('')}
+          <button type="button" class="page-btn" data-ems-page="${prefix}:${page + 1}" ${page >= totalPages ? 'disabled' : ''}>Next</button>
+        </div>`
+    }
+
+    // --------------------------------------------------------- EMS: TOD grid
+    function renderEmsTodGridPanel() {
+      const term = emsTodSearch.trim().toLowerCase()
+      const all = Store.get().emsTodReadings.slice().sort((a, b) => (a.date < b.date ? 1 : -1))
+      const filtered = term ? all.filter((r) => r.date.toLowerCase().includes(term)) : all
+      const { pageRows, totalPages, page } = emsPaginate(filtered, emsTodPage, EMS_PER_PAGE)
+      emsTodPage = page
+      const rowsHtml =
+        pageRows.length === 0
+          ? '<tr><td colspan="8" class="empty-table-note">No readings match your search.</td></tr>'
+          : pageRows
+              .map(
+                (r, i) => `
+        <tr>
+          <td>${(page - 1) * EMS_PER_PAGE + i + 1}</td>
+          <td>${r.date}</td>
+          ${EMS_TOD_SLOTS.map((slot) => `<td><button type="button" class="ems-cell-btn" data-ems-slot="${r.id}:${slot}">${r[slot]}</button></td>`).join('')}
+          <td>${r.totalHours}</td>
+        </tr>`,
+              )
+              .join('')
+      return `
+        <div class="ems-toolbar">
+          <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="ems-tod-search" placeholder="Search by date" value="${emsTodSearch}" /></div>
+          <div class="ems-toolbar-actions">
+            <button type="button" class="solid-action-button" id="ems-tod-add-btn">${emsAddIcon()}Add</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>S.No</th><th>Date</th><th>T1 ()</th><th>T2 ()</th><th>T3 ()</th><th>T4 ()</th><th>T5 ()</th><th>Total Hours (12AM to 12PM)</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        ${emsPaginationHtml(page, totalPages, 'todgrid')}`
+    }
+
+    function emsOpenTodAdd() {
+      document.getElementById('ems-tod-modal-title').textContent = 'Add New Actual Reading'
+      document.getElementById('ems-tod-save-btn').textContent = 'Add Reading'
+      document.getElementById('ems-tod-form').dataset.editingId = ''
+      document.getElementById('ems-tod-date').value = ''
+      EMS_TOD_SLOTS.forEach((slot) => {
+        document.getElementById('ems-tod-' + slot).value = ''
+      })
+      document.getElementById('ems-tod-total').value = ''
+      UI.openModal('ems-tod-modal')
+    }
+
+    function emsOpenTodSlot(readingId, slot) {
+      const reading = Store.get().emsTodReadings.find((r) => r.id === readingId)
+      if (!reading) return
+      const label = slot.toUpperCase() + ' ()'
+      document.getElementById('ems-tod-slot-title').textContent = 'Update ' + label
+      document.getElementById('ems-tod-slot-value-label').textContent = label + ':'
+      document.getElementById('ems-tod-slot-date').value = reading.date
+      document.getElementById('ems-tod-slot-value').value = reading[slot]
+      document.getElementById('ems-tod-slot-form').dataset.readingId = readingId
+      document.getElementById('ems-tod-slot-form').dataset.slot = slot
+      UI.openModal('ems-tod-slot-modal')
+    }
+
+    function wireEmsTodGridPanel() {
+      document.getElementById('ems-tod-search').addEventListener('input', (event) => {
+        emsTodSearch = event.target.value
+        emsTodPage = 1
+        renderPage()
+      })
+      document.getElementById('ems-tod-add-btn').addEventListener('click', emsOpenTodAdd)
+      document.querySelectorAll('[data-ems-slot]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [readingId, slot] = btn.getAttribute('data-ems-slot').split(':')
+          emsOpenTodSlot(readingId, slot)
+        }),
+      )
+    }
+
+    // ---------------------------------------------------- EMS: meter list
+    function renderEmsMeterListPanel() {
+      const term = emsMeterSearch.trim().toLowerCase()
+      const all = Store.get().emsMeters
+      const filtered = term ? all.filter((m) => m.name.toLowerCase().includes(term) || m.meterId.toLowerCase().includes(term)) : all
+      const { pageRows, totalPages, page } = emsPaginate(filtered, emsMeterPage, EMS_PER_PAGE)
+      emsMeterPage = page
+      const rowsHtml =
+        pageRows.length === 0
+          ? '<tr><td colspan="7" class="empty-table-note">No meters match your search.</td></tr>'
+          : pageRows
+              .map(
+                (m, i) => `
+        <tr>
+          <td><input type="checkbox" data-ems-meter-check="${m.id}" ${emsMeterSelected.has(m.id) ? 'checked' : ''} /></td>
+          <td>${(page - 1) * EMS_PER_PAGE + i + 1}</td>
+          <td>${m.name}</td>
+          <td>${m.meterId}</td>
+          <td>${m.model || '—'}</td>
+          <td>${m.unit || '—'}</td>
+          <td>
+            <button type="button" class="ems-row-action-btn" data-ems-meter-edit="${m.id}" aria-label="Edit meter">${emsEditIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-ems-meter-dashboard="${m.id}" aria-label="Open meter dashboard">${emsViewIcon()}</button>
+          </td>
+        </tr>`,
+              )
+              .join('')
+      const allOnPageSelected = pageRows.length > 0 && pageRows.every((m) => emsMeterSelected.has(m.id))
+      return `
+        <div class="ems-toolbar">
+          <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="ems-meter-search" placeholder="Search meters" value="${emsMeterSearch}" /></div>
+          <div class="ems-toolbar-actions">
+            <button type="button" class="solid-action-button danger" id="ems-meter-delete-btn" ${emsMeterSelected.size === 0 ? 'disabled' : ''}>${emsDeleteIcon()}Delete</button>
+            <button type="button" class="solid-action-button" id="ems-meter-add-btn">${emsAddIcon()}Add</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th><input type="checkbox" id="ems-meter-select-all" ${allOnPageSelected ? 'checked' : ''} /></th><th>S.No</th><th>Meter Name</th><th>Meter ID</th><th>Model</th><th>Unit Type</th><th>Action</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        ${emsPaginationHtml(page, totalPages, 'meters')}`
+    }
+
+    function emsOpenMeterAdd() {
+      document.getElementById('ems-meter-modal-title').textContent = 'Add New Meter'
+      document.getElementById('ems-meter-save-btn').textContent = 'Add Meter'
+      document.getElementById('ems-meter-form').dataset.editingId = ''
+      Object.values(EMS_METER_FIELD_IDS).forEach((id) => {
+        document.getElementById(id).value = ''
+      })
+      UI.openModal('ems-meter-modal')
+    }
+
+    function emsOpenMeterEdit(id) {
+      const meter = Store.get().emsMeters.find((m) => m.id === id)
+      if (!meter) return
+      document.getElementById('ems-meter-modal-title').textContent = 'Edit Meter'
+      document.getElementById('ems-meter-save-btn').textContent = 'Save changes'
+      document.getElementById('ems-meter-form').dataset.editingId = id
+      Object.entries(EMS_METER_FIELD_IDS).forEach(([field, elId]) => {
+        document.getElementById(elId).value = meter[field] ?? ''
+      })
+      UI.openModal('ems-meter-modal')
+    }
+
+    function wireEmsMeterListPanel() {
+      document.getElementById('ems-meter-search').addEventListener('input', (event) => {
+        emsMeterSearch = event.target.value
+        emsMeterPage = 1
+        renderPage()
+      })
+      document.getElementById('ems-meter-add-btn').addEventListener('click', emsOpenMeterAdd)
+      document.getElementById('ems-meter-delete-btn').addEventListener('click', () => {
+        if (emsMeterSelected.size === 0) return
+        UI.confirm({
+          message: `Delete ${emsMeterSelected.size} selected meter${emsMeterSelected.size === 1 ? '' : 's'}? This can't be undone.`,
+          onConfirm: () => {
+            Store.removeEmsMeters(Array.from(emsMeterSelected))
+            emsMeterSelected.clear()
+            UI.toast('Meter(s) deleted successfully!')
+            renderPage()
+          },
+        })
+      })
+      document.getElementById('ems-meter-select-all')?.addEventListener('change', (event) => {
+        document.querySelectorAll('[data-ems-meter-check]').forEach((cb) => {
+          const id = cb.getAttribute('data-ems-meter-check')
+          if (event.target.checked) emsMeterSelected.add(id)
+          else emsMeterSelected.delete(id)
+        })
+        renderPage()
+      })
+      document.querySelectorAll('[data-ems-meter-check]').forEach((cb) =>
+        cb.addEventListener('change', () => {
+          const id = cb.getAttribute('data-ems-meter-check')
+          if (cb.checked) emsMeterSelected.add(id)
+          else emsMeterSelected.delete(id)
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-ems-meter-edit]').forEach((btn) => btn.addEventListener('click', () => emsOpenMeterEdit(btn.getAttribute('data-ems-meter-edit'))))
+      document.querySelectorAll('[data-ems-meter-dashboard]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          window.location.href = 'ems-meter-dashboard.html#' + btn.getAttribute('data-ems-meter-dashboard')
+        }),
+      )
+    }
+
+    // --------------------------------------------------- EMS: energy data
+    function renderEmsEnergyDataPanel() {
+      const term = emsEnergySearch.trim().toLowerCase()
+      const all = Store.get()
+        .emsEnergyData.slice()
+        .sort((a, b) => (a.year !== b.year ? b.year - a.year : EMS_TAB_MONTHS.indexOf(b.month) - EMS_TAB_MONTHS.indexOf(a.month)))
+      const filtered = term ? all.filter((e) => String(e.year).includes(term) || e.month.toLowerCase().includes(term)) : all
+      const { pageRows, totalPages, page } = emsPaginate(filtered, emsEnergyPage, EMS_PER_PAGE)
+      emsEnergyPage = page
+      const rowsHtml =
+        pageRows.length === 0
+          ? '<tr><td colspan="9" class="empty-table-note">No results found.</td></tr>'
+          : pageRows
+              .map(
+                (e, i) => `
+        <tr>
+          <td><input type="checkbox" data-ems-energy-check="${e.id}" ${emsEnergySelected.has(e.id) ? 'checked' : ''} /></td>
+          <td>${(page - 1) * EMS_PER_PAGE + i + 1}</td>
+          <td>${e.year}</td>
+          <td>${e.month}</td>
+          <td>${e.renewable}</td>
+          <td>${e.nonRenewable}</td>
+          <td>${e.renewablePercent}%</td>
+          <td>${e.nonRenewablePercent}%</td>
+          <td><button type="button" class="ems-row-action-btn" data-ems-energy-edit="${e.id}" aria-label="Edit energy data">${emsEditIcon()}</button></td>
+        </tr>`,
+              )
+              .join('')
+      return `
+        <div class="ems-toolbar">
+          <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="ems-energy-search" placeholder="Search by year or month" value="${emsEnergySearch}" /></div>
+          <div class="ems-toolbar-actions">
+            <button type="button" class="solid-action-button danger" id="ems-energy-delete-btn" ${emsEnergySelected.size === 0 ? 'disabled' : ''}>${emsDeleteIcon()}Delete</button>
+            <button type="button" class="solid-action-button" id="ems-energy-add-btn">${emsAddIcon()}Add</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th><input type="checkbox" id="ems-energy-select-all" /></th><th>S.No</th><th>Year</th><th>Month</th><th>Renewable</th><th>Non-Renewable</th><th>Renewable %</th><th>Non-Renewable %</th><th>Action</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        ${emsPaginationHtml(page, totalPages, 'energy')}`
+    }
+
+    function emsPopulateYearOptions(selectedYear) {
+      const currentYear = new Date().getFullYear()
+      const years = []
+      for (let y = 2021; y <= currentYear + 1; y++) years.push(y)
+      document.getElementById('ems-energy-year').innerHTML = years.map((y) => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')
+    }
+
+    function emsOpenEnergyAdd() {
+      document.getElementById('ems-energy-modal-title').textContent = 'Add Energy Data'
+      document.getElementById('ems-energy-save-btn').textContent = 'Add Energy'
+      document.getElementById('ems-energy-form').dataset.editingId = ''
+      emsPopulateYearOptions(new Date().getFullYear())
+      document.getElementById('ems-energy-month').value = ''
+      document.getElementById('ems-energy-renewable').value = ''
+      document.getElementById('ems-energy-non-renewable').value = ''
+      document.getElementById('ems-energy-renewable-pct').value = ''
+      document.getElementById('ems-energy-non-renewable-pct').value = ''
+      UI.openModal('ems-energy-modal')
+    }
+
+    function emsOpenEnergyEdit(id) {
+      const energy = Store.get().emsEnergyData.find((e) => e.id === id)
+      if (!energy) return
+      document.getElementById('ems-energy-modal-title').textContent = 'Edit Energy Data'
+      document.getElementById('ems-energy-save-btn').textContent = 'Save changes'
+      document.getElementById('ems-energy-form').dataset.editingId = id
+      emsPopulateYearOptions(energy.year)
+      document.getElementById('ems-energy-month').value = energy.month
+      document.getElementById('ems-energy-renewable').value = energy.renewable
+      document.getElementById('ems-energy-non-renewable').value = energy.nonRenewable
+      document.getElementById('ems-energy-renewable-pct').value = energy.renewablePercent
+      document.getElementById('ems-energy-non-renewable-pct').value = energy.nonRenewablePercent
+      UI.openModal('ems-energy-modal')
+    }
+
+    function wireEmsEnergyDataPanel() {
+      document.getElementById('ems-energy-search').addEventListener('input', (event) => {
+        emsEnergySearch = event.target.value
+        emsEnergyPage = 1
+        renderPage()
+      })
+      document.getElementById('ems-energy-add-btn').addEventListener('click', emsOpenEnergyAdd)
+      document.getElementById('ems-energy-delete-btn').addEventListener('click', () => {
+        if (emsEnergySelected.size === 0) return
+        UI.confirm({
+          message: `Delete ${emsEnergySelected.size} selected record${emsEnergySelected.size === 1 ? '' : 's'}? This can't be undone.`,
+          onConfirm: () => {
+            Store.removeEmsEnergyData(Array.from(emsEnergySelected))
+            emsEnergySelected.clear()
+            UI.toast('Energy data deleted successfully!')
+            renderPage()
+          },
+        })
+      })
+      document.getElementById('ems-energy-select-all')?.addEventListener('change', (event) => {
+        document.querySelectorAll('[data-ems-energy-check]').forEach((cb) => {
+          const id = cb.getAttribute('data-ems-energy-check')
+          if (event.target.checked) emsEnergySelected.add(id)
+          else emsEnergySelected.delete(id)
+        })
+        renderPage()
+      })
+      document.querySelectorAll('[data-ems-energy-check]').forEach((cb) =>
+        cb.addEventListener('change', () => {
+          const id = cb.getAttribute('data-ems-energy-check')
+          if (cb.checked) emsEnergySelected.add(id)
+          else emsEnergySelected.delete(id)
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-ems-energy-edit]').forEach((btn) => btn.addEventListener('click', () => emsOpenEnergyEdit(btn.getAttribute('data-ems-energy-edit'))))
+    }
+
+    function renderEmsBody() {
+      const panel = emsActiveTab === 'todgrid' ? renderEmsTodGridPanel() : emsActiveTab === 'meters' ? renderEmsMeterListPanel() : renderEmsEnergyDataPanel()
+      return `
+        <div class="detail-tabs">
+          ${EMS_TABS.map((t) => `<button type="button" class="detail-tab-button${emsActiveTab === t.key ? ' active' : ''}" data-ems-tab="${t.key}">${t.label}</button>`).join('')}
+        </div>
+        <div class="detail-card">${panel}</div>`
+    }
+
+    function wireEmsBody() {
+      document.querySelectorAll('[data-ems-tab]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          emsActiveTab = btn.getAttribute('data-ems-tab')
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-ems-page]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [prefix, pageStr] = btn.getAttribute('data-ems-page').split(':')
+          const page = Number(pageStr)
+          if (prefix === 'todgrid') emsTodPage = page
+          else if (prefix === 'meters') emsMeterPage = page
+          else emsEnergyPage = page
+          renderPage()
+        }),
+      )
+      if (emsActiveTab === 'todgrid') wireEmsTodGridPanel()
+      else if (emsActiveTab === 'meters') wireEmsMeterListPanel()
+      else wireEmsEnergyDataPanel()
+    }
+
+    document.getElementById('ems-tod-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const data = {
+        date: document.getElementById('ems-tod-date').value,
+        t1: Number(document.getElementById('ems-tod-t1').value) || 0,
+        t2: Number(document.getElementById('ems-tod-t2').value) || 0,
+        t3: Number(document.getElementById('ems-tod-t3').value) || 0,
+        t4: Number(document.getElementById('ems-tod-t4').value) || 0,
+        t5: Number(document.getElementById('ems-tod-t5').value) || 0,
+        totalHours: Number(document.getElementById('ems-tod-total').value) || 0,
+      }
+      if (!data.date) return
+      Store.addEmsTodReading(data)
+      UI.toast('Reading added successfully!')
+      UI.closeModal('ems-tod-modal')
+      renderPage()
+    })
+
+    document.getElementById('ems-tod-slot-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const readingId = this.dataset.readingId
+      const slot = this.dataset.slot
+      const value = Number(document.getElementById('ems-tod-slot-value').value) || 0
+      Store.updateEmsTodReading(readingId, { [slot]: value })
+      UI.toast('Reading updated successfully!')
+      UI.closeModal('ems-tod-slot-modal')
+      renderPage()
+    })
+
+    document.getElementById('ems-meter-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const data = {}
+      Object.entries(EMS_METER_FIELD_IDS).forEach(([field, elId]) => {
+        const raw = document.getElementById(elId).value
+        data[field] = EMS_METER_NUMERIC_FIELDS.includes(field) ? (raw === '' ? null : Number(raw)) : raw.trim()
+      })
+      if (!data.name || !data.meterId) return
+      const editingId = this.dataset.editingId
+      if (editingId) {
+        Store.updateEmsMeter(editingId, data)
+        UI.toast('Meter updated successfully!')
+      } else {
+        Store.addEmsMeter(data)
+        UI.toast('Meter added successfully!')
+      }
+      UI.closeModal('ems-meter-modal')
+      renderPage()
+    })
+
+    document.getElementById('ems-energy-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const data = {
+        year: Number(document.getElementById('ems-energy-year').value),
+        month: document.getElementById('ems-energy-month').value,
+        renewable: Number(document.getElementById('ems-energy-renewable').value) || 0,
+        nonRenewable: Number(document.getElementById('ems-energy-non-renewable').value) || 0,
+        renewablePercent: Number(document.getElementById('ems-energy-renewable-pct').value) || 0,
+        nonRenewablePercent: Number(document.getElementById('ems-energy-non-renewable-pct').value) || 0,
+      }
+      if (!data.month) return
+      const editingId = this.dataset.editingId
+      if (editingId) {
+        Store.updateEmsEnergyData(editingId, data)
+        UI.toast('Energy data updated successfully!')
+      } else {
+        Store.addEmsEnergyData(data)
+        UI.toast('Energy data added successfully!')
+      }
+      UI.closeModal('ems-energy-modal')
+      renderPage()
+    })
+
     function renderPage() {
       const app = getApp()
       const root = document.getElementById('app-detail-root')
@@ -877,6 +1592,7 @@
       }
 
       const isPms = app.name === 'PMS'
+      const isEms = app.name === 'EMS'
       const data = Store.get()
       const devices = (app.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
       const assets = (app.assetIds || []).map((id) => data.assets.find((a) => a.id === id)).filter(Boolean)
@@ -896,7 +1612,7 @@
           </div>
         </div>
 
-        ${isPms ? renderPmsBody() : renderGenericBody(app, devices, assets)}`
+        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : renderGenericBody(app, devices, assets)}`
 
       document.getElementById('toggle-status-btn').addEventListener('click', () => {
         Store.toggleApplicationStatus(app.id)
@@ -906,7 +1622,12 @@
       document.getElementById('edit-app-btn').addEventListener('click', openEdit)
       document.getElementById('delete-app-btn')?.addEventListener('click', confirmDelete)
       if (isPms) wirePmsBody()
+      else if (isEms) wireEmsBody()
       else wireGenericBody()
+      // The palette FAB lives outside #app-detail-root (see the modal/FAB
+      // markup near the bottom of <body>) so it survives this rewrite —
+      // only show it for a generic app's own Custom widgets tab.
+      document.getElementById('widget-palette-fab').classList.toggle('hidden', isPms || isEms || genericActiveTab !== 'widgets')
     }
 
     renderPage()
