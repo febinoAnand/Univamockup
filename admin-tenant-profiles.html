@@ -49,7 +49,7 @@
     <div class="modal-card" style="max-width:640px;">
       <div class="modal-header">
         <h2 id="modal-title">Add tenant profile</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="profile-form">
@@ -140,7 +140,7 @@
           <fieldset class="profile-fieldset">
             <legend class="profile-fieldset-legend">Alarms and notifications <span class="range">(0 - unlimited)</span></legend>
             <div class="profile-toggle-row">
-              <button type="button" class="admin-toggle-switch on" id="sms-toggle" aria-pressed="true" aria-label="SMS enabled"><span class="admin-toggle-switch-knob"></span></button>
+              <button type="button" class="admin-toggle-switch on" id="sms-toggle" aria-pressed="true" aria-label="SMS enabled" title="SMS enabled"><span class="admin-toggle-switch-knob"></span></button>
               SMS enabled
             </div>
             <div class="modal-field" id="max-sms-field"><label for="p-max-sms">SMS sent maximum number*</label><input id="p-max-sms" type="number" min="0" required /></div>
@@ -219,7 +219,7 @@
           <td data-label="Max applications">${p.maxApplications}</td>
           <td data-label="Max dashboards">${p.maxDashboards}</td>
           <td data-label="In use">${counts[p.name] ?? 0}</td>
-          <td data-label="Default">${p.isDefault ? '<span class="default-profile-badge">Default</span>' : '—'}</td>
+          <td data-label="Default">${p.isDefault ? '<span class="default-profile-badge" title="Default tenant profile">Default</span>' : '—'}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>

@@ -692,7 +692,7 @@
             <p class="cms-header-subtitle">${machine.machineId} · ${machine.line || '—'} · ${machine.manufacturer || '—'} ${machine.model || ''}</p>
           </div>
           <div class="cms-header-right">
-            <span class="status-pill status-${machine.connected ? 'active' : 'offline'}">● ${machine.connected ? 'Connected' : 'Disconnected'}</span>
+            <span class="status-pill status-${machine.connected ? 'active' : 'offline'}" title="● ${machine.connected ? 'Connected' : 'Disconnected'}">● ${machine.connected ? 'Connected' : 'Disconnected'}</span>
             <span class="cms-last-updated">Last updated: ${machine.lastUpdated || '—'}</span>
           </div>
         </div>
@@ -701,9 +701,9 @@
           <div class="cms-panel-header-row">
             <h2>Operating States</h2>
             <div class="cms-date-nav">
-              <button type="button" class="cms-date-nav-btn" id="cms-date-prev" aria-label="Previous day">&larr;</button>
+              <button type="button" class="cms-date-nav-btn" id="cms-date-prev" aria-label="Previous day" title="Previous day">&larr;</button>
               <input type="date" id="cms-date-input" value="${cmsSelectedDate}" max="${todayIso}" />
-              <button type="button" class="cms-date-nav-btn" id="cms-date-next" aria-label="Next day" ${isToday ? 'disabled' : ''}>&rarr;</button>
+              <button type="button" class="cms-date-nav-btn" id="cms-date-next" aria-label="Next day" title="Next day" ${isToday ? 'disabled' : ''}>&rarr;</button>
             </div>
           </div>
           <div class="cms-timeline-track">
@@ -734,22 +734,22 @@
           <div class="cms-main-col">
             <h2 class="cms-section-title">Key Metrics</h2>
             <div class="cms-metric-row">
-              <div class="cms-metric-card" style="--cms-metric-accent:#2563eb;">
+              <div class="cms-metric-card" style="--cms-metric-accent:#2563eb;" title="Total time the crane has spent actively working today">
                 <p class="label">Cumulative Hours</p>
                 <p class="value">${formatHMS(workingSeconds)}<small>hrs</small></p>
                 <span class="tag">Today</span>
               </div>
-              <div class="cms-metric-card cms-metric-highlight" style="--cms-metric-accent:${stateColor};">
+              <div class="cms-metric-card cms-metric-highlight" style="--cms-metric-accent:${stateColor};" title="Current crane operation right now">
                 <p class="label">Live Status</p>
                 <span class="cms-metric-value-box">${(machine.currentOperation || state).toUpperCase()}</span>
                 <div><span class="tag">Live</span></div>
               </div>
-              <div class="cms-metric-card" style="--cms-metric-accent:#dc2626;">
+              <div class="cms-metric-card" style="--cms-metric-accent:#dc2626;" title="Time today the crane was idle, stopped, or disconnected">
                 <p class="label">Non-Working Time</p>
                 <p class="value">${formatHMS(nonWorkingSeconds)}<small>hrs</small></p>
                 <span class="tag">Today</span>
               </div>
-              <div class="cms-metric-card" style="--cms-metric-accent:#d97706;">
+              <div class="cms-metric-card" style="--cms-metric-accent:#d97706;" title="Share of today's elapsed time spent actively working">
                 <p class="label">Duty Cycle</p>
                 <p class="value">${dutyCycleToday}<small>%</small></p>
                 <span class="tag">Efficiency</span>
@@ -789,7 +789,7 @@
                         .map(
                           (seg) => `
                       <div class="cms-activity-row">
-                        <span class="cms-activity-dot" style="background:${TIMELINE_STATE_COLORS[seg.state]};"></span>
+                        <span class="cms-activity-dot" style="background:${TIMELINE_STATE_COLORS[seg.state]};" title="${TIMELINE_STATE_LABELS[seg.state]}"></span>
                         <span class="cms-activity-text">Switched to ${TIMELINE_STATE_LABELS[seg.state]}</span>
                         <span class="cms-activity-time">${minutesToClock(seg.startMin)}</span>
                       </div>`,
@@ -810,7 +810,7 @@
                   const fillPct = rated ? Math.min(100, ((motor.power || 0) / rated) * 100) : 0
                   return `
               <div class="cms-motor-row">
-                <div class="cms-motor-row-header"><span class="dot" style="background:${accent};"></span><h4>${label}</h4></div>
+                <div class="cms-motor-row-header"><span class="dot" style="background:${accent};" title="${motor.status === 'running' ? 'Running' : 'Stopped'}"></span><h4>${label}</h4></div>
                 <p class="cms-motor-row-status" style="color:${accent};">${motor.status === 'running' ? 'Running' : 'Stopped'}</p>
                 <div class="cms-motor-bar-track"><div class="cms-motor-bar-fill" style="width:${fillPct}%;background:${accent};"></div></div>
                 <span class="cms-motor-bar-caption">${motor.status === 'running' ? motor.power + ' kW' : 'N/A'}</span>
@@ -820,7 +820,7 @@
             </div>
 
             <div class="detail-card">
-              <h2><span class="section-icon">${iconSvg('shield')}</span>Active Alerts${alerts.length ? `<span class="cms-alert-count">${alerts.length}</span>` : ''}</h2>
+              <h2><span class="section-icon">${iconSvg('shield')}</span>Active Alerts${alerts.length ? `<span class="cms-alert-count" title="${alerts.length} active alert${alerts.length === 1 ? '' : 's'}">${alerts.length}</span>` : ''}</h2>
               ${
                 alerts.length === 0
                   ? `<div class="cms-empty-state">No active alerts</div>`
@@ -829,7 +829,7 @@
                         .map(
                           (a) => `
                       <div class="cms-alert-row">
-                        <span class="cms-alert-dot" style="background:${severityDotColor(a.severity)};"></span>
+                        <span class="cms-alert-dot" style="background:${severityDotColor(a.severity)};" title="${a.severity.charAt(0).toUpperCase() + a.severity.slice(1)}"></span>
                         <span class="cms-alert-message">${a.message}</span>
                         <span class="cms-alert-time">${a.createdDate}</span>
                       </div>`,

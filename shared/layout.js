@@ -117,7 +117,7 @@ function renderSidebar(active) {
   const items = NAV_SECTIONS.map((section) => {
     if (!section.children) {
       const isActive = section.key === active
-      return `<a class="sidebar-link${isActive ? ' active' : ''}" href="${section.href}">${iconSvg(section.icon)}<span>${section.label}</span></a>`
+      return `<a class="sidebar-link${isActive ? ' active' : ''}" href="${section.href}" title="${section.label}">${iconSvg(section.icon)}<span>${section.label}</span></a>`
     }
     // Static section — always shows its children, no expand/collapse.
     let sectionChildren = section.children
@@ -128,7 +128,7 @@ function renderSidebar(active) {
       )
     }
     const children = sectionChildren
-      .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}">${iconSvg(child.icon)}<span>${child.label}</span></a>`)
+      .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}" title="${child.label}">${iconSvg(child.icon)}<span>${child.label}</span></a>`)
       .join('')
     return `
       <div class="sidebar-section" data-group="${section.key}">
@@ -154,7 +154,7 @@ function renderTopBar(breadcrumbs) {
       const isLast = index === breadcrumbs.length - 1
       const label = isLast
         ? `<span class="breadcrumb-current">${crumb.label}</span>`
-        : `<a class="breadcrumb-link" href="${crumb.href}">${crumb.label}</a>`
+        : `<a class="breadcrumb-link" href="${crumb.href}" title="${crumb.label}">${crumb.label}</a>`
       return index === 0 ? label : `<span class="breadcrumb-separator">/</span>${label}`
     })
     .join('')
@@ -162,7 +162,7 @@ function renderTopBar(breadcrumbs) {
   return `
     <header class="top-bar">
       <div class="top-bar-left">
-        <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle navigation">${iconSvg('hamburger')}</button>
+        <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle navigation" title="Toggle navigation">${iconSvg('hamburger')}</button>
         <div class="top-bar-breadcrumbs">${crumbHtml}</div>
       </div>
       <div class="top-bar-actions">
@@ -290,7 +290,7 @@ const Layout = {
     const linkHtml = links
       .map(
         (link) =>
-          `<a class="sidebar-link${link.key === active ? ' active' : ''}" href="${link.href}"><span class="sidebar-link-icon">${iconSvg(link.icon)}</span>${link.label}</a>`,
+          `<a class="sidebar-link${link.key === active ? ' active' : ''}" href="${link.href}" title="${link.label}"><span class="sidebar-link-icon">${iconSvg(link.icon)}</span>${link.label}</a>`,
       )
       .join('')
 
@@ -301,19 +301,19 @@ const Layout = {
           <span class="sidebar-brand-icon"><img src="assets/favicon.png" alt="Univa"></span>
         </div>
         ${linkHtml}
-        <a class="sidebar-link" href="sysadmin-login.html"><span class="sidebar-link-icon">${iconSvg('admin-logout')}</span>Sign out</a>
+        <a class="sidebar-link" href="sysadmin-login.html" title="Sign out"><span class="sidebar-link-icon">${iconSvg('admin-logout')}</span>Sign out</a>
       </nav>`,
     )
     contentHost.insertAdjacentHTML(
       'beforebegin',
       `<header class="admin-top-bar">
         <div class="admin-top-bar-left">
-          <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle navigation">${iconSvg('hamburger')}</button>
+          <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle navigation" title="Toggle navigation">${iconSvg('hamburger')}</button>
           <span class="admin-top-bar-title">Control Center</span>
         </div>
         <div class="admin-top-bar-actions">
-          <button type="button" class="admin-top-bar-icon-button" aria-label="Notifications">${iconSvg('bell')}</button>
-          <button type="button" class="admin-top-bar-icon-button" aria-label="Account">${iconSvg('user')}</button>
+          <button type="button" class="admin-top-bar-icon-button" aria-label="Notifications" title="Notifications">${iconSvg('bell')}</button>
+          <button type="button" class="admin-top-bar-icon-button" aria-label="Account" title="Account">${iconSvg('user')}</button>
         </div>
       </header>`,
     )

@@ -59,7 +59,7 @@
     <div class="modal-card" style="max-width:600px;">
       <div class="modal-header">
         <h2 id="modal-title">Add tenant</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('tenant-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('tenant-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="tenant-form">
@@ -133,7 +133,7 @@
           <td data-label="Country">${t.country}</td>
           <td data-label="Tenant profile">${t.tenantProfileName}</td>
           <td data-label="Devices">${t.deviceCount}</td>
-          <td data-label="Status"><span class="status-pill status-${t.status}">${t.status}</span></td>
+          <td data-label="Status"><span class="status-pill status-${t.status}" title="${t.status}">${t.status}</span></td>
           <td class="data-table-menu-col">
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>

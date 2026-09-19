@@ -38,7 +38,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2>Add role</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('add-role-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('add-role-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-role-form">
@@ -59,7 +59,7 @@
     <div class="modal-card" style="max-width:640px;">
       <div class="modal-header">
         <h2 id="edit-permissions-title">Edit permissions</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('edit-permissions-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('edit-permissions-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p class="modal-hint hidden" id="edit-permissions-locked-hint">Owner always has full access &mdash; permissions cannot be changed for this role.</p>
@@ -366,7 +366,7 @@
           <span class="role-card-body">
             <span class="role-card-top">
               <span class="role-name">${role.name}</span>
-              ${role.system ? `<span class="system-badge">${SHIELD_SVG}System</span>` : ''}
+              ${role.system ? `<span class="system-badge" title="System role — always has full access, cannot be edited or removed">${SHIELD_SVG}System</span>` : ''}
             </span>
             <p class="role-desc">${role.description}</p>
             <span class="role-meta">
@@ -417,7 +417,7 @@
         return `
         <tr>
           <td class="module-cell">
-            ${hasFields ? `<button type="button" class="module-expand-toggle" data-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
+            ${hasFields ? `<button type="button" class="module-expand-toggle" data-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields" title="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
             <span class="module-icon">${MODULE_ICON_SVG[module.iconFamily]}</span>
             ${module.label}
           </td>
@@ -554,7 +554,7 @@
         const hasFields = moduleFields.length > 0
         const cells = PERMISSION_ACTIONS.map((action) => {
           const checked = editDraft[module.key][action.key]
-          return `<td><input type="checkbox" data-cell-module="${module.key}" data-cell-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${module.label}"/></td>`
+          return `<td><input type="checkbox" data-cell-module="${module.key}" data-cell-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${module.label}" title="${action.label} ${module.label}"/></td>`
         }).join('')
         let fieldRowsHtml = ''
         if (expanded) {
@@ -563,7 +563,7 @@
             const fieldCells = PERMISSION_ACTIONS.map((action) => {
               if (!FIELD_ACTION_KEYS.includes(action.key)) return '<td></td>'
               const checked = fieldPermission[action.key]
-              return `<td><input type="checkbox" data-field-module="${module.key}" data-field-key="${field.key}" data-field-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${field.label} on ${module.label}"/></td>`
+              return `<td><input type="checkbox" data-field-module="${module.key}" data-field-key="${field.key}" data-field-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${field.label} on ${module.label}" title="${action.label} ${field.label} on ${module.label}"/></td>`
             }).join('')
             return `<tr class="field-row"><td class="module-cell field-cell">${field.label}</td>${fieldCells}</tr>`
           }).join('')
@@ -571,7 +571,7 @@
         return `
         <tr>
           <td class="module-cell">
-            ${hasFields ? `<button type="button" class="module-expand-toggle" data-edit-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
+            ${hasFields ? `<button type="button" class="module-expand-toggle" data-edit-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields" title="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
             ${module.label}
           </td>
           ${cells}

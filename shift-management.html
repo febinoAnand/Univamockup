@@ -58,7 +58,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="modal-title">Add shift</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('shift-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('shift-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="shift-form">
@@ -145,7 +145,7 @@
           <td data-label="From">${formatTime(s.startTime)}</td>
           <td data-label="To">${formatTime(s.endTime)}</td>
           <td data-label="Midnight crossed">${s.midnightCrossed ? '<span class="day-chip">Crosses midnight</span>' : '—'}</td>
-          <td data-label="Status"><span class="status-pill status-${s.status}">${s.status}</span></td>
+          <td data-label="Status"><span class="status-pill status-${s.status}" title="${s.status}">${s.status}</span></td>
           <td data-label="Created Date">${s.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">

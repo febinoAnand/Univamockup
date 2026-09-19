@@ -55,10 +55,10 @@
     const suspendedTenants = data.tenants.filter((t) => t.status === 'suspended').length
 
     document.getElementById('stat-grid').innerHTML = `
-      <div class="admin-stat-card"><p class="admin-stat-label">Tenants</p><p class="admin-stat-value">${data.tenants.length}</p></div>
-      <div class="admin-stat-card"><p class="admin-stat-label">Total devices</p><p class="admin-stat-value">${totalDevices}</p></div>
-      <div class="admin-stat-card"><p class="admin-stat-label">Tenant profiles</p><p class="admin-stat-value">${data.tenantProfiles.length}</p></div>
-      <div class="admin-stat-card"><p class="admin-stat-label">Suspended tenants</p><p class="admin-stat-value${suspendedTenants > 0 ? ' warning' : ''}">${suspendedTenants}</p></div>`
+      <div class="admin-stat-card" title="Total number of tenants across the platform"><p class="admin-stat-label">Tenants</p><p class="admin-stat-value">${data.tenants.length}</p></div>
+      <div class="admin-stat-card" title="Total devices across all tenants"><p class="admin-stat-label">Total devices</p><p class="admin-stat-value">${totalDevices}</p></div>
+      <div class="admin-stat-card" title="Number of tenant profile templates"><p class="admin-stat-label">Tenant profiles</p><p class="admin-stat-value">${data.tenantProfiles.length}</p></div>
+      <div class="admin-stat-card" title="Tenants currently suspended"><p class="admin-stat-label">Suspended tenants</p><p class="admin-stat-value${suspendedTenants > 0 ? ' warning' : ''}">${suspendedTenants}</p></div>`
 
     const recentTenants = [...data.tenants].sort((a, b) => b.createdDate.localeCompare(a.createdDate)).slice(0, 5)
     document.getElementById('tbody').innerHTML = recentTenants
@@ -68,7 +68,7 @@
         <td class="card-title-cell">${t.title}</td>
         <td data-label="Tenant profile">${t.tenantProfileName}</td>
         <td data-label="Devices">${t.deviceCount}</td>
-        <td data-label="Status"><span class="status-pill status-${t.status}">${t.status}</span></td>
+        <td data-label="Status"><span class="status-pill status-${t.status}" title="${t.status}">${t.status}</span></td>
         <td data-label="Created Date">${t.createdDate}</td>
       </tr>`,
       )

@@ -837,33 +837,33 @@ function renderStatusListContent(config) {
   })
 
   if (variant === 'card-grid') {
-    return `<div class="status-list-widget status-card-grid">${rows.map((r) => `<div class="status-card"><span class="status-dot${r.online ? ' online' : ' offline'}"></span><span class="status-card-name">${r.name}</span><span class="status-card-uptime">${r.uptimePct}% up</span></div>`).join('')}</div>`
+    return `<div class="status-list-widget status-card-grid">${rows.map((r) => `<div class="status-card"><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span><span class="status-card-name">${r.name}</span><span class="status-card-uptime">${r.uptimePct}% up</span></div>`).join('')}</div>`
   }
   if (variant === 'avatar-list') {
-    return `<ul class="status-list-widget status-avatar-list">${rows.map((r) => `<li><span class="status-avatar">${initials(r.name)}</span><span class="status-row-name">${r.name}</span><span class="status-dot${r.online ? ' online' : ' offline'}"></span></li>`).join('')}</ul>`
+    return `<ul class="status-list-widget status-avatar-list">${rows.map((r) => `<li><span class="status-avatar">${initials(r.name)}</span><span class="status-row-name">${r.name}</span><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span></li>`).join('')}</ul>`
   }
   if (variant === 'progress-rows') {
     return `<ul class="status-list-widget status-progress-rows">${rows.map((r) => `<li><div class="status-progress-head"><span>${r.name}</span><span>${r.uptimePct}%</span></div><div class="status-progress-track"><div class="status-progress-fill" style="width:${r.uptimePct}%;background:${r.online ? '#16a34a' : '#dc2626'}"></div></div></li>`).join('')}</ul>`
   }
   if (variant === 'timeline') {
-    return `<ul class="status-list-widget status-timeline">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}"></span><div class="status-timeline-body"><span class="status-row-name">${r.name}</span><span class="status-timeline-meta">${r.online ? 'Connected' : 'Disconnected'} · ${r.activeAlerts} alerts</span></div></li>`).join('')}</ul>`
+    return `<ul class="status-list-widget status-timeline">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span><div class="status-timeline-body"><span class="status-row-name">${r.name}</span><span class="status-timeline-meta">${r.online ? 'Connected' : 'Disconnected'} · ${r.activeAlerts} alerts</span></div></li>`).join('')}</ul>`
   }
   if (variant === 'table-style') {
-    return `<table class="status-list-widget status-table"><thead><tr><th>Device</th><th>Status</th><th>Alerts</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r.name}</td><td><span class="status-dot${r.online ? ' online' : ' offline'}"></span> ${r.online ? 'Online' : 'Offline'}</td><td>${r.activeAlerts}</td></tr>`).join('')}</tbody></table>`
+    return `<table class="status-list-widget status-table"><thead><tr><th>Device</th><th>Status</th><th>Alerts</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r.name}</td><td><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span> ${r.online ? 'Online' : 'Offline'}</td><td>${r.activeAlerts}</td></tr>`).join('')}</tbody></table>`
   }
   if (variant === 'compact-chips') {
-    return `<div class="status-list-widget status-compact-chips">${rows.map((r) => `<span class="status-chip${r.online ? ' online' : ' offline'}">${r.name}</span>`).join('')}</div>`
+    return `<div class="status-list-widget status-compact-chips">${rows.map((r) => `<span class="status-chip${r.online ? ' online' : ' offline'}" title="${r.name} — ${r.online ? 'Online' : 'Offline'}">${r.name}</span>`).join('')}</div>`
   }
   if (variant === 'minimal-text') {
     return `<ul class="status-list-widget status-minimal-text">${rows.map((r) => `<li>${r.name} — ${r.online ? 'online' : 'offline'}</li>`).join('')}</ul>`
   }
   if (variant === 'icon-list') {
-    return `<ul class="status-list-widget status-icon-list">${rows.map((r) => `<li><span class="status-icon-badge${r.online ? ' online' : ' offline'}">${r.online ? '✓' : '!'}</span><span class="status-row-name">${r.name}</span></li>`).join('')}</ul>`
+    return `<ul class="status-list-widget status-icon-list">${rows.map((r) => `<li><span class="status-icon-badge${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}">${r.online ? '✓' : '!'}</span><span class="status-row-name">${r.name}</span></li>`).join('')}</ul>`
   }
   if (variant === 'badge-list') {
     return `<ul class="status-list-widget status-badge-list">${rows.map((r) => `<li><span class="status-row-name">${r.name}</span><span class="status-badge${r.online ? ' online' : ' offline'}">${r.online ? 'Online' : 'Offline'}</span></li>`).join('')}</ul>`
   }
-  return `<ul class="status-list-widget status-dot-list">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}"></span><span class="status-row-name">${r.name}</span><span class="status-row-meta">${r.activeAlerts} alerts</span></li>`).join('')}</ul>`
+  return `<ul class="status-list-widget status-dot-list">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span><span class="status-row-name">${r.name}</span><span class="status-row-meta">${r.activeAlerts} alerts</span></li>`).join('')}</ul>`
 }
 
 const TABLE_MODIFIER_CLASS = { basic: '', striped: 'table-striped', bordered: 'table-bordered', compact: 'table-compact', 'dark-header': 'table-dark-header', minimal: 'table-minimal', 'hover-highlight': 'table-hover-highlight' }
@@ -992,14 +992,14 @@ function renderExtraContent(config) {
       const onlineRatio = onlineCount / devices.length
       const score = Math.round(Math.max(0, Math.min(100, onlineRatio * 100 - activeAlerts * 4)))
       const color = score > 80 ? '#16a34a' : score > 50 ? '#d97706' : '#dc2626'
-      return `<div class="extra-widget extra-health-score"><svg viewBox="0 0 100 100" class="health-score-svg"><circle cx="50" cy="50" r="42" fill="none" stroke="#e7e5e4" stroke-width="8"/><circle cx="50" cy="50" r="42" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(score / 100) * 264} 264" transform="rotate(-90 50 50)"/></svg><div class="health-score-center"><span class="health-score-value" style="color:${color}">${score}</span><span class="health-score-label">Health</span></div></div>`
+      return `<div class="extra-widget extra-health-score" title="Health score: based on device connectivity and active alerts"><svg viewBox="0 0 100 100" class="health-score-svg"><circle cx="50" cy="50" r="42" fill="none" stroke="#e7e5e4" stroke-width="8"/><circle cx="50" cy="50" r="42" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(score / 100) * 264} 264" transform="rotate(-90 50 50)"/></svg><div class="health-score-center"><span class="health-score-value" style="color:${color}">${score}</span><span class="health-score-label">Health</span></div></div>`
     }
     case 'network-status': {
       const sample = getDevices().slice(0, 6)
       if (sample.length === 0) return '<div class="widget-empty-note">No devices yet.</div>'
       return `<div class="extra-widget extra-network-status"><span class="network-hub"></span>${sample.map((d) => {
         const online = connectivitySnapshot(d.id).online
-        return `<div class="network-node"><span class="network-line"></span><span class="network-dot${online ? ' online' : ''}" title="${escapeHtml(d.name)}"></span></div>`
+        return `<div class="network-node"><span class="network-line"></span><span class="network-dot${online ? ' online' : ''}" title="${escapeHtml(d.name)} — ${online ? 'Online' : 'Offline'}"></span></div>`
       }).join('')}</div>`
     }
     case 'weather':
@@ -1345,10 +1345,10 @@ function widgetCardHtml(config) {
       <div class="widget-card-header" style="${headerBg}">
         <span class="widget-card-title" style="${headerColor}${headerSize}${headerWeight}">${escapeHtml(config.title)}</span>
         <div class="widget-card-actions">
-          <button type="button" class="widget-card-icon-button" data-action="maximize" aria-label="Expand">${UI.EXPAND_ICON}</button>
+          <button type="button" class="widget-card-icon-button" data-action="maximize" aria-label="Expand" title="Expand">${UI.EXPAND_ICON}</button>
           <button type="button" class="widget-card-icon-button" data-action="toggle-fields" aria-label="Edit field positions" title="Drag fields to reposition">${MOVE_SVG}</button>
-          <button type="button" class="widget-card-icon-button" data-action="open-settings" aria-label="Widget settings">${GEAR_SVG}</button>
-          <button type="button" class="widget-card-icon-button danger" data-action="remove" aria-label="Remove widget">${TRASH_SVG}</button>
+          <button type="button" class="widget-card-icon-button" data-action="open-settings" aria-label="Widget settings" title="Widget settings">${GEAR_SVG}</button>
+          <button type="button" class="widget-card-icon-button danger" data-action="remove" aria-label="Remove widget" title="Remove widget">${TRASH_SVG}</button>
         </div>
       </div>
       <div class="widget-card-body" data-widget-body="${config.id}"></div>
@@ -1362,7 +1362,7 @@ function renderFieldsLayerHtml(config, editMode) {
   if (fields.length === 0 && editMode) html += '<div class="custom-fields-empty-hint">No fields yet — add one below, then drag it into place.</div>'
   fields.forEach((field) => {
     const style = `left:${field.x}%;top:${field.y}%;${field.color ? `color:${field.color};` : ''}${field.fontSize ? `font-size:${field.fontSize}px;` : ''}${field.fontWeight ? `font-weight:${field.fontWeight};` : ''}`
-    html += `<div class="custom-field${editMode ? ' custom-field-editable' : ''}" style="${style}" data-field-id="${field.id}">${fieldReadingHtml(field)}${editMode ? '<button type="button" class="custom-field-remove" data-remove-field aria-label="Remove field">×</button>' : ''}</div>`
+    html += `<div class="custom-field${editMode ? ' custom-field-editable' : ''}" style="${style}" data-field-id="${field.id}">${fieldReadingHtml(field)}${editMode ? '<button type="button" class="custom-field-remove" data-remove-field aria-label="Remove field" title="Remove field">×</button>' : ''}</div>`
   })
   if (editMode) html += '<button type="button" class="custom-field-add" data-add-field>+ Add field</button>'
   html += '</div>'
@@ -1390,6 +1390,7 @@ function wireWidgetMaximizeButton(btn, cardEl, config) {
   function applyIcon(isMaximized) {
     btn.innerHTML = isMaximized ? '&times;' : UI.EXPAND_ICON
     btn.setAttribute('aria-label', isMaximized ? 'Close' : 'Expand')
+    btn.setAttribute('title', isMaximized ? 'Close' : 'Expand')
   }
   function onRestore() {
     delete widgetNaturalContentSize[config.id]
@@ -1517,7 +1518,7 @@ function openAddFieldModal(config) {
       <div class="modal-card" style="max-width:420px">
         <div class="modal-header">
           <h2>Add field</h2>
-          <button type="button" class="modal-close" id="add-field-close" aria-label="Close">&times;</button>
+          <button type="button" class="modal-close" id="add-field-close" aria-label="Close" title="Close">&times;</button>
         </div>
         <div class="modal-body">
           <form id="add-field-form">
@@ -1700,9 +1701,9 @@ function renderCanvas() {
     const width = layout.w * colWidth + (layout.w - 1) * MARGIN[0]
     const height = layout.h * ROW_HEIGHT + (layout.h - 1) * MARGIN[1]
     html += `<div class="grid-item" data-grid-item="${config.id}" style="left:${left}px;top:${top}px;width:${width}px;height:${height}px;">
-      <button type="button" class="widget-drag-handle" aria-label="Move widget">${DRAG_HANDLE_SVG}</button>
+      <button type="button" class="widget-drag-handle" aria-label="Move widget" title="Move widget">${DRAG_HANDLE_SVG}</button>
       <div class="grid-item-body">${widgetCardHtml(config)}</div>
-      <button type="button" class="widget-resize-handle" aria-label="Resize widget"></button>
+      <button type="button" class="widget-resize-handle" aria-label="Resize widget" title="Resize widget"></button>
     </div>`
   })
   html += '</div>'
@@ -1721,11 +1722,11 @@ function renderCanvas() {
       UI.toggleMaximize(cardEl, { onRestore: function () {
         delete widgetNaturalContentSize[config.id]
         const restoreBtn = cardEl.querySelector('[data-action="maximize"]')
-        if (restoreBtn) { restoreBtn.innerHTML = UI.EXPAND_ICON; restoreBtn.setAttribute('aria-label', 'Expand') }
+        if (restoreBtn) { restoreBtn.innerHTML = UI.EXPAND_ICON; restoreBtn.setAttribute('aria-label', 'Expand'); restoreBtn.setAttribute('title', 'Expand') }
         refreshWidgetBody(config.id)
       } })
       const btn = cardEl.querySelector('[data-action="maximize"]')
-      if (btn) { btn.innerHTML = '&times;'; btn.setAttribute('aria-label', 'Close') }
+      if (btn) { btn.innerHTML = '&times;'; btn.setAttribute('aria-label', 'Close'); btn.setAttribute('title', 'Close') }
     }
     refreshWidgetBody(config.id)
   })
@@ -1805,14 +1806,14 @@ function openWidgetSettings(id) {
       return `
       <div class="field-editor-row" data-field-row="${field.id}">
         <div class="field-editor-grid">
-          <select data-field-device aria-label="Field device"><option value="">No device</option>${devices.map((d) => `<option value="${d.id}" ${d.id === field.deviceId ? 'selected' : ''}>${escapeHtml(d.name)}</option>`).join('')}</select>
-          <select data-field-metric aria-label="Field metric">${fieldMetrics.map((m) => `<option value="${m.key}" ${m.key === field.metricKey ? 'selected' : ''}>${m.label}</option>`).join('')}</select>
-          <input type="text" data-field-label placeholder="Label" value="${escapeHtml(field.label || '')}" aria-label="Field label" />
+          <select data-field-device aria-label="Field device" title="Field device"><option value="">No device</option>${devices.map((d) => `<option value="${d.id}" ${d.id === field.deviceId ? 'selected' : ''}>${escapeHtml(d.name)}</option>`).join('')}</select>
+          <select data-field-metric aria-label="Field metric" title="Field metric">${fieldMetrics.map((m) => `<option value="${m.key}" ${m.key === field.metricKey ? 'selected' : ''}>${m.label}</option>`).join('')}</select>
+          <input type="text" data-field-label placeholder="Label" value="${escapeHtml(field.label || '')}" aria-label="Field label" title="Field label" />
         </div>
         <div class="field-editor-grid field-editor-style-grid">
           <label class="field-editor-color">Color<input type="color" data-field-color value="${field.color || '#1e293b'}" /></label>
           <label class="field-editor-number">Size<input type="number" data-field-size min="8" max="72" value="${field.fontSize || 14}" /></label>
-          <select data-field-weight aria-label="Field weight"><option value="normal" ${field.fontWeight === 'normal' ? 'selected' : ''}>Normal</option><option value="600" ${field.fontWeight === '600' ? 'selected' : ''}>Semibold</option><option value="700" ${field.fontWeight === '700' ? 'selected' : ''}>Bold</option></select>
+          <select data-field-weight aria-label="Field weight" title="Field weight"><option value="normal" ${field.fontWeight === 'normal' ? 'selected' : ''}>Normal</option><option value="600" ${field.fontWeight === '600' ? 'selected' : ''}>Semibold</option><option value="700" ${field.fontWeight === '700' ? 'selected' : ''}>Bold</option></select>
           <button type="button" class="field-editor-remove" data-field-remove>Remove</button>
         </div>
       </div>`

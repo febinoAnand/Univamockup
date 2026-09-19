@@ -145,7 +145,7 @@ function renderRoot() {
         <span class="token-info-banner-icon">${INFO_SVG}</span>
         <span>Learn how to activate the device token.</span>
         <button type="button" class="outline-action-button">Read tutorial</button>
-        <button type="button" class="icon-button token-info-banner-close" id="token-banner-close" aria-label="Dismiss">${CLOSE_SVG}</button>
+        <button type="button" class="icon-button token-info-banner-close" id="token-banner-close" aria-label="Dismiss" title="Dismiss">${CLOSE_SVG}</button>
       </div>` : ''}
 
       <div class="device-detail-tabs" id="device-detail-tabs">
@@ -333,8 +333,8 @@ function renderOverviewTab(container) {
         <div class="device-panel-title-row">
           <h2 class="device-panel-title">${LIST_SVG}Metadata</h2>
           <div class="device-panel-title-actions">
-            <button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button>
-            <button type="button" class="icon-button" id="metadata-search-toggle" aria-label="Search metadata">${SEARCH_SVG}</button>
+            <button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button>
+            <button type="button" class="icon-button" id="metadata-search-toggle" aria-label="Search metadata" title="Search metadata">${SEARCH_SVG}</button>
           </div>
         </div>
         ${ov.searchOpen ? `<input type="text" class="metadata-search-input" id="metadata-search-input" placeholder="Search metadata" value="${escapeHtml(ov.search)}" />` : ''}
@@ -367,14 +367,14 @@ function renderOverviewTab(container) {
         <div class="metadata-add-row">
           <input type="text" placeholder="Key" id="metadata-new-key" />
           <input type="text" placeholder="Value" id="metadata-new-value" />
-          <button type="button" class="icon-button" id="metadata-add-btn" aria-label="Add metadata field">+</button>
+          <button type="button" class="icon-button" id="metadata-add-btn" aria-label="Add metadata field" title="Add metadata field">+</button>
         </div>
       </div>
 
       <div class="device-panel" id="device-stats-panel">
         <div class="device-panel-title-row">
           <h2 class="device-panel-title">${CHART_SVG}Device statistics</h2>
-          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div>
+          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button></div>
         </div>
         <div class="stat-total-row">
           <span class="stat-label">Data sent total</span>
@@ -401,7 +401,7 @@ function renderOverviewTab(container) {
     if (panelEl) {
       UI.toggleMaximize(panelEl)
       const btn = panelEl.querySelector('[aria-label="Expand"]')
-      if (btn) { btn.innerHTML = UI.COLLAPSE_ICON; btn.setAttribute('aria-label', 'Restore') }
+      if (btn) { btn.innerHTML = UI.COLLAPSE_ICON; btn.setAttribute('aria-label', 'Restore'); btn.setAttribute('title', 'Restore') }
     }
   }
 }
@@ -492,7 +492,7 @@ function tokenPanelHtml() {
   return `
     <div class="device-panel-title-row">
       <h2 class="device-panel-title">${KEY_SVG}Endpoint Token Status</h2>
-      <span class="status-pill status-${status}">${status === 'unavailable' ? 'Unavailable' : status}</span>
+      <span class="status-pill status-${status}" title="${status === 'unavailable' ? 'Unavailable' : status}">${status === 'unavailable' ? 'Unavailable' : status}</span>
     </div>
     ${note}
     ${device.tokenValue ? `<code class="token-value">${escapeHtml(device.tokenValue)}</code>` : ''}
@@ -623,10 +623,10 @@ function telemetryPanelHtml() {
       <div class="telemetry-toolbar">
         <div class="telemetry-toolbar-left">
           <div class="telemetry-view-toggle">
-            <button type="button" class="${ov.viewMode === 'chart' ? 'active' : ''}" data-view-mode="chart" aria-label="Chart view">${CHART_SVG}</button>
-            <button type="button" class="${ov.viewMode === 'table' ? 'active' : ''}" data-view-mode="table" aria-label="Table view">${LIST_SVG}</button>
+            <button type="button" class="${ov.viewMode === 'chart' ? 'active' : ''}" data-view-mode="chart" aria-label="Chart view" title="Chart view">${CHART_SVG}</button>
+            <button type="button" class="${ov.viewMode === 'table' ? 'active' : ''}" data-view-mode="table" aria-label="Table view" title="Table view">${LIST_SVG}</button>
           </div>
-          <button type="button" class="icon-button" id="telemetry-refresh-btn" aria-label="Refresh">${REFRESH_SVG}</button>
+          <button type="button" class="icon-button" id="telemetry-refresh-btn" aria-label="Refresh" title="Refresh">${REFRESH_SVG}</button>
           <select class="telemetry-range-select" id="telemetry-range-select">
             ${Object.keys(RANGE_PRESETS).map((k) => `<option value="${k}" ${k === ov.range ? 'selected' : ''}>${RANGE_PRESETS[k].label}</option>`).join('')}
           </select>
@@ -706,8 +706,8 @@ function renderAlertsTab(container) {
       <div class="detail-toolbar">
         <h2 class="device-panel-title" style="margin:0;">Alerts</h2>
         <div class="detail-toolbar-actions">
-          <button type="button" class="icon-button" aria-label="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button>
+          <button type="button" class="icon-button" aria-label="Download" title="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button>
         </div>
       </div>
       ${device.alerts.length === 0 ? '<div class="empty-table-note"><p>No data.</p></div>' : `
@@ -719,10 +719,10 @@ function renderAlertsTab(container) {
             <tr>
               <td>${alert.id.slice(0, 8)}</td>
               <td>${escapeHtml(alert.alertType)}</td>
-              <td><span class="status-pill status-${alert.severity}">${alert.severity}</span></td>
+              <td><span class="status-pill status-${alert.severity}" title="${alert.severity}">${alert.severity}</span></td>
               <td>${escapeHtml(alert.activateReason)}</td>
               <td>${escapeHtml(alert.resolveReason || '—')}</td>
-              <td><span class="status-pill status-${alert.state}">${alert.state}</span></td>
+              <td><span class="status-pill status-${alert.state}" title="${alert.state}">${alert.state}</span></td>
               <td>${alert.acknowledgedBy ? `${escapeHtml(alert.acknowledgedBy)} · ${alert.acknowledgedDate}` : '—'}</td>
               <td>${jsonCellHtml(alert.metadata, 'alert-md-' + alert.id)}</td>
               <td>${jsonCellHtml(alert.activationMetadata, 'alert-actmd-' + alert.id)}</td>
@@ -804,7 +804,7 @@ function renderCommandsTab(container) {
       <div class="device-panel">
         <div class="device-panel-title-row">
           <h2 class="device-panel-title">Command execution</h2>
-          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div>
+          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button></div>
         </div>
         <form id="command-form">
           <div class="radio-field-group">
@@ -841,7 +841,7 @@ function renderCommandsTab(container) {
       <div class="device-panel">
         <div class="device-panel-title-row">
           <h2 class="device-panel-title">Commands history</h2>
-          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div>
+          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button></div>
         </div>
         <div class="detail-toolbar">
           <div class="table-search-wrap"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/></svg><input type="text" id="commands-search" placeholder="Search" /></div>
@@ -918,7 +918,7 @@ function renderCommandsHistory() {
           ${list.map((c) => `
           <tr>
             <td>${escapeHtml(c.name)}</td>
-            <td><span class="status-pill status-${c.status}">${c.status}</span></td>
+            <td><span class="status-pill status-${c.status}" title="${c.status}">${c.status}</span></td>
             <td>${c.statusCode == null ? '—' : c.statusCode}</td>
             <td>${escapeHtml(c.reasonPhrase)}</td>
             <td><span class="payload-preview">${escapeHtml(c.params)}${c.responsePayload ? ' → ' + escapeHtml(c.responsePayload) : ''}</span></td>
@@ -949,14 +949,14 @@ function renderRelationsTab(container) {
   function endpointFieldHtml(value, options, key) {
     return `
       <div class="relation-box" data-relation-box="${key}">
-        <button type="button" class="relation-box-remove" data-remove-relation="${key}" aria-label="Remove relation">${TRASH_SVG}</button>
+        <button type="button" class="relation-box-remove" data-remove-relation="${key}" aria-label="Remove relation" title="Remove relation">${TRASH_SVG}</button>
         <label class="relation-box-label">Endpoint ID<span class="relation-required">*</span><span class="help-icon" title="Select the related device by endpoint ID">${HELP_SVG}</span></label>
         <div class="relation-box-field">
           <select data-relation-select="${key}">
             <option value="" disabled ${!value ? 'selected' : ''}>Select endpoint…</option>
             ${options.map((o) => `<option value="${o.id}" ${o.id === value ? 'selected' : ''}>${escapeHtml(o.name)}</option>`).join('')}
           </select>
-          <button type="button" class="icon-button" data-copy-relation="${key}" aria-label="Copy endpoint id" ${!value ? 'disabled' : ''}>${COPY_SVG}</button>
+          <button type="button" class="icon-button" data-copy-relation="${key}" aria-label="Copy endpoint id" title="Copy endpoint id" ${!value ? 'disabled' : ''}>${COPY_SVG}</button>
         </div>
       </div>`
   }
@@ -964,12 +964,12 @@ function renderRelationsTab(container) {
   container.innerHTML = `
     <div class="relations-grid">
       <div class="device-panel">
-        <div class="device-panel-title-row"><h2 class="device-panel-title">Asset - Device relations</h2><div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div></div>
+        <div class="device-panel-title-row"><h2 class="device-panel-title">Asset - Device relations</h2><div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button></div></div>
         <p class="token-note">Relation between current device application and asset type is not configured. It is not possible to define parent asset.</p>
       </div>
 
       <div class="device-panel">
-        <div class="device-panel-title-row"><h2 class="device-panel-title">Device - Device relations</h2><div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div></div>
+        <div class="device-panel-title-row"><h2 class="device-panel-title">Device - Device relations</h2><div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button></div></div>
 
         <div class="relations-section">
           <span class="relations-section-title">${chevronSvg(true, 0)} Parent</span>
@@ -1087,7 +1087,7 @@ function renderDataPublishBody(container) {
           <label class="radio-option"><input type="radio" name="protocol" ${pub.protocol === 'mqtt' ? 'checked' : ''} data-protocol="mqtt" /> MQTT</label>
           <label class="radio-option"><input type="radio" name="protocol" ${pub.protocol === 'http' ? 'checked' : ''} data-protocol="http" /> HTTP</label>
           <span class="metadata-key"><strong>Connection url:</strong> ${connectionUrl}</span>
-          <button type="button" class="icon-button" id="copy-connection-url" aria-label="Copy connection url">${COPY_SVG}</button>
+          <button type="button" class="icon-button" id="copy-connection-url" aria-label="Copy connection url" title="Copy connection url">${COPY_SVG}</button>
         </div>
       </div>
 
@@ -1096,8 +1096,8 @@ function renderDataPublishBody(container) {
         ${pub.protocol === 'http' ? `<div class="publish-actions-right"><input type="text" class="device-token-input" id="device-token-input" placeholder="Device token" value="${escapeHtml(pub.deviceToken)}" /><button type="button" class="solid-action-button" id="send-request-btn">Send request</button></div>` : ''}
       </div>
 
-      ${pub.protocol === 'mqtt' ? `<div class="topic-row" style="margin-top:1rem;"><span class="topic-badge topic-pub">PUB</span><code>${escapeHtml(pubTopic)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(pubTopic)}::Publish topic" aria-label="Copy publish topic">${COPY_SVG}</button></div>`
-        : `<div class="topic-row" style="margin-top:1rem;"><span class="topic-badge topic-post">POST</span><code>${escapeHtml(httpPath)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(httpPath)}::Request path" aria-label="Copy request path">${COPY_SVG}</button></div>`}
+      ${pub.protocol === 'mqtt' ? `<div class="topic-row" style="margin-top:1rem;"><span class="topic-badge topic-pub" title="MQTT publish topic">PUB</span><code>${escapeHtml(pubTopic)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(pubTopic)}::Publish topic" aria-label="Copy publish topic" title="Copy publish topic">${COPY_SVG}</button></div>`
+        : `<div class="topic-row" style="margin-top:1rem;"><span class="topic-badge topic-post" title="HTTP POST request">POST</span><code>${escapeHtml(httpPath)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(httpPath)}::Request path" aria-label="Copy request path" title="Copy request path">${COPY_SVG}</button></div>`}
 
       <p class="token-note" style="margin-top:1rem;">Publish telemetry data to the platform in JSON format. Supports single and batched messages sent as an array. ${pub.protocol === 'mqtt' ? 'When used with MQTT, optionally specify the request ID to subscribe on the status or error topic to get the operation result.' : 'When used over HTTP, the response body carries the operation status directly.'}</p>
 
@@ -1111,8 +1111,8 @@ function renderDataPublishBody(container) {
 
       ${pub.protocol === 'mqtt' ? `
       <p class="publish-subheading" style="margin-top:1rem;">Subscribe status / error topics:</p>
-      <div class="topic-row"><span class="topic-badge topic-sub">SUB</span><code>${escapeHtml(statusTopic)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(statusTopic)}::Status topic" aria-label="Copy status topic">${COPY_SVG}</button></div>
-      <div class="topic-row"><span class="topic-badge topic-sub">SUB</span><code>${escapeHtml(errorTopic)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(errorTopic)}::Error topic" aria-label="Copy error topic">${COPY_SVG}</button></div>` : ''}
+      <div class="topic-row"><span class="topic-badge topic-sub" title="MQTT subscribe topic">SUB</span><code>${escapeHtml(statusTopic)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(statusTopic)}::Status topic" aria-label="Copy status topic" title="Copy status topic">${COPY_SVG}</button></div>
+      <div class="topic-row"><span class="topic-badge topic-sub" title="MQTT subscribe topic">SUB</span><code>${escapeHtml(errorTopic)}</code><button type="button" class="icon-button" data-copy="${escapeHtml(errorTopic)}::Error topic" aria-label="Copy error topic" title="Copy error topic">${COPY_SVG}</button></div>` : ''}
 
       <p class="publish-subheading" style="margin-top:1rem;">Code example</p>
       <div class="code-example-tabs">${codeTabs.map((t) => `<button type="button" class="tab-button${pub.codeTab === t ? ' active' : ''}" data-code-tab="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('')}</div>

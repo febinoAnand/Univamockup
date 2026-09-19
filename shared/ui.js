@@ -109,6 +109,7 @@ const UI = {
       const nowMaximized = UI.toggleMaximize(panelEl, opts)
       btn.innerHTML = nowMaximized ? UI.COLLAPSE_ICON : UI.EXPAND_ICON
       btn.setAttribute('aria-label', nowMaximized ? 'Restore' : 'Expand')
+      btn.setAttribute('title', nowMaximized ? 'Restore' : 'Expand')
     })
   },
 
@@ -124,7 +125,7 @@ const UI = {
         <div class="modal-card" style="max-width:420px">
           <div class="modal-header">
             <h2>${title}</h2>
-            <button type="button" class="modal-close" id="confirm-dialog-close" aria-label="Close">&times;</button>
+            <button type="button" class="modal-close" id="confirm-dialog-close" aria-label="Close" title="Close">&times;</button>
           </div>
           <div class="modal-body">
             <p class="confirm-dialog-message">${message}</p>
@@ -163,7 +164,7 @@ const UI = {
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span class="device-toast-message">${message}</span>
-        <button type="button" class="device-toast-close" aria-label="Dismiss">
+        <button type="button" class="device-toast-close" aria-label="Dismiss" title="Dismiss">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
         </button>
       </div>`
@@ -282,6 +283,7 @@ const UI = {
       input.type = showing ? 'password' : 'text'
       button.innerHTML = showing ? UI.EYE_ICON : UI.EYE_OFF_ICON
       button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password')
+      button.setAttribute('title', showing ? 'Show password' : 'Hide password')
       button.classList.remove('suffix-icon-pop')
       void button.offsetWidth
       button.classList.add('suffix-icon-pop')

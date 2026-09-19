@@ -35,7 +35,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2>Edit asset</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('asset-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('asset-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="asset-form">
@@ -68,14 +68,14 @@
   </div>
 
   <!-- Custom widgets section: same floating palette used on the main dashboard -->
-  <button type="button" class="widget-palette-fab" id="widget-palette-fab" aria-label="Add widget">
+  <button type="button" class="widget-palette-fab" id="widget-palette-fab" aria-label="Add widget" title="Add widget">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
   </button>
   <div class="widget-palette-backdrop" id="widget-palette-backdrop"></div>
   <aside class="widget-palette-drawer" id="widget-palette-drawer">
     <div class="widget-palette-header">
       <div id="widget-palette-header-title"><span class="widget-palette-title">Widget library</span></div>
-      <button type="button" class="widget-palette-close" id="widget-palette-close" aria-label="Close">
+      <button type="button" class="widget-palette-close" id="widget-palette-close" aria-label="Close" title="Close">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -91,7 +91,7 @@
     <div class="modal-card" style="max-width:560px;">
       <div class="modal-header">
         <h2>Widget settings</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('widget-settings-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('widget-settings-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body" id="widget-settings-body"></div>
       <div class="modal-footer">
@@ -282,8 +282,8 @@
         <div class="device-panel-title-row">
           <h2 class="device-panel-title">${LIST_SVG}Metadata</h2>
           <div class="device-panel-title-actions">
-            <button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button>
-            <button type="button" class="icon-button" id="metadata-search-toggle" aria-label="Search metadata">${SEARCH_SVG}</button>
+            <button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button>
+            <button type="button" class="icon-button" id="metadata-search-toggle" aria-label="Search metadata" title="Search metadata">${SEARCH_SVG}</button>
           </div>
         </div>
         ${md.searchOpen ? `<input type="text" class="metadata-search-input" id="metadata-search-input" placeholder="Search metadata" value="${escapeHtml(md.search)}" />` : ''}
@@ -316,7 +316,7 @@
         <div class="metadata-add-row">
           <input type="text" placeholder="Key" id="metadata-new-key" />
           <input type="text" placeholder="Value" id="metadata-new-value" />
-          <button type="button" class="icon-button" id="metadata-add-btn" aria-label="Add metadata field">+</button>
+          <button type="button" class="icon-button" id="metadata-add-btn" aria-label="Add metadata field" title="Add metadata field">+</button>
         </div>`
     }
 
@@ -503,10 +503,10 @@
           <div class="telemetry-toolbar">
             <div class="telemetry-toolbar-left">
               <div class="telemetry-view-toggle">
-                <button type="button" class="${tm.viewMode === 'chart' ? 'active' : ''}" data-view-mode="chart" aria-label="Chart view">${CHART_SVG}</button>
-                <button type="button" class="${tm.viewMode === 'table' ? 'active' : ''}" data-view-mode="table" aria-label="Table view">${LIST_SVG}</button>
+                <button type="button" class="${tm.viewMode === 'chart' ? 'active' : ''}" data-view-mode="chart" aria-label="Chart view" title="Chart view">${CHART_SVG}</button>
+                <button type="button" class="${tm.viewMode === 'table' ? 'active' : ''}" data-view-mode="table" aria-label="Table view" title="Table view">${LIST_SVG}</button>
               </div>
-              <button type="button" class="icon-button" id="telemetry-refresh-btn" aria-label="Refresh">${REFRESH_SVG}</button>
+              <button type="button" class="icon-button" id="telemetry-refresh-btn" aria-label="Refresh" title="Refresh">${REFRESH_SVG}</button>
               <select class="telemetry-range-select" id="telemetry-range-select">
                 ${Object.keys(RANGE_PRESETS).map((k) => `<option value="${k}" ${k === tm.range ? 'selected' : ''}>${RANGE_PRESETS[k].label}</option>`).join('')}
               </select>
@@ -520,7 +520,7 @@
       return `
         <div class="device-panel-title-row">
           <h2 class="device-panel-title">${CHART_SVG}Telemetry</h2>
-          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand">${EXPAND_SVG}</button></div>
+          <div class="device-panel-title-actions"><button type="button" class="icon-button" aria-label="Expand" title="Expand">${EXPAND_SVG}</button></div>
         </div>
         <div class="telemetry-mode-tabs">
           <button type="button" class="tab-button${tm.dataMode === 'telemetry' ? ' active' : ''}" data-data-mode="telemetry">Telemetry</button>
@@ -687,7 +687,7 @@
               <p class="device-detail-subtitle">${escapeHtml(asset.location || 'No location provided')}</p>
             </div>
             <div class="page-header-actions">
-              <span class="status-pill status-${asset.status}">${asset.status}</span>
+              <span class="status-pill status-${asset.status}" title="${asset.status}">${asset.status}</span>
               <button type="button" class="outline-action-button" id="toggle-status-btn">${asset.status === 'operational' ? 'Mark offline' : 'Mark operational'}</button>
               <button type="button" class="outline-action-button" id="edit-asset-btn">Edit</button>
               <button type="button" class="outline-action-button" id="delete-asset-btn" style="color:var(--danger); border-color:var(--danger-bg);">Delete</button>

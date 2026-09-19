@@ -55,7 +55,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="modal-title">Add schedule</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('schedule-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('schedule-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="schedule-form">
@@ -133,7 +133,7 @@
           <td class="card-title-cell"><div class="group-name-cell">${s.name}${s.description ? `<p class="group-description">${s.description}</p>` : ''}</div></td>
           <td data-label="Days"><div class="day-chip-row">${DAY_OPTIONS.map((d) => {
             const names = shiftNamesForDay(s.assignments[d])
-            if (names.length === 0) return `<span class="day-chip off">${d}</span>`
+            if (names.length === 0) return `<span class="day-chip off" title="No shift assigned">${d}</span>`
             const suffix = names.length > 1 ? ` ×${names.length}` : ''
             return `<span class="day-chip" title="${names.join(', ')}">${d}${suffix}</span>`
           }).join('')}</div></td>

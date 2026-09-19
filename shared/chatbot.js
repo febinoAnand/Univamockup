@@ -573,6 +573,7 @@ function chatbotBuildDom() {
   launcher.id = 'chatbot-launcher'
   launcher.className = 'chatbot-launcher'
   launcher.setAttribute('aria-label', 'Open assistant')
+  launcher.setAttribute('title', 'Open assistant')
   launcher.innerHTML =
     '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 1 1 3.3 6.5L4 20l1.2-3.6A8 8 0 0 1 4 12Z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/></svg>'
 
@@ -586,10 +587,10 @@ function chatbotBuildDom() {
         Univa Assistant
       </div>
       <div class="chatbot-header-actions">
-        <button type="button" class="chatbot-icon-button" id="chatbot-settings-btn" aria-label="Settings">
+        <button type="button" class="chatbot-icon-button" id="chatbot-settings-btn" aria-label="Settings" title="Settings">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-1.7-1L15 3h-4l-.3 2.4a7.7 7.7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.7 7.7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 1.7 1L11 21h4l.3-2.4a7.7 7.7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <button type="button" class="chatbot-icon-button" id="chatbot-close-btn" aria-label="Close">
+        <button type="button" class="chatbot-icon-button" id="chatbot-close-btn" aria-label="Close" title="Close">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
         </button>
       </div>
@@ -602,7 +603,7 @@ function chatbotBuildDom() {
     </div>
     <div class="chatbot-input-row" id="chatbot-input-row">
       <textarea id="chatbot-textarea" rows="1" placeholder="Ask about your data or tell it what to do…"></textarea>
-      <button type="button" class="chatbot-send-button" id="chatbot-send-btn" aria-label="Send">
+      <button type="button" class="chatbot-send-button" id="chatbot-send-btn" aria-label="Send" title="Send">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l16-8-6 8 6 8-16-8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>

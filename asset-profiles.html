@@ -54,7 +54,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="modal-title">Add asset profile</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="profile-form">
@@ -116,7 +116,7 @@
         .map(
           (row) => `
         <div class="metadata-row">
-          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute">
+          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute" title="Remove attribute">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
           </button>
           <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>

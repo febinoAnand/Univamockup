@@ -59,7 +59,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="user-modal-title">Add user</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('user-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('user-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="user-form">
@@ -162,7 +162,7 @@
           <td data-label="Email">${u.email}</td>
           <td data-label="Role">${u.role}</td>
           <td data-label="Group">${u.groupNames.join(', ') || '—'}</td>
-          <td data-label="Status"><span class="status-pill status-${u.status}">${u.status}</span></td>
+          <td data-label="Status"><span class="status-pill status-${u.status}" title="${u.status}">${u.status}</span></td>
           <td data-label="Created Date">${u.createdDate}</td>
           <td class="data-table-menu-col">
             <div class="row-menu">

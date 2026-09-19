@@ -1695,7 +1695,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2>Edit application</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('app-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('app-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="app-form">
@@ -1749,7 +1749,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="ems-tod-modal-title">Add New Actual Reading</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('ems-tod-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-tod-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="ems-tod-form">
@@ -1774,7 +1774,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="ems-tod-slot-title">Update T1 ()</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('ems-tod-slot-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-tod-slot-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="ems-tod-slot-form">
@@ -1794,7 +1794,7 @@
     <div class="modal-card" style="max-width:680px;">
       <div class="modal-header">
         <h2 id="ems-meter-modal-title">Add New Meter</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('ems-meter-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-meter-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="ems-meter-form">
@@ -1850,7 +1850,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="ems-energy-modal-title">Add Energy Data</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('ems-energy-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('ems-energy-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="ems-energy-form">
@@ -1887,7 +1887,7 @@
     <div class="modal-card" style="max-width:680px;">
       <div class="modal-header">
         <h2 id="cms-machine-modal-title">Add Machine</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('cms-machine-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('cms-machine-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="cms-machine-form">
@@ -1923,7 +1923,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2 id="notion-db-item-modal-title">Edit item</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('notion-db-item-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('notion-db-item-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="notion-db-item-form">
@@ -1952,14 +1952,14 @@
   </div>
 
   <!-- Custom widgets tab (generic apps only): same floating palette used on the main dashboard -->
-  <button type="button" class="widget-palette-fab hidden" id="widget-palette-fab" aria-label="Add widget">
+  <button type="button" class="widget-palette-fab hidden" id="widget-palette-fab" aria-label="Add widget" title="Add widget">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
   </button>
   <div class="widget-palette-backdrop" id="widget-palette-backdrop"></div>
   <aside class="widget-palette-drawer" id="widget-palette-drawer">
     <div class="widget-palette-header">
       <div id="widget-palette-header-title"><span class="widget-palette-title">Widget library</span></div>
-      <button type="button" class="widget-palette-close" id="widget-palette-close" aria-label="Close">
+      <button type="button" class="widget-palette-close" id="widget-palette-close" aria-label="Close" title="Close">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -1975,7 +1975,7 @@
     <div class="modal-card" style="max-width:560px;">
       <div class="modal-header">
         <h2>Widget settings</h2>
-        <button type="button" class="modal-close" onclick="UI.closeModal('widget-settings-modal')" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close" onclick="UI.closeModal('widget-settings-modal')" aria-label="Close" title="Close">&times;</button>
       </div>
       <div class="modal-body" id="widget-settings-body"></div>
       <div class="modal-footer">
@@ -2049,7 +2049,7 @@
 
     function renderIconPicker() {
       document.getElementById('app-icon-picker').innerHTML = APPLICATION_ICON_OPTIONS.map(
-        (key) => `<button type="button" class="icon-picker-option${key === selectedIcon ? ' selected' : ''}" data-icon="${key}" aria-label="${key} icon">${iconSvg(key)}</button>`,
+        (key) => `<button type="button" class="icon-picker-option${key === selectedIcon ? ' selected' : ''}" data-icon="${key}" aria-label="${key} icon" title="${key} icon">${iconSvg(key)}</button>`,
       ).join('')
       document.querySelectorAll('#app-icon-picker [data-icon]').forEach((btn) =>
         btn.addEventListener('click', () => {
@@ -2064,7 +2064,7 @@
         .map(
           (row) => `
         <div class="metadata-row">
-          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute">
+          <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute" title="Remove attribute">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
           </button>
           <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>
@@ -2239,7 +2239,7 @@
           <div class="detail-card detail-overview-card">
             <h2><span class="section-icon">${iconSvg('profile')}</span>Overview</h2>
             <div class="detail-meta-grid">
-              <div class="detail-meta-item"><p class="label">Status</p><p class="value"><span class="status-pill status-${app.status}">${app.status}</span></p></div>
+              <div class="detail-meta-item"><p class="label">Status</p><p class="value"><span class="status-pill status-${app.status}" title="${app.status}">${app.status}</span></p></div>
               <div class="detail-meta-item"><p class="label">Created date</p><p class="value">${app.createdDate}</p></div>
               <div class="detail-meta-item"><p class="label">Application ID</p><p class="value no-transform">${app.id}</p></div>
               <div class="detail-meta-item"><p class="label">Sidebar icon</p><p class="value with-icon">${iconSvg(app.icon || 'app')}${app.icon || 'app'}</p></div>
@@ -2253,7 +2253,7 @@
               ${countTiles
                 .map(
                   (t) => `
-              <div class="count-tile" style="--tile-bg: ${t.bg}; --tile-icon-bg: ${t.iconBg}; --tile-icon-color: ${t.iconColor};">
+              <div class="count-tile" style="--tile-bg: ${t.bg}; --tile-icon-bg: ${t.iconBg}; --tile-icon-color: ${t.iconColor};" title="${t.label}: ${t.value}${t.breakdown ? ' (' + t.breakdown + ')' : ''}">
                 <span class="count-tile-icon">${iconSvg(t.icon)}</span>
                 <span>
                   <p class="count-tile-value">${t.value}</p>
@@ -2295,7 +2295,7 @@
               <a class="detail-tile" href="device-detail.html#${d.id}">
                 <span class="detail-tile-icon">${iconSvg('device')}</span>
                 <p class="detail-tile-name">${d.name}</p>
-                <span class="status-pill status-${d.state === 'online' ? 'active' : 'offline'}">${d.state}</span>
+                <span class="status-pill status-${d.state === 'online' ? 'active' : 'offline'}" title="${d.state}">${d.state}</span>
               </a>`,
               )
               .join('')}</div>`
@@ -2309,7 +2309,7 @@
               <a class="detail-tile" href="asset-detail.html#${a.id}">
                 <span class="detail-tile-icon">${iconSvg('asset')}</span>
                 <p class="detail-tile-name">${a.name}</p>
-                <span class="status-pill status-${a.status}">${a.status}</span>
+                <span class="status-pill status-${a.status}" title="${a.status}">${a.status}</span>
               </a>`,
               )
               .join('')}</div>`
@@ -2330,7 +2330,7 @@
               <a class="detail-tile" href="asset-detail.html#${a.id}">
                 <span class="detail-tile-icon">${iconSvg('asset')}</span>
                 <p class="detail-tile-name">${a.name}</p>
-                <span class="status-pill status-${a.status}">${a.status}</span>
+                <span class="status-pill status-${a.status}" title="${a.status}">${a.status}</span>
               </a>`,
                 )
                 .join('')}</div>`}`
@@ -2408,7 +2408,7 @@
               <input type="date" id="pms-production-date" value="${todayIso()}" />
             </div>
             <div class="detail-toolbar-actions">
-              <button type="button" class="icon-button" id="pms-production-search" aria-label="Search">${pmsSearchIcon()}</button>
+              <button type="button" class="icon-button" id="pms-production-search" aria-label="Search" title="Search">${pmsSearchIcon()}</button>
             </div>
           </div>
         </div>
@@ -2457,7 +2457,7 @@
               <input type="date" id="pms-shift-date" value="${todayIso()}" />
             </div>
             <div class="detail-toolbar-actions">
-              <button type="button" class="icon-button" id="pms-shift-search" aria-label="Search">${pmsSearchIcon()}</button>
+              <button type="button" class="icon-button" id="pms-shift-search" aria-label="Search" title="Search">${pmsSearchIcon()}</button>
             </div>
           </div>
         </div>
@@ -2702,9 +2702,9 @@
       const dragHandle = `<span class="notion-drag-handle" draggable="true" aria-hidden="true">${notionDragHandleIcon()}</span>`
       const actions = `
         <div class="notion-block-actions">
-          <button type="button" class="notion-block-action-btn" data-notion-move="${block.id}:up" ${index === 0 ? 'disabled' : ''} aria-label="Move block up">${notionChevronUpIcon()}</button>
-          <button type="button" class="notion-block-action-btn" data-notion-move="${block.id}:down" ${index === total - 1 ? 'disabled' : ''} aria-label="Move block down">${notionChevronDownIcon()}</button>
-          <button type="button" class="notion-block-action-btn" data-notion-delete-block="${block.id}" aria-label="Delete block">${notionTrashIcon()}</button>
+          <button type="button" class="notion-block-action-btn" data-notion-move="${block.id}:up" ${index === 0 ? 'disabled' : ''} aria-label="Move block up" title="Move block up">${notionChevronUpIcon()}</button>
+          <button type="button" class="notion-block-action-btn" data-notion-move="${block.id}:down" ${index === total - 1 ? 'disabled' : ''} aria-label="Move block down" title="Move block down">${notionChevronDownIcon()}</button>
+          <button type="button" class="notion-block-action-btn" data-notion-delete-block="${block.id}" aria-label="Delete block" title="Delete block">${notionTrashIcon()}</button>
         </div>`
 
       if (block.type === 'divider') {
@@ -3122,7 +3122,7 @@
           (item) => `
         <tr>
           ${properties.map((prop) => `<td>${notionPropertyCellHtml(block, item, prop)}</td>`).join('')}
-          <td><button type="button" class="notion-block-action-btn" data-notion-db-delete-item="${block.id}:${item.id}" aria-label="Delete item">${notionTrashIcon()}</button></td>
+          <td><button type="button" class="notion-block-action-btn" data-notion-db-delete-item="${block.id}:${item.id}" aria-label="Delete item" title="Delete item">${notionTrashIcon()}</button></td>
         </tr>`,
         )
         .join('')
@@ -3147,9 +3147,9 @@
         .map(
           (prop) => `
         <div class="notion-db-properties-row">
-          <span class="notion-db-properties-type-badge">${prop.type}</span>
+          <span class="notion-db-properties-type-badge" title="${prop.type} property">${prop.type}</span>
           <input type="text" class="notion-db-col-name-input" data-notion-db-rename-col="${block.id}:${prop.id}" value="${prop.name || ''}" />
-          ${prop.id === 'title' ? '' : `<button type="button" class="notion-block-action-btn" data-notion-db-delete-col="${block.id}:${prop.id}" aria-label="Delete property">${notionTrashIcon()}</button>`}
+          ${prop.id === 'title' ? '' : `<button type="button" class="notion-block-action-btn" data-notion-db-delete-col="${block.id}:${prop.id}" aria-label="Delete property" title="Delete property">${notionTrashIcon()}</button>`}
         </div>`,
         )
         .join('')
@@ -3180,8 +3180,8 @@
       const rows = items
         .map(
           (i) => `
-        <div class="notion-db-list-row" data-notion-db-open-item="${block.id}:${i.id}">
-          <span class="notion-db-status-dot" style="background:${notionDbStatusColor(i.status)};"></span>
+        <div class="notion-db-list-row" data-notion-db-open-item="${block.id}:${i.id}" title="${i.status || 'No status'} — click to open">
+          <span class="notion-db-status-dot" style="background:${notionDbStatusColor(i.status)};" title="${i.status || 'No status'}"></span>
           <span class="notion-db-list-title">${i.title || 'Untitled'}</span>
           ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
           ${i.date ? `<span class="notion-db-list-date">${i.date}</span>` : ''}
@@ -3204,7 +3204,7 @@
                 .filter((i) => i.status === status)
                 .map(
                   (i) => `
-                <div class="notion-db-board-card" draggable="true" data-notion-db-card="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}">
+                <div class="notion-db-board-card" draggable="true" data-notion-db-card="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}" title="${i.title || 'Untitled'} — drag to move, click to open">
                   <p class="notion-db-board-card-title">${i.title || 'Untitled'}</p>
                   ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
                 </div>`,
@@ -3245,7 +3245,7 @@
         const dayItems = itemsByDay[d] || []
         const dateStr = monthKey + '-' + String(d).padStart(2, '0')
         cells.push(`
-          <div class="notion-db-cal-cell" data-notion-db-cal-cell="${block.id}:${dateStr}">
+          <div class="notion-db-cal-cell" data-notion-db-cal-cell="${block.id}:${dateStr}" title="Add item on ${dateStr}">
             <p class="notion-db-cal-daynum">${d}</p>
             ${dayItems
               .map(
@@ -3257,9 +3257,9 @@
       const monthLabel = firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       return `
         <div class="notion-db-cal-header">
-          <button type="button" class="icon-button" data-notion-db-cal-nav="${block.id}:prev" aria-label="Previous month">&lsaquo;</button>
+          <button type="button" class="icon-button" data-notion-db-cal-nav="${block.id}:prev" aria-label="Previous month" title="Previous month">&lsaquo;</button>
           <p class="notion-db-cal-month">${monthLabel}</p>
-          <button type="button" class="icon-button" data-notion-db-cal-nav="${block.id}:next" aria-label="Next month">&rsaquo;</button>
+          <button type="button" class="icon-button" data-notion-db-cal-nav="${block.id}:next" aria-label="Next month" title="Next month">&rsaquo;</button>
         </div>
         <div class="notion-db-cal-grid">
           ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => `<div class="notion-db-cal-weekday">${d}</div>`).join('')}
@@ -3290,7 +3290,7 @@
                 <div class="notion-db-timeline-row">
                   <span class="notion-db-timeline-label" data-notion-db-open-item="${block.id}:${i.id}">${i.title || 'Untitled'}</span>
                   <div class="notion-db-timeline-track" style="width:${trackWidth}px;">
-                    <span class="notion-db-timeline-bar" data-notion-db-timeline-bar="${block.id}:${i.id}" style="left:${startOffset * dayWidth}px; width:${duration * dayWidth}px; background:${notionDbStatusColor(i.status)};" title="${i.title || ''}">
+                    <span class="notion-db-timeline-bar" data-notion-db-timeline-bar="${block.id}:${i.id}" style="left:${startOffset * dayWidth}px; width:${duration * dayWidth}px; background:${notionDbStatusColor(i.status)};" title="${i.title || 'Untitled'} (${i.status || 'No status'}): ${i.date}${i.endDate ? ' – ' + i.endDate : ''}">
                       <span class="notion-db-timeline-handle" title="Drag to resize"></span>
                     </span>
                   </div>
@@ -3305,8 +3305,8 @@
       const cards = items
         .map(
           (i) => `
-        <div class="notion-db-gallery-card" data-notion-db-open-item="${block.id}:${i.id}">
-          <div class="notion-db-gallery-cover" style="--notion-db-cover-color:${notionDbStatusColor(i.status)};"></div>
+        <div class="notion-db-gallery-card" data-notion-db-open-item="${block.id}:${i.id}" title="${i.title || 'Untitled'} — click to open">
+          <div class="notion-db-gallery-cover" style="--notion-db-cover-color:${notionDbStatusColor(i.status)};" title="${i.status || 'No status'}"></div>
           <p class="notion-db-gallery-title">${i.title || 'Untitled'}</p>
           <div class="notion-db-gallery-meta">
             <span class="notion-db-status-pill" style="background:${notionDbStatusColor(i.status)};">${i.status}</span>
@@ -3358,13 +3358,13 @@
       return `
         <div class="notion-editor-header">
           <div class="notion-icon-picker-wrap">
-            <button type="button" class="notion-page-icon-btn" id="notion-page-icon-btn" aria-label="Change page icon">${page.icon || '📄'}</button>
+            <button type="button" class="notion-page-icon-btn" id="notion-page-icon-btn" aria-label="Change page icon" title="Change page icon">${page.icon || '📄'}</button>
             <div class="notion-icon-picker-menu" id="notion-icon-picker-menu" style="display:none;">
               ${NOTION_PAGE_ICONS.map((e) => `<button type="button" class="notion-icon-option" data-notion-icon-pick="${e}">${e}</button>`).join('')}
             </div>
           </div>
           <input type="text" class="notion-title-input" id="notion-title-input" value="${page.title || ''}" placeholder="Untitled" />
-          <button type="button" class="icon-button" id="notion-delete-page-btn" aria-label="Delete page">${notionTrashIcon()}</button>
+          <button type="button" class="icon-button" id="notion-delete-page-btn" aria-label="Delete page" title="Delete page">${notionTrashIcon()}</button>
         </div>
         <p class="notion-updated-note">Last edited ${page.updatedDate || page.createdDate || ''}</p>
         <div class="notion-blocks" id="notion-blocks">
@@ -4106,15 +4106,15 @@
               .map(
                 (m, i) => `
         <tr>
-          <td><input type="checkbox" data-ems-meter-check="${m.id}" ${emsMeterSelected.has(m.id) ? 'checked' : ''} /></td>
+          <td><input type="checkbox" data-ems-meter-check="${m.id}" title="Select row" ${emsMeterSelected.has(m.id) ? 'checked' : ''} /></td>
           <td>${(page - 1) * EMS_PER_PAGE + i + 1}</td>
           <td>${m.name}</td>
           <td>${m.meterId}</td>
           <td>${m.model || '—'}</td>
           <td>${m.unit || '—'}</td>
           <td>
-            <button type="button" class="ems-row-action-btn" data-ems-meter-edit="${m.id}" aria-label="Edit meter">${emsEditIcon()}</button>
-            <button type="button" class="ems-row-action-btn" data-ems-meter-dashboard="${m.id}" aria-label="Open meter dashboard">${emsViewIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-ems-meter-edit="${m.id}" aria-label="Edit meter" title="Edit meter">${emsEditIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-ems-meter-dashboard="${m.id}" aria-label="Open meter dashboard" title="Open meter dashboard">${emsViewIcon()}</button>
           </td>
         </tr>`,
               )
@@ -4130,7 +4130,7 @@
         </div>
         <div class="table-scroll">
           <table class="data-table">
-            <thead><tr><th><input type="checkbox" id="ems-meter-select-all" ${allOnPageSelected ? 'checked' : ''} /></th><th>S.No</th><th>Meter Name</th><th>Meter ID</th><th>Model</th><th>Unit Type</th><th>Action</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="ems-meter-select-all" title="Select all" ${allOnPageSelected ? 'checked' : ''} /></th><th>S.No</th><th>Meter Name</th><th>Meter ID</th><th>Model</th><th>Unit Type</th><th>Action</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
           </table>
         </div>
@@ -4218,7 +4218,7 @@
               .map(
                 (e, i) => `
         <tr>
-          <td><input type="checkbox" data-ems-energy-check="${e.id}" ${emsEnergySelected.has(e.id) ? 'checked' : ''} /></td>
+          <td><input type="checkbox" data-ems-energy-check="${e.id}" title="Select row" ${emsEnergySelected.has(e.id) ? 'checked' : ''} /></td>
           <td>${(page - 1) * EMS_PER_PAGE + i + 1}</td>
           <td>${e.year}</td>
           <td>${e.month}</td>
@@ -4226,7 +4226,7 @@
           <td>${e.nonRenewable}</td>
           <td>${e.renewablePercent}%</td>
           <td>${e.nonRenewablePercent}%</td>
-          <td><button type="button" class="ems-row-action-btn" data-ems-energy-edit="${e.id}" aria-label="Edit energy data">${emsEditIcon()}</button></td>
+          <td><button type="button" class="ems-row-action-btn" data-ems-energy-edit="${e.id}" aria-label="Edit energy data" title="Edit energy data">${emsEditIcon()}</button></td>
         </tr>`,
               )
               .join('')
@@ -4240,7 +4240,7 @@
         </div>
         <div class="table-scroll">
           <table class="data-table">
-            <thead><tr><th><input type="checkbox" id="ems-energy-select-all" /></th><th>S.No</th><th>Year</th><th>Month</th><th>Renewable</th><th>Non-Renewable</th><th>Renewable %</th><th>Non-Renewable %</th><th>Action</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="ems-energy-select-all" title="Select all" /></th><th>S.No</th><th>Year</th><th>Month</th><th>Renewable</th><th>Non-Renewable</th><th>Renewable %</th><th>Non-Renewable %</th><th>Action</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
           </table>
         </div>
@@ -4464,7 +4464,7 @@
     }
 
     function cmsMachineStatusPill(machine) {
-      return `<span class="status-pill status-${machine.connected ? 'active' : 'offline'}">${machine.connected ? 'Online' : 'Offline'}</span>`
+      return `<span class="status-pill status-${machine.connected ? 'active' : 'offline'}" title="${machine.connected ? 'Online' : 'Offline'}">${machine.connected ? 'Online' : 'Offline'}</span>`
     }
 
     function cmsEnergyIcon() {
@@ -4505,9 +4505,9 @@
           <td>${m.line || '—'}</td>
           <td>${cmsMachineStatusPill(m)}</td>
           <td>
-            <button type="button" class="ems-row-action-btn" data-cms-machine-edit="${m.id}" aria-label="Edit machine">${emsEditIcon()}</button>
-            <button type="button" class="ems-row-action-btn" data-cms-machine-delete="${m.id}" aria-label="Delete machine">${emsDeleteIcon()}</button>
-            <button type="button" class="ems-row-action-btn" data-cms-machine-view="${m.id}" aria-label="Open machine dashboard">${emsViewIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-cms-machine-edit="${m.id}" aria-label="Edit machine" title="Edit machine">${emsEditIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-cms-machine-delete="${m.id}" aria-label="Delete machine" title="Delete machine">${emsDeleteIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-cms-machine-view="${m.id}" aria-label="Open machine dashboard" title="Open machine dashboard">${emsViewIcon()}</button>
           </td>
         </tr>`,
               )
@@ -4612,7 +4612,7 @@
 
     function cmsStatePill(state) {
       const variant = state === 'working' ? 'active' : state === 'idle' ? 'maintenance' : 'suspended'
-      return `<span class="status-pill status-${variant}">${state.toUpperCase()}</span>`
+      return `<span class="status-pill status-${variant}" title="${state.toUpperCase()}">${state.toUpperCase()}</span>`
     }
 
     const CMS_STATE_COLORS = { working: '#16a34a', idle: '#d97706', off: '#dc2626', overload: '#dc2626', errors: '#7e22ce' }
@@ -4636,19 +4636,19 @@
           <div class="detail-card detail-overview-card">
             <h2><span class="section-icon">${iconSvg('report')}</span>Quick Stats<a href="#" id="cms-refresh-btn" style="margin-left:auto;font-size:0.78rem;font-weight:700;text-decoration:none;">Refresh</a></h2>
             <div class="cms-quickstat-grid">
-              <div class="cms-quickstat-card" style="--cms-stat-accent:#7c3aed;--cms-stat-icon-bg:#ede9fe;">
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#7c3aed;--cms-stat-icon-bg:#ede9fe;" title="Total energy consumed across all cranes today">
                 <span class="cms-quickstat-icon">${cmsEnergyIcon()}</span>
                 <span><p class="cms-quickstat-value">${todayEnergy.toFixed(1)}<small>kWh</small></p><p class="cms-quickstat-label">Today's Energy</p></span>
               </div>
-              <div class="cms-quickstat-card" style="--cms-stat-accent:#0284c7;--cms-stat-icon-bg:#e0f2fe;">
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#0284c7;--cms-stat-icon-bg:#e0f2fe;" title="Total energy cost across all cranes today">
                 <span class="cms-quickstat-icon">${cmsCostIcon()}</span>
                 <span><p class="cms-quickstat-value">${todayCost.toFixed(1)}<small>Rs</small></p><p class="cms-quickstat-label">Today's Cost</p></span>
               </div>
-              <div class="cms-quickstat-card" style="--cms-stat-accent:#16a34a;--cms-stat-icon-bg:#dcfce7;">
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#16a34a;--cms-stat-icon-bg:#dcfce7;" title="Cranes currently working, out of all cranes">
                 <span class="cms-quickstat-icon">${cmsActiveIcon()}</span>
                 <span><p class="cms-quickstat-value">${activeCount}<small>/ ${all.length}</small></p><p class="cms-quickstat-label">Active Cranes</p></span>
               </div>
-              <div class="cms-quickstat-card" style="--cms-stat-accent:#d97706;--cms-stat-icon-bg:#fef3c7;">
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#d97706;--cms-stat-icon-bg:#fef3c7;" title="Cranes currently idle, out of all cranes">
                 <span class="cms-quickstat-icon">${cmsIdleIcon()}</span>
                 <span><p class="cms-quickstat-value">${idleCount}<small>/ ${all.length}</small></p><p class="cms-quickstat-label">Idle Cranes</p></span>
               </div>
@@ -4687,9 +4687,9 @@
               : filtered
                   .map(
                     ({ machine: m, state }) => `
-          <div class="detail-card cms-crane-card" data-cms-crane-id="${m.id}" role="button" tabindex="0" style="--cms-card-accent:${CMS_STATE_COLORS[state]};">
+          <div class="detail-card cms-crane-card" data-cms-crane-id="${m.id}" role="button" tabindex="0" title="Open ${m.name} dashboard" style="--cms-card-accent:${CMS_STATE_COLORS[state]};">
             <div class="cms-crane-card-header">
-              <span class="cms-status-dot cms-status-dot-${state}"></span>
+              <span class="cms-status-dot cms-status-dot-${state}" title="${state.charAt(0).toUpperCase() + state.slice(1)}"></span>
               <h3>${m.name}</h3>
               ${cmsStatePill(state)}
             </div>
@@ -4845,11 +4845,11 @@
         <a class="detail-back-link" href="applications.html">&larr; Back to Applications</a>
         <div class="page-header">
           <div>
-            <h1 class="page-title">${app.name}${app.isDefault ? ' <span class="default-profile-badge">Default</span>' : ''}</h1>
+            <h1 class="page-title">${app.name}${app.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}</h1>
             <p class="page-subtitle">${app.description || 'No description provided.'}</p>
           </div>
           <div class="page-header-actions">
-            <span class="status-pill status-${app.status}">${app.status}</span>
+            <span class="status-pill status-${app.status}" title="${app.status}">${app.status}</span>
             <button type="button" class="modal-button secondary" id="toggle-status-btn">${app.status === 'active' ? 'Suspend' : 'Activate'}</button>
             <button type="button" class="modal-button secondary" id="edit-app-btn">Edit</button>
             ${app.isDefault ? '' : '<button type="button" class="modal-button danger" id="delete-app-btn">Delete</button>'}
