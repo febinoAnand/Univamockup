@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
   <link rel="stylesheet" href="shared/dashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
   <title>Application — Univa</title>
   <style>
     .detail-card {
@@ -309,6 +310,1122 @@
       background: var(--surface-alt);
       color: var(--accent-strong-text);
     }
+
+    /* ------------------------------------------------------------- Notion
+       A lightweight page-workspace: a sidebar of pages plus a block editor
+       (heading/text/to-do/bullet/divider) for the selected page. Sits inside
+       the same .detail-card used elsewhere on this page. */
+    .notion-workspace {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+    .notion-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      width: 220px;
+      flex-shrink: 0;
+      padding-right: 1.25rem;
+      border-right: 1px solid var(--border);
+    }
+    .notion-sidebar .solid-action-button {
+      width: 100%;
+      justify-content: center;
+    }
+    .notion-page-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .notion-page-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: none;
+      border-left: 2px solid transparent;
+      border-radius: 8px;
+      background: none;
+      color: var(--text-subtle);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+    }
+    .notion-page-item:hover {
+      background: var(--surface-alt);
+      transform: translateX(1px);
+    }
+    .notion-page-item.active {
+      background: var(--accent-soft);
+      border-left-color: var(--accent);
+      color: var(--text);
+      font-weight: 700;
+    }
+    .notion-page-icon {
+      flex-shrink: 0;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .notion-page-title {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .notion-editor {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .notion-editor-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .notion-icon-picker-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .notion-page-icon-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: none;
+      font-size: 1.6rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+    .notion-page-icon-btn:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent-soft-border);
+      transform: scale(1.06);
+    }
+    .notion-icon-picker-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.2rem;
+      margin-top: 0.3rem;
+      padding: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-md);
+      animation: notionPanelFadeIn 0.12s ease;
+    }
+    .notion-icon-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .notion-icon-option:hover {
+      background: var(--surface-alt);
+    }
+    .notion-title-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: none;
+      background: none;
+      padding: 0.2rem 0;
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.015em;
+      color: var(--text);
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.15s ease;
+    }
+    .notion-title-input:hover {
+      border-bottom-color: var(--border);
+    }
+    .notion-title-input:focus-visible {
+      outline: none;
+      border-bottom-color: var(--accent);
+    }
+    .notion-updated-note {
+      margin: -0.5rem 0 0;
+      font-size: 0.72rem;
+      color: var(--text-faint);
+    }
+    .notion-blocks {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .notion-block-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+    .notion-block {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.15rem 0.4rem;
+      margin: 0 -0.4rem;
+      border-radius: 8px;
+      transition: background 0.12s ease;
+    }
+    .notion-block:hover {
+      background: var(--surface-alt);
+    }
+    .notion-block.drag-over {
+      box-shadow: 0 -2px 0 0 var(--accent) inset;
+    }
+    .notion-block.dragging {
+      opacity: 0.4;
+    }
+    /* Drag handle + move/delete controls stay out of the way until you
+       hover the row, like Notion's own minimal block chrome. */
+    .notion-drag-handle,
+    .notion-block-actions {
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+    .notion-block:hover .notion-drag-handle,
+    .notion-block:hover .notion-block-actions,
+    .notion-block-actions:focus-within {
+      opacity: 1;
+    }
+    .notion-drag-handle {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      color: var(--text-faint);
+      cursor: grab;
+    }
+    .notion-block-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: none;
+      background: none;
+      padding: 0.35rem 0.4rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: var(--text);
+      border-bottom: 2px solid transparent;
+    }
+    .notion-block-input:hover {
+      background: var(--surface-alt);
+    }
+    .notion-block-input:focus-visible {
+      outline: none;
+      background: var(--surface-alt);
+      border-bottom-color: var(--accent);
+    }
+    .notion-block-input.heading1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+    .notion-block-input.heading2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .notion-block-input.quote {
+      font-size: 0.98rem;
+      font-style: italic;
+      color: var(--text-subtle);
+    }
+    .notion-block-input.code {
+      background: #1c1917;
+      color: #f4f4f5;
+      border-radius: 6px;
+      padding: 0.5rem 0.7rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+    }
+    .notion-block-input.code::placeholder {
+      color: #78716c;
+    }
+    .notion-block-input.code:hover,
+    .notion-block-input.code:focus-visible {
+      background: #292524;
+    }
+    .notion-block-divider hr {
+      flex: 1 1 auto;
+      height: 1px;
+      margin: 0.5rem 0;
+      border: none;
+      background: linear-gradient(90deg, transparent, var(--border-strong) 20%, var(--border-strong) 80%, transparent);
+    }
+    .notion-bullet-dot,
+    .notion-number-marker {
+      flex-shrink: 0;
+      min-width: 1.2em;
+      text-align: center;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .notion-block-quote {
+      border-left: 3px solid var(--accent);
+      padding: 0.35rem 0 0.35rem 0.75rem;
+      background: linear-gradient(90deg, var(--accent-soft), transparent 70%);
+      border-radius: 0 8px 8px 0;
+    }
+    .notion-block-callout {
+      padding: 0.55rem 0.7rem;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-soft-border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    /* Quote/callout already carry their own background — the generic
+       .notion-block:hover fill would otherwise flatten it on hover, since
+       it's declared later and matches with equal specificity. */
+    .notion-block-quote:hover {
+      background: linear-gradient(90deg, var(--accent-soft), transparent 70%);
+    }
+    .notion-block-callout:hover {
+      background: var(--accent-soft);
+      box-shadow: var(--shadow-md);
+    }
+    .notion-callout-emoji {
+      flex-shrink: 0;
+      font-size: 1.1rem;
+    }
+    .notion-block-todo.checked .notion-block-input {
+      color: var(--text-faint);
+      text-decoration: line-through;
+    }
+    .notion-slash-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin: 0.2rem 0 0.4rem 1.9rem;
+      padding: 0.3rem;
+      max-height: 190px;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+      animation: notionPanelFadeIn 0.12s ease;
+    }
+    .notion-slash-item {
+      padding: 0.4rem 0.6rem;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: var(--text-subtle);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+    .notion-slash-item:hover {
+      background: var(--surface-alt);
+      color: var(--text);
+    }
+    .notion-block-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.1rem;
+      flex-shrink: 0;
+    }
+    .notion-block-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: var(--text-faint);
+      cursor: pointer;
+    }
+    .notion-block-action-btn:hover {
+      background: var(--surface-alt);
+      color: var(--accent-strong-text);
+    }
+    .notion-block-action-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .notion-block-action-btn:disabled:hover {
+      background: none;
+      color: var(--text-faint);
+    }
+    .notion-add-block-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .notion-add-block-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-subtle);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .notion-add-block-btn:hover {
+      background: var(--accent-soft);
+      color: var(--accent-strong-text);
+      border-color: var(--accent-soft-border);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* -------------------------------------------------- Notion database
+       A "database" block: a view-switcher row (Table/Board/List/Calendar/
+       Timeline/Gallery/Chart) plus whichever view is currently active,
+       all reading the same block.items array. */
+    .notion-block-database {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .notion-db-views {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .notion-db-view-tab {
+      padding: 0.3rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-subtle);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .notion-db-view-tab:hover {
+      background: var(--surface-alt);
+    }
+    .notion-db-view-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 2px 10px -2px rgba(124, 58, 237, 0.45);
+    }
+    .notion-db-content {
+      margin: 0.6rem 0 0.4rem 1.9rem;
+    }
+    .notion-db-table input,
+    .notion-db-table select {
+      width: 100%;
+      min-width: 110px;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.82rem;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: none;
+    }
+    .notion-db-table input:hover,
+    .notion-db-table select:hover,
+    .notion-db-table input:focus,
+    .notion-db-table select:focus {
+      background: var(--surface-alt);
+      border-color: var(--border);
+    }
+    .notion-db-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      color: var(--text-subtle);
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .notion-db-status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .notion-db-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .notion-db-list-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.4rem 0.5rem;
+      border-radius: 8px;
+    }
+    .notion-db-list-row:hover {
+      background: var(--surface-alt);
+    }
+    .notion-db-status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .notion-db-list-title {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .notion-db-list-date {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+      flex-shrink: 0;
+    }
+    .notion-db-board {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding-bottom: 0.3rem;
+    }
+    .notion-db-board-col {
+      flex-shrink: 0;
+      width: 200px;
+      padding: 0.6rem;
+      background: var(--surface-alt);
+      border-radius: 10px;
+      border-top: 3px solid var(--border);
+    }
+    .notion-db-board-col.drag-over {
+      outline: 2px dashed var(--accent);
+      outline-offset: -2px;
+    }
+    .notion-db-board-col-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .notion-db-board-count {
+      color: var(--text-faint);
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .notion-db-board-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-height: 40px;
+    }
+    .notion-db-board-card {
+      padding: 0.5rem 0.6rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      cursor: grab;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .notion-db-board-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent-soft-border);
+    }
+    .notion-db-board-card.dragging {
+      opacity: 0.4;
+    }
+    .notion-db-board-card-title {
+      margin: 0 0 0.3rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .notion-db-cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .notion-db-cal-month {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .notion-db-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.3rem;
+    }
+    .notion-db-cal-weekday {
+      text-align: center;
+      padding-bottom: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-faint);
+    }
+    .notion-db-cal-cell {
+      min-height: 72px;
+      padding: 0.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .notion-db-cal-cell.empty {
+      background: var(--surface-alt);
+      border-color: transparent;
+      cursor: default;
+    }
+    .notion-db-cal-cell.empty:hover {
+      background: var(--surface-alt);
+      border-color: transparent;
+    }
+    .notion-db-cal-daynum {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-faint);
+    }
+    .notion-db-cal-item {
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: var(--accent-strong-text);
+      font-size: 0.66rem;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .notion-db-timeline-scroll {
+      overflow-x: auto;
+    }
+    .notion-db-timeline-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+    .notion-db-timeline-label {
+      width: 150px;
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .notion-db-timeline-track {
+      position: relative;
+      height: 22px;
+      background: var(--surface-alt);
+      border-radius: 6px;
+    }
+    .notion-db-timeline-bar {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      border-radius: 6px;
+    }
+    .notion-db-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.75rem;
+    }
+    .notion-db-gallery-card {
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .notion-db-gallery-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent-soft-border);
+    }
+    .notion-db-gallery-cover {
+      height: 56px;
+      background-color: var(--notion-db-cover-color, var(--text-faint));
+      background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.25), transparent 60%);
+    }
+    .notion-db-gallery-title {
+      margin: 0.55rem 0.6rem 0.3rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .notion-db-gallery-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin: 0 0.6rem 0.6rem;
+    }
+    .notion-db-list-row,
+    .notion-db-board-card,
+    .notion-db-gallery-card,
+    .notion-db-timeline-label {
+      cursor: pointer;
+    }
+    .notion-db-add-card-btn {
+      width: 100%;
+      margin-top: 0.4rem;
+      padding: 0.4rem;
+      border: 1px dashed var(--border-strong);
+      border-radius: 8px;
+      background: none;
+      color: var(--text-faint);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+    .notion-db-add-card-btn:hover {
+      background: var(--surface);
+      color: var(--accent-strong-text);
+    }
+    .notion-db-gallery-add-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      min-height: 110px;
+      border: 1.5px dashed var(--border-strong);
+      border-radius: 10px;
+      background: none;
+      color: var(--text-faint);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .notion-db-gallery-add-card:hover {
+      background: var(--surface-alt);
+      color: var(--accent-strong-text);
+    }
+    .notion-db-hint {
+      margin: 0 0 0.5rem;
+      font-size: 0.74rem;
+      color: var(--text-faint);
+    }
+    .notion-db-cal-item {
+      cursor: grab;
+    }
+    .notion-db-cal-cell {
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease;
+    }
+    .notion-db-cal-cell:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent-soft-border);
+    }
+    .notion-db-cal-cell.drag-over {
+      outline: 2px dashed var(--accent);
+      outline-offset: -2px;
+    }
+    .notion-db-timeline-bar {
+      position: relative;
+      cursor: grab;
+    }
+    .notion-db-timeline-handle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 6px;
+      height: 100%;
+      border-radius: 0 6px 6px 0;
+      background: rgba(255, 255, 255, 0.45);
+      cursor: ew-resize;
+    }
+
+    /* Table view's column header: rename inline by typing (adding/deleting
+       properties happens in the shared "Properties" panel below instead). */
+    .notion-db-th {
+      white-space: nowrap;
+    }
+    .notion-db-col-name-input {
+      width: auto;
+      min-width: 60px;
+      padding: 0.2rem 0.3rem;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: none;
+      color: inherit;
+      font-size: inherit;
+      font-weight: 700;
+    }
+    .notion-db-col-name-input:hover,
+    .notion-db-col-name-input:focus {
+      background: var(--surface);
+      border-color: var(--border);
+    }
+
+    /* Shared "Properties" panel (add/rename/delete) — a `position: fixed`
+       overlay so it always escapes Table's .table-scroll and Board/Gallery's
+       own horizontal scroll clipping (see notionPositionFloatingPanel). */
+    .notion-db-properties-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-subtle);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .notion-db-properties-btn:hover {
+      background: var(--surface-alt);
+    }
+    .notion-db-properties-panel {
+      position: fixed;
+      z-index: 40;
+      padding: 0.75rem;
+      width: 260px;
+      max-height: 70vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-md);
+      text-align: left;
+      white-space: normal;
+      font-weight: 400;
+      animation: notionPanelFadeIn 0.12s ease;
+    }
+    .notion-db-properties-panel-title {
+      margin: 0 0 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .notion-db-properties-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .notion-db-properties-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .notion-db-properties-row .notion-db-col-name-input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .notion-db-properties-type-badge {
+      flex-shrink: 0;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      color: var(--text-faint);
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .notion-db-properties-add .modal-field {
+      margin-bottom: 0.5rem;
+    }
+    .notion-db-properties-add .modal-field label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Image/Video/Embed */
+    .notion-media-preview {
+      margin: 0.3rem 0 0 1.9rem;
+    }
+    .notion-media-image {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+    .notion-media-frame {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      padding-top: 56.25%;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface-alt);
+    }
+    .notion-media-frame iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .notion-media-frame-spotify {
+      padding-top: 0;
+      height: 152px;
+      max-width: 100%;
+    }
+    .notion-embed-gallery-title {
+      margin: 0 0 0.6rem;
+      font-size: 0.8rem;
+      color: var(--text-subtle);
+    }
+    .notion-embed-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 0.5rem;
+    }
+    .notion-embed-gallery-chip {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.5rem 0.6rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .notion-embed-gallery-icon {
+      flex-shrink: 0;
+      font-size: 1.1rem;
+      line-height: 1.2;
+    }
+    .notion-embed-gallery-text {
+      font-size: 0.76rem;
+      color: var(--text-subtle);
+      line-height: 1.4;
+    }
+    .notion-embed-gallery-text strong {
+      color: var(--text);
+    }
+
+    /* Math (KaTeX) */
+    .notion-math-preview {
+      margin: 0.3rem 0 0 1.9rem;
+      padding: 0.6rem 0.8rem;
+      overflow-x: auto;
+      background: var(--surface-alt);
+      border-radius: 8px;
+    }
+
+    /* Table of contents */
+    .notion-toc-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1 1 auto;
+      color: var(--text-subtle);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .notion-toc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin: 0.3rem 0 0 1.9rem;
+    }
+    .notion-toc-item {
+      align-self: flex-start;
+      padding: 0.2rem 0.4rem;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: var(--accent-strong-text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+    .notion-toc-item:hover {
+      background: var(--surface-alt);
+      text-decoration: underline;
+    }
+    .notion-toc-item.notion-toc-indent {
+      margin-left: 1.2rem;
+      font-weight: 500;
+    }
+
+    /* Brief flash when a Table of Contents link scrolls a block into view */
+    .notion-block-highlight {
+      animation: notionBlockFlash 1.2s ease;
+    }
+    @keyframes notionBlockFlash {
+      0% { background: var(--accent-soft); }
+      100% { background: transparent; }
+    }
+    @keyframes notionPanelFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Live widgets: Clock, Pomodoro timer, Countdown, Habit tracker */
+    .notion-clock-face {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      flex: 1 1 auto;
+      padding: 0.3rem 0;
+    }
+    .notion-clock-time {
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .notion-clock-date {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-faint);
+    }
+    .notion-timer-widget {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1 1 auto;
+      padding: 0.4rem 0;
+    }
+    .notion-timer-presets {
+      display: flex;
+      gap: 0.3rem;
+    }
+    .notion-timer-preset {
+      padding: 0.25rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-faint);
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .notion-timer-preset:hover {
+      background: var(--surface-alt);
+    }
+    .notion-timer-preset.active {
+      background: var(--accent-soft);
+      border-color: var(--accent-soft-border);
+      color: var(--accent-strong-text);
+    }
+    .notion-timer-display {
+      font-size: 1.7rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .notion-timer-controls {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .notion-countdown-target-input {
+      width: auto;
+      flex-shrink: 0;
+    }
+    .notion-countdown-display {
+      margin: 0.4rem 0 0 1.9rem;
+      font-size: 1.1rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-strong-text);
+    }
+    .notion-habit-days {
+      display: flex;
+      gap: 0.35rem;
+      margin: 0.4rem 0 0 1.9rem;
+    }
+    .notion-habit-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      width: 42px;
+      padding: 0.4rem 0.2rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+    }
+    .notion-habit-day:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+    .notion-habit-day.done {
+      background: var(--success-bg);
+      border-color: var(--success-dark);
+    }
+    .notion-habit-day-label {
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+    }
+    .notion-habit-day-check {
+      min-height: 1.1em;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--success-dark);
+    }
+    @media (max-width: 720px) {
+      .notion-workspace {
+        flex-direction: column;
+      }
+      .notion-sidebar {
+        width: 100%;
+        padding-right: 0;
+        padding-bottom: 1rem;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .notion-db-content {
+        margin-left: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -511,6 +1628,39 @@
     </div>
   </div>
 
+  <!-- Notion: edit a database item (opened from Board/List/Calendar/Timeline/Gallery) -->
+  <div class="modal-overlay" id="notion-db-item-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="notion-db-item-modal-title">Edit item</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('notion-db-item-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="notion-db-item-form">
+          <div class="modal-field"><label for="notion-db-item-title">Title</label><input id="notion-db-item-title" type="text" placeholder="Untitled" /></div>
+          <div class="modal-field-grid">
+            <div class="modal-field">
+              <label for="notion-db-item-status">Status</label>
+              <select id="notion-db-item-status">
+                <option>Not started</option>
+                <option>In progress</option>
+                <option>Done</option>
+              </select>
+            </div>
+            <div class="modal-field"><label for="notion-db-item-tag">Tag</label><input id="notion-db-item-tag" type="text" placeholder="Tag" /></div>
+            <div class="modal-field"><label for="notion-db-item-date">Date</label><input id="notion-db-item-date" type="date" /></div>
+            <div class="modal-field"><label for="notion-db-item-end-date">End date</label><input id="notion-db-item-end-date" type="date" /></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button danger" id="notion-db-item-delete-btn" style="margin-right:auto;">Delete</button>
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('notion-db-item-modal')">Cancel</button>
+        <button type="submit" form="notion-db-item-form" class="modal-button primary">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom widgets tab (generic apps only): same floating palette used on the main dashboard -->
   <button type="button" class="widget-palette-fab hidden" id="widget-palette-fab" aria-label="Add widget">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
@@ -546,6 +1696,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.49.1/apexcharts.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
@@ -737,6 +1888,31 @@
       UI.closeModal('app-modal')
       renderPage()
       Layout.setActive(`application-${app.id}`)
+    })
+
+    // Notion database item modal is static markup outside #app-detail-root
+    // (like the widget-palette FAB), so it's wired once here rather than
+    // inside wireNotionBody(), which reruns on every render.
+    document.getElementById('notion-db-item-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      if (!notionEditingDbItem) return
+      const { blockId, itemId } = notionEditingDbItem
+      Store.updateNotionDatabaseItem(notionActivePageId, blockId, itemId, {
+        title: document.getElementById('notion-db-item-title').value.trim(),
+        status: document.getElementById('notion-db-item-status').value,
+        tag: document.getElementById('notion-db-item-tag').value.trim(),
+        date: document.getElementById('notion-db-item-date').value,
+        endDate: document.getElementById('notion-db-item-end-date').value,
+      })
+      UI.closeModal('notion-db-item-modal')
+      renderPage()
+    })
+    document.getElementById('notion-db-item-delete-btn').addEventListener('click', () => {
+      if (!notionEditingDbItem) return
+      const { blockId, itemId } = notionEditingDbItem
+      UI.closeModal('notion-db-item-modal')
+      Store.removeNotionDatabaseItem(notionActivePageId, blockId, itemId)
+      renderPage()
     })
 
     function confirmDelete() {
@@ -1016,6 +2192,1457 @@
       )
       document.getElementById('pms-production-search')?.addEventListener('click', () => renderPage())
       document.getElementById('pms-shift-search')?.addEventListener('click', () => renderPage())
+    }
+
+    // ---------------------------------------------------------- Notion
+    // Notion is the third built-in application: a lightweight page
+    // workspace (sidebar of searchable pages + a block editor) instead of
+    // the generic device/asset/metadata summary. Typing/checking a block
+    // never triggers a full renderPage() (it would drop input focus) —
+    // only structural changes (add/delete/move/convert/switch page) do.
+    let notionActivePageId = null
+    let notionPageSearch = ''
+    let notionRefocusSearch = false
+    let notionFocusBlockId = null
+    let notionDraggedBlockId = null
+    let notionGlobalClickListenerAttached = false
+
+    const NOTION_BLOCK_TYPES = [
+      { type: 'heading', label: 'Heading 1' },
+      { type: 'heading2', label: 'Heading 2' },
+      { type: 'text', label: 'Text' },
+      { type: 'todo', label: 'To-do' },
+      { type: 'bullet', label: 'Bulleted list' },
+      { type: 'numbered', label: 'Numbered list' },
+      { type: 'quote', label: 'Quote' },
+      { type: 'callout', label: 'Callout' },
+      { type: 'code', label: 'Code' },
+      { type: 'divider', label: 'Divider' },
+      { type: 'image', label: 'Image' },
+      { type: 'video', label: 'Video' },
+      { type: 'embed', label: 'Embed' },
+      { type: 'math', label: 'Math equation' },
+      { type: 'toc', label: 'Table of contents' },
+      { type: 'clock', label: 'Clock' },
+      { type: 'timer', label: 'Pomodoro timer' },
+      { type: 'countdown', label: 'Countdown' },
+      { type: 'habit', label: 'Habit tracker' },
+      { type: 'database', label: 'Database' },
+    ]
+    const NOTION_TIMER_PRESETS = [
+      { label: 'Focus 25', minutes: 25 },
+      { label: 'Short break 5', minutes: 5 },
+      { label: 'Long break 15', minutes: 15 },
+    ]
+    const NOTION_HABIT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    // Ephemeral (not persisted) Pomodoro runtime state, keyed by block id —
+    // like a real Pomodoro widget, the running countdown resets if you
+    // navigate away, only the chosen duration would be worth persisting and
+    // even that isn't, to keep this a plain client-side widget.
+    let notionTimerState = {}
+    let notionLiveWidgetIntervalAttached = false
+    const NOTION_CONTINUABLE_TYPES = ['bullet', 'numbered', 'todo']
+    const NOTION_PAGE_ICONS = ['📄', '📝', '📌', '📚', '💡', '🎯', '🚀', '✅', '📅', '⭐', '🔥', '🗂️', '🧩', '📊']
+    const NOTION_DB_VIEWS = [
+      { key: 'table', label: 'Table' },
+      { key: 'board', label: 'Board' },
+      { key: 'list', label: 'List' },
+      { key: 'calendar', label: 'Calendar' },
+      { key: 'timeline', label: 'Timeline' },
+      { key: 'gallery', label: 'Gallery' },
+      { key: 'chart', label: 'Chart' },
+    ]
+    const NOTION_DB_STATUSES = ['Not started', 'In progress', 'Done']
+    // Falls back into notionDbProperties() for database blocks created
+    // before per-database columns existed (or missing the field for any
+    // other reason) so Table view always has something to render.
+    const NOTION_DB_DEFAULT_PROPERTIES = [
+      { id: 'title', name: 'Title', type: 'text' },
+      { id: 'status', name: 'Status', type: 'select', options: NOTION_DB_STATUSES },
+      { id: 'tag', name: 'Tag', type: 'text' },
+      { id: 'date', name: 'Date', type: 'date' },
+      { id: 'endDate', name: 'End date', type: 'date' },
+    ]
+    let notionDbCalendarMonth = {}
+    let notionDbChartInstances = {}
+    let notionDraggedDbCard = null
+    let notionEditingDbItem = null
+    let notionTimelineDrag = null
+    const NOTION_TIMELINE_DAY_WIDTH = 32
+
+    function notionDbStatusColor(status) {
+      if (status === 'Done') return 'var(--success-dark)'
+      if (status === 'In progress') return 'var(--accent)'
+      return 'var(--text-faint)'
+    }
+    function notionDbProperties(block) {
+      return block.properties && block.properties.length ? block.properties : NOTION_DB_DEFAULT_PROPERTIES
+    }
+    function notionBlockData(type) {
+      if (type === 'divider' || type === 'toc' || type === 'clock') return { type }
+      if (type === 'database') return { type, view: 'table', properties: NOTION_DB_DEFAULT_PROPERTIES.map((p) => Object.assign({}, p, p.options ? { options: p.options.slice() } : {})), items: [] }
+      if (type === 'todo') return { type, text: '', checked: false }
+      if (type === 'image' || type === 'video' || type === 'embed') return { type, url: '' }
+      if (type === 'timer') return { type, minutes: 25 }
+      if (type === 'countdown') return { type, text: '', target: '' }
+      if (type === 'habit') return { type, text: 'Daily habit', days: NOTION_HABIT_DAYS.map(() => false) }
+      return { type, text: '' }
+    }
+    // Positions a `position: fixed` floating panel (column menu / add-column
+    // popover) against the button that opened it, using the viewport rather
+    // than any CSS offset parent — called only after the panel's `display`
+    // is already switched on, so panel.offsetWidth reflects its real size.
+    function notionPositionFloatingPanel(btn, panel) {
+      const rect = btn.getBoundingClientRect()
+      const panelWidth = panel.offsetWidth
+      let left = rect.right - panelWidth
+      if (left < 8) left = rect.left
+      left = Math.max(8, Math.min(left, window.innerWidth - panelWidth - 8))
+      panel.style.top = rect.bottom + 4 + 'px'
+      panel.style.left = left + 'px'
+    }
+    // Named (not inline) so the exact same function reference can be passed
+    // to both addEventListener and removeEventListener — not needed here
+    // since it's only ever attached, but kept consistent with
+    // notionTimelineOnMouseMove/Up below, which do need that.
+    function notionCloseFloatingPanels() {
+      const menu = document.getElementById('notion-icon-picker-menu')
+      if (menu) menu.style.display = 'none'
+      document.querySelectorAll('[data-notion-db-properties-panel]').forEach((el) => {
+        el.style.display = 'none'
+      })
+    }
+    function notionFindDbItem(blockId, itemId) {
+      const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+      const block = page && page.blocks.find((b) => b.id === blockId)
+      const item = block && (block.items || []).find((i) => i.id === itemId)
+      return item ? { page, block, item } : null
+    }
+    // Shared "edit item" modal used by Board/List/Calendar/Timeline/Gallery —
+    // Table view edits cells inline instead, since it already shows every
+    // property in one row.
+    function notionOpenItemModal(blockId, itemId) {
+      const found = notionFindDbItem(blockId, itemId)
+      if (!found) return
+      notionEditingDbItem = { blockId, itemId }
+      document.getElementById('notion-db-item-modal-title').textContent = found.item.title ? 'Edit item' : 'New item'
+      document.getElementById('notion-db-item-title').value = found.item.title || ''
+      document.getElementById('notion-db-item-status').value = found.item.status || 'Not started'
+      document.getElementById('notion-db-item-tag').value = found.item.tag || ''
+      document.getElementById('notion-db-item-date').value = found.item.date || ''
+      document.getElementById('notion-db-item-end-date').value = found.item.endDate || ''
+      UI.openModal('notion-db-item-modal')
+    }
+    function notionAddDbItemAndEdit(blockId, seed) {
+      Store.addNotionDatabaseItem(notionActivePageId, blockId, Object.assign({ title: '', status: 'Not started', tag: '', date: '', endDate: '' }, seed))
+      const page = Store.get().notionPages.find((p) => p.id === notionActivePageId)
+      const block = page.blocks.find((b) => b.id === blockId)
+      const newItem = block.items[block.items.length - 1]
+      renderPage()
+      notionOpenItemModal(blockId, newItem.id)
+    }
+
+    // Named (not inline) so the exact same function reference can be passed
+    // to both addEventListener and removeEventListener below.
+    function notionTimelineOnMouseMove(event) {
+      if (!notionTimelineDrag) return
+      const deltaPx = event.clientX - notionTimelineDrag.startX
+      const deltaDays = Math.round(deltaPx / NOTION_TIMELINE_DAY_WIDTH)
+      notionTimelineDrag.deltaDays = deltaDays
+      if (notionTimelineDrag.mode === 'move') {
+        notionTimelineDrag.el.style.left = notionTimelineDrag.originalLeft + deltaDays * NOTION_TIMELINE_DAY_WIDTH + 'px'
+      } else {
+        const newWidth = Math.max(NOTION_TIMELINE_DAY_WIDTH, notionTimelineDrag.originalWidth + deltaDays * NOTION_TIMELINE_DAY_WIDTH)
+        notionTimelineDrag.el.style.width = newWidth + 'px'
+      }
+    }
+    function notionTimelineOnMouseUp() {
+      if (!notionTimelineDrag) return
+      const { blockId, itemId, mode, deltaDays, originalDate, originalEndDate } = notionTimelineDrag
+      document.removeEventListener('mousemove', notionTimelineOnMouseMove)
+      document.removeEventListener('mouseup', notionTimelineOnMouseUp)
+      notionTimelineDrag = null
+      if (!deltaDays) return
+      const addDays = (iso, n) => {
+        const d = new Date(iso + 'T00:00:00')
+        d.setDate(d.getDate() + n)
+        return d.toISOString().slice(0, 10)
+      }
+      if (mode === 'move') {
+        Store.updateNotionDatabaseItem(notionActivePageId, blockId, itemId, {
+          date: addDays(originalDate, deltaDays),
+          endDate: originalEndDate ? addDays(originalEndDate, deltaDays) : '',
+        })
+      } else {
+        const newEnd = addDays(originalEndDate || originalDate, deltaDays)
+        Store.updateNotionDatabaseItem(notionActivePageId, blockId, itemId, { endDate: newEnd < originalDate ? originalDate : newEnd })
+      }
+      renderPage()
+    }
+
+    function notionTrashIcon() {
+      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>'
+    }
+    function notionChevronUpIcon() {
+      return '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    }
+    function notionChevronDownIcon() {
+      return '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    }
+    function notionAddIcon() {
+      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>'
+    }
+    function notionDragHandleIcon() {
+      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><circle cx="9" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="15" cy="18" r="1.4"/></svg>'
+    }
+    function notionSettingsIcon() {
+      return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="3.5" rx="1"/><rect x="4" y="10.5" width="16" height="3.5" rx="1"/><rect x="4" y="16" width="16" height="3.5" rx="1"/><circle cx="8" cy="6.75" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="12.25" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="17.75" r="1.1" fill="currentColor" stroke="none"/></svg>'
+    }
+
+    function notionSlashMenu(block) {
+      return `
+        <div class="notion-slash-menu" data-notion-slash-menu="${block.id}" style="display:none;">
+          ${NOTION_BLOCK_TYPES.map((t) => `<button type="button" class="notion-slash-item" data-notion-slash-pick="${block.id}:${t.type}" data-label="${t.label.toLowerCase()}">${t.label}</button>`).join('')}
+        </div>`
+    }
+
+    function renderNotionBlock(block, index, total, numberedIndex, page) {
+      const dragHandle = `<span class="notion-drag-handle" draggable="true" aria-hidden="true">${notionDragHandleIcon()}</span>`
+      const actions = `
+        <div class="notion-block-actions">
+          <button type="button" class="notion-block-action-btn" data-notion-move="${block.id}:up" ${index === 0 ? 'disabled' : ''} aria-label="Move block up">${notionChevronUpIcon()}</button>
+          <button type="button" class="notion-block-action-btn" data-notion-move="${block.id}:down" ${index === total - 1 ? 'disabled' : ''} aria-label="Move block down">${notionChevronDownIcon()}</button>
+          <button type="button" class="notion-block-action-btn" data-notion-delete-block="${block.id}" aria-label="Delete block">${notionTrashIcon()}</button>
+        </div>`
+
+      if (block.type === 'divider') {
+        return `<div class="notion-block-wrap" id="notion-block-${block.id}"><div class="notion-block notion-block-divider" data-notion-block-id="${block.id}">${dragHandle}<hr />${actions}</div></div>`
+      }
+      if (block.type === 'database') {
+        return renderNotionDatabaseBlock(block, dragHandle, actions)
+      }
+      if (block.type === 'image' || block.type === 'video' || block.type === 'embed') {
+        return renderNotionMediaBlock(block, dragHandle, actions)
+      }
+      if (block.type === 'math') {
+        return renderNotionMathBlock(block, dragHandle, actions)
+      }
+      if (block.type === 'toc') {
+        return renderNotionTocBlock(block, dragHandle, actions, page)
+      }
+      if (block.type === 'clock') {
+        return renderNotionClockBlock(block, dragHandle, actions)
+      }
+      if (block.type === 'timer') {
+        return renderNotionTimerBlock(block, dragHandle, actions)
+      }
+      if (block.type === 'countdown') {
+        return renderNotionCountdownBlock(block, dragHandle, actions)
+      }
+      if (block.type === 'habit') {
+        return renderNotionHabitBlock(block, dragHandle, actions)
+      }
+      let row
+      if (block.type === 'todo') {
+        row = `
+          <div class="notion-block notion-block-todo${block.checked ? ' checked' : ''}" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="checkbox" data-notion-block-checked="${block.id}" ${block.checked ? 'checked' : ''} />
+            <input type="text" class="notion-block-input" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="To-do" />
+            ${actions}
+          </div>`
+      } else if (block.type === 'bullet') {
+        row = `
+          <div class="notion-block notion-block-bullet" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <span class="notion-bullet-dot">&bull;</span>
+            <input type="text" class="notion-block-input" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="List item" />
+            ${actions}
+          </div>`
+      } else if (block.type === 'numbered') {
+        row = `
+          <div class="notion-block notion-block-numbered" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <span class="notion-number-marker">${numberedIndex}.</span>
+            <input type="text" class="notion-block-input" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="List item" />
+            ${actions}
+          </div>`
+      } else if (block.type === 'heading') {
+        row = `
+          <div class="notion-block notion-block-heading" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input heading1" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="Heading 1" />
+            ${actions}
+          </div>`
+      } else if (block.type === 'heading2') {
+        row = `
+          <div class="notion-block notion-block-heading" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input heading2" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="Heading 2" />
+            ${actions}
+          </div>`
+      } else if (block.type === 'quote') {
+        row = `
+          <div class="notion-block notion-block-quote" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input quote" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="Quote" />
+            ${actions}
+          </div>`
+      } else if (block.type === 'callout') {
+        row = `
+          <div class="notion-block notion-block-callout" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <span class="notion-callout-emoji">💡</span>
+            <input type="text" class="notion-block-input" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="Callout" />
+            ${actions}
+          </div>`
+      } else if (block.type === 'code') {
+        row = `
+          <div class="notion-block notion-block-code" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input code" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="Code" />
+            ${actions}
+          </div>`
+      } else {
+        row = `
+          <div class="notion-block notion-block-text" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="Text" />
+            ${actions}
+          </div>`
+      }
+      return `<div class="notion-block-wrap" id="notion-block-${block.id}">${row}${notionSlashMenu(block)}</div>`
+    }
+
+    // -------------------------------------------- Notion media blocks
+    // Image/Video/Embed all just store a `url` and preview it — Video
+    // recognizes YouTube/Loom links and rewrites them to their embeddable
+    // URL, Embed just iframes whatever's pasted (works for sites that allow
+    // being framed; there's no backend here to resolve arbitrary links the
+    // way Notion's own oEmbed service does for its 500+ supported sites).
+    // The URL commits on blur/Enter rather than every keystroke, so pasting
+    // a link doesn't fight for focus and still shows the preview right away.
+    function notionMediaEmbedSrc(type, rawUrl) {
+      const url = (rawUrl || '').trim()
+      if (!url) return ''
+      if (type === 'video') {
+        const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/)
+        if (yt) return 'https://www.youtube.com/embed/' + yt[1]
+        const loom = url.match(/loom\.com\/(?:share|embed)\/([\w-]+)/)
+        if (loom) return 'https://www.loom.com/embed/' + loom[1]
+      }
+      if (type === 'embed') {
+        // Spotify's embed player is public — no API key needed — so any
+        // normal share link just gets rewritten to its /embed/ form, same
+        // idea as the YouTube/Loom rewrite above.
+        const spotify = url.match(/open\.spotify\.com\/(track|album|playlist|episode|show|artist)\/([\w]+)/)
+        if (spotify) return `https://open.spotify.com/embed/${spotify[1]}/${spotify[2]}`
+      }
+      return url
+    }
+
+    function notionIsSpotifyUrl(url) {
+      return /open\.spotify\.com/.test(url || '')
+    }
+
+    // The 600+ widgets in a real Notion widget gallery aren't built by
+    // Notion itself — each one is generated on a third-party site (Indify,
+    // Apption Widgets, Widgetbox, etc.) as a unique embed link, which you
+    // then paste into Notion's one generic /embed block. This block works
+    // the same way: it's already compatible with all of them the moment a
+    // link is pasted in, so the empty state just surfaces the categories of
+    // services people commonly use it for, rather than the app trying to
+    // natively rebuild hundreds of widgets.
+    const NOTION_EMBED_GALLERY = [
+      { icon: '🕐', label: 'Clocks & timers', services: 'Indify, Apption Widgets, Widgetbox' },
+      { icon: '🌦️', label: 'Weather', services: 'Indify, Weatherwidget.io' },
+      { icon: '🎵', label: 'Music', services: 'Spotify, SoundCloud' },
+      { icon: '📅', label: 'Calendars', services: 'Google Calendar' },
+      { icon: '🗺️', label: 'Maps', services: 'Google Maps' },
+      { icon: '🎨', label: 'Design & docs', services: 'Figma, Miro, Google Drive' },
+      { icon: '📊', label: 'Data & charts', services: 'Datawrapper, Rows, CodePen' },
+      { icon: '📣', label: 'Buttons & social', services: 'Indify, Apption Widgets' },
+    ]
+
+    function notionEmbedGalleryHtml() {
+      return `
+        <div class="notion-embed-gallery">
+          <p class="notion-embed-gallery-title">Paste a link from any of these — this one block works with all of them, the same way Notion's own /embed does:</p>
+          <div class="notion-embed-gallery-grid">
+            ${NOTION_EMBED_GALLERY.map(
+              (c) => `
+              <div class="notion-embed-gallery-chip">
+                <span class="notion-embed-gallery-icon">${c.icon}</span>
+                <span class="notion-embed-gallery-text"><strong>${c.label}</strong><br>${c.services}</span>
+              </div>`,
+            ).join('')}
+          </div>
+          <p class="notion-db-hint">Some services block being framed — if a preview stays blank, that's why.</p>
+        </div>`
+    }
+
+    function renderNotionMediaBlock(block, dragHandle, actions) {
+      const url = block.url || ''
+      const placeholder = block.type === 'image' ? 'Image URL' : block.type === 'video' ? 'YouTube or Loom URL' : 'Embed URL — paste a link from Spotify, Google Calendar, Indify, Apption Widgets, and 100s more'
+      let preview = ''
+      if (url) {
+        if (block.type === 'image') {
+          preview = `<img class="notion-media-image" src="${url}" alt="" />`
+        } else {
+          const frameClass = notionIsSpotifyUrl(url) ? 'notion-media-frame notion-media-frame-spotify' : 'notion-media-frame'
+          preview = `<div class="${frameClass}"><iframe src="${notionMediaEmbedSrc(block.type, url)}" loading="lazy" allowfullscreen></iframe></div>`
+        }
+      } else if (block.type === 'embed') {
+        preview = notionEmbedGalleryHtml()
+      }
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-media" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input" data-notion-block-url="${block.id}" value="${url}" placeholder="${placeholder}" />
+            ${actions}
+          </div>
+          ${preview ? `<div class="notion-media-preview">${preview}</div>` : ''}
+        </div>`
+    }
+
+    // -------------------------------------------- Notion math block
+    // Renders LaTeX via KaTeX (loaded from CDN), synchronously to an HTML
+    // string — no separate DOM step needed. The text input reuses the same
+    // [data-notion-block-text] wiring every other text-bearing block uses;
+    // that handler also refreshes this block's own preview live as you type
+    // (see wireNotionBody), since a formula is worth watching update.
+    function notionRenderMath(text) {
+      if (!text || !text.trim()) return '<span class="section-empty">Type a LaTeX expression above, e.g. E = mc^2</span>'
+      try {
+        return katex.renderToString(text, { throwOnError: false, displayMode: true })
+      } catch (e) {
+        return '<span class="section-empty">Could not render this expression.</span>'
+      }
+    }
+
+    function renderNotionMathBlock(block, dragHandle, actions) {
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-math" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input code" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="LaTeX, e.g. E = mc^2" />
+            ${actions}
+          </div>
+          <div class="notion-math-preview">${notionRenderMath(block.text)}</div>
+        </div>`
+    }
+
+    // -------------------------------------------- Notion table of contents
+    // Purely computed from the page's own heading/heading2 blocks — stores
+    // no data of its own. Jumping to a heading scrolls + briefly highlights
+    // it; it deliberately isn't a real <a href="#..."> link, since that
+    // would rewrite window.location.hash, which this very page already
+    // parses as "#applicationId:tab" for routing.
+    function renderNotionTocBlock(block, dragHandle, actions, page) {
+      const headings = (page ? page.blocks : []).filter((b) => b.type === 'heading' || b.type === 'heading2')
+      const list = headings.length === 0
+        ? '<span class="section-empty">No headings on this page yet.</span>'
+        : headings
+            .map(
+              (h) => `<button type="button" class="notion-toc-item${h.type === 'heading2' ? ' notion-toc-indent' : ''}" data-notion-toc-jump="${h.id}">${h.text || 'Untitled heading'}</button>`,
+            )
+            .join('')
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-toc" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <span class="notion-toc-label">${notionSettingsIcon()}Table of contents</span>
+            ${actions}
+          </div>
+          <div class="notion-toc-list">${list}</div>
+        </div>`
+    }
+
+    // -------------------------------------------- Notion live widgets
+    // Clock, Pomodoro timer, and Countdown all tick every second via one
+    // shared setInterval (notionTickLiveWidgets, wired once in
+    // wireNotionBody) that updates their DOM text directly — never through
+    // renderPage(), so a running timer never gets reset by an unrelated
+    // re-render and typing elsewhere never stutters against a 1s redraw.
+    function renderNotionClockBlock(block, dragHandle, actions) {
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-clock" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <div class="notion-clock-face" data-notion-clock>
+              <span class="notion-clock-time"></span>
+              <span class="notion-clock-date"></span>
+            </div>
+            ${actions}
+          </div>
+        </div>`
+    }
+
+    function notionFormatClock(now) {
+      return { time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), date: now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) }
+    }
+
+    function renderNotionTimerBlock(block, dragHandle, actions) {
+      const state = notionTimerState[block.id] || (notionTimerState[block.id] = { remaining: (block.minutes || 25) * 60, running: false })
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-timer" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <div class="notion-timer-widget">
+              <div class="notion-timer-presets">
+                ${NOTION_TIMER_PRESETS.map((p) => `<button type="button" class="notion-timer-preset${block.minutes === p.minutes ? ' active' : ''}" data-notion-timer-preset="${block.id}:${p.minutes}">${p.label}</button>`).join('')}
+              </div>
+              <span class="notion-timer-display" data-notion-timer>${notionFormatTimer(state.remaining)}</span>
+              <div class="notion-timer-controls">
+                <button type="button" class="notion-add-block-btn" data-notion-timer-toggle="${block.id}">${state.running ? 'Pause' : 'Start'}</button>
+                <button type="button" class="notion-add-block-btn" data-notion-timer-reset="${block.id}">Reset</button>
+              </div>
+            </div>
+            ${actions}
+          </div>
+        </div>`
+    }
+
+    function notionFormatTimer(totalSeconds) {
+      const s = Math.max(0, totalSeconds)
+      const m = Math.floor(s / 60)
+      const sec = s % 60
+      return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0')
+    }
+
+    function renderNotionCountdownBlock(block, dragHandle, actions) {
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-countdown" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="What are you counting down to?" />
+            <input type="datetime-local" class="notion-countdown-target-input" data-notion-countdown-target="${block.id}" value="${block.target || ''}" />
+            ${actions}
+          </div>
+          <div class="notion-countdown-display" data-notion-countdown="${block.target || ''}"></div>
+        </div>`
+    }
+
+    function notionFormatCountdown(targetIso) {
+      if (!targetIso) return 'Set a target date above.'
+      const diff = new Date(targetIso).getTime() - Date.now()
+      if (Number.isNaN(diff)) return 'Set a target date above.'
+      if (diff <= 0) return 'Countdown reached!'
+      const totalSeconds = Math.floor(diff / 1000)
+      const days = Math.floor(totalSeconds / 86400)
+      const hours = Math.floor((totalSeconds % 86400) / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = totalSeconds % 60
+      return `${days}d ${hours}h ${minutes}m ${seconds}s remaining`
+    }
+
+    function renderNotionHabitBlock(block, dragHandle, actions) {
+      const days = block.days && block.days.length === 7 ? block.days : NOTION_HABIT_DAYS.map(() => false)
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-habit" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <input type="text" class="notion-block-input" data-notion-block-text="${block.id}" value="${block.text || ''}" placeholder="Habit name" />
+            ${actions}
+          </div>
+          <div class="notion-habit-days">
+            ${NOTION_HABIT_DAYS.map(
+              (label, i) => `
+              <button type="button" class="notion-habit-day${days[i] ? ' done' : ''}" data-notion-habit-toggle="${block.id}:${i}">
+                <span class="notion-habit-day-label">${label}</span>
+                <span class="notion-habit-day-check">${days[i] ? '✓' : ''}</span>
+              </button>`,
+            ).join('')}
+          </div>
+        </div>`
+    }
+
+    // Runs once a second (attached once, guarded by
+    // notionLiveWidgetIntervalAttached) and updates every currently-rendered
+    // clock/timer/countdown directly via the DOM — re-querying elements each
+    // tick means it naturally follows whatever's on screen after a
+    // renderPage(), an add/delete block, or switching pages, with no
+    // per-block cleanup needed.
+    function notionTickLiveWidgets() {
+      document.querySelectorAll('[data-notion-clock]').forEach((el) => {
+        const now = new Date()
+        const formatted = notionFormatClock(now)
+        el.querySelector('.notion-clock-time').textContent = formatted.time
+        el.querySelector('.notion-clock-date').textContent = formatted.date
+      })
+      document.querySelectorAll('[data-notion-timer]').forEach((el) => {
+        const wrap = el.closest('.notion-block-wrap')
+        const blockId = wrap && wrap.id.replace('notion-block-', '')
+        const state = blockId && notionTimerState[blockId]
+        if (!state) return
+        if (state.running && state.remaining > 0) state.remaining -= 1
+        el.textContent = notionFormatTimer(state.remaining)
+        if (state.running && state.remaining <= 0) {
+          state.running = false
+          const toggleBtn = wrap.querySelector('[data-notion-timer-toggle]')
+          if (toggleBtn) toggleBtn.textContent = 'Start'
+        }
+      })
+      document.querySelectorAll('[data-notion-countdown]').forEach((el) => {
+        el.textContent = notionFormatCountdown(el.getAttribute('data-notion-countdown'))
+      })
+    }
+
+    // ------------------------------------------------- Notion database block
+    // A "database" block embeds a small structured item list (title/status/
+    // tag/date/endDate) that can be displayed through 7 different views —
+    // Table, Board, List, Calendar, Timeline, Gallery, Chart — all reading
+    // the same underlying items. Items are only added/edited in Table view;
+    // the other views are read-only visualizations (Board also supports
+    // dragging a card to a different status column).
+    // Table view has a per-database, user-editable schema (block.properties):
+    // add a column (choose Text/Date/Select + a name), rename one by typing
+    // in its header, or delete one via its header's dropdown — everything
+    // except the required "Title" column, which every database keeps.
+    function notionPropertyCellHtml(block, item, prop) {
+      const key = `${block.id}:${item.id}:${prop.id}`
+      if (prop.type === 'select') {
+        const options = prop.options || []
+        return `<select data-notion-db-field="${key}">${options.map((o) => `<option value="${o}" ${item[prop.id] === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`
+      }
+      if (prop.type === 'date') {
+        return `<input type="date" data-notion-db-field="${key}" value="${item[prop.id] || ''}" />`
+      }
+      return `<input type="text" data-notion-db-field="${key}" value="${item[prop.id] || ''}" placeholder="${prop.id === 'title' ? 'Untitled' : ''}" />`
+    }
+
+    // Table view supports renaming a column inline (click its header,
+    // type) — the one property action Notion itself keeps in the table
+    // header. Adding/deleting properties is centralized in the single
+    // "Properties" panel below instead, reachable from every view, matching
+    // how Board/List/Gallery/Calendar/Timeline all manage the schema through
+    // one settings surface rather than per-column header chrome.
+    function notionColumnHeaderHtml(block, prop) {
+      return `<th class="notion-db-th"><input type="text" class="notion-db-col-name-input" data-notion-db-rename-col="${block.id}:${prop.id}" value="${prop.name || ''}" /></th>`
+    }
+
+    function renderNotionDbTable(block) {
+      const items = block.items || []
+      const properties = notionDbProperties(block)
+      const rows = items
+        .map(
+          (item) => `
+        <tr>
+          ${properties.map((prop) => `<td>${notionPropertyCellHtml(block, item, prop)}</td>`).join('')}
+          <td><button type="button" class="notion-block-action-btn" data-notion-db-delete-item="${block.id}:${item.id}" aria-label="Delete item">${notionTrashIcon()}</button></td>
+        </tr>`,
+        )
+        .join('')
+      return `
+        <div class="table-scroll">
+          <table class="data-table notion-db-table">
+            <thead><tr>${properties.map((prop) => notionColumnHeaderHtml(block, prop)).join('')}<th></th></tr></thead>
+            <tbody>${rows || `<tr><td colspan="${properties.length + 1}" class="empty-table-note">No items yet.</td></tr>`}</tbody>
+          </table>
+        </div>
+        <button type="button" class="notion-add-block-btn" data-notion-db-add-item="${block.id}">${notionAddIcon()}Add item</button>`
+    }
+
+    // Shared "Properties" panel — available from every view's toolbar, not
+    // just Table — for adding, renaming, and deleting the database's
+    // properties. Rendered as a `position: fixed` overlay (see
+    // notionPositionFloatingPanel) so .table-scroll's overflow clipping,
+    // and Board/Gallery's own horizontal scroll, never cut it off.
+    function notionPropertiesPanelHtml(block) {
+      const properties = notionDbProperties(block)
+      const rows = properties
+        .map(
+          (prop) => `
+        <div class="notion-db-properties-row">
+          <span class="notion-db-properties-type-badge">${prop.type}</span>
+          <input type="text" class="notion-db-col-name-input" data-notion-db-rename-col="${block.id}:${prop.id}" value="${prop.name || ''}" />
+          ${prop.id === 'title' ? '' : `<button type="button" class="notion-block-action-btn" data-notion-db-delete-col="${block.id}:${prop.id}" aria-label="Delete property">${notionTrashIcon()}</button>`}
+        </div>`,
+        )
+        .join('')
+      return `
+        <div class="notion-db-properties-panel" data-notion-db-properties-panel="${block.id}" style="display:none;">
+          <p class="notion-db-properties-panel-title">Properties</p>
+          <div class="notion-db-properties-list">${rows}</div>
+          <div class="notion-db-properties-add">
+            <div class="modal-field"><label>Property name</label><input type="text" data-notion-db-new-col-name="${block.id}" placeholder="Property name" /></div>
+            <div class="modal-field">
+              <label>Type</label>
+              <select data-notion-db-new-col-type="${block.id}">
+                <option value="text">Text</option>
+                <option value="date">Date</option>
+                <option value="select">Select</option>
+              </select>
+            </div>
+            <div class="modal-field" data-notion-db-new-col-options-field="${block.id}" style="display:none;">
+              <label>Options (comma separated)</label>
+              <input type="text" data-notion-db-new-col-options="${block.id}" placeholder="Option 1, Option 2" />
+            </div>
+            <button type="button" class="notion-add-block-btn" data-notion-db-add-col-confirm="${block.id}">Add property</button>
+          </div>
+        </div>`
+    }
+
+    function renderNotionDbList(block, items) {
+      const rows = items
+        .map(
+          (i) => `
+        <div class="notion-db-list-row" data-notion-db-open-item="${block.id}:${i.id}">
+          <span class="notion-db-status-dot" style="background:${notionDbStatusColor(i.status)};"></span>
+          <span class="notion-db-list-title">${i.title || 'Untitled'}</span>
+          ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
+          ${i.date ? `<span class="notion-db-list-date">${i.date}</span>` : ''}
+        </div>`,
+        )
+        .join('')
+      return `
+        <div class="notion-db-list">${rows || '<span class="section-empty">No items yet.</span>'}</div>
+        <button type="button" class="notion-add-block-btn" data-notion-db-quick-add="${block.id}">${notionAddIcon()}Add item</button>`
+    }
+
+    function renderNotionDbBoard(block, items) {
+      return `<div class="notion-db-board">
+        ${NOTION_DB_STATUSES.map(
+          (status) => `
+          <div class="notion-db-board-col" data-notion-db-board-col="${block.id}:${status}" style="border-top-color:${notionDbStatusColor(status)};">
+            <p class="notion-db-board-col-title">${status}<span class="notion-db-board-count">${items.filter((i) => i.status === status).length}</span></p>
+            <div class="notion-db-board-cards">
+              ${items
+                .filter((i) => i.status === status)
+                .map(
+                  (i) => `
+                <div class="notion-db-board-card" draggable="true" data-notion-db-card="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}">
+                  <p class="notion-db-board-card-title">${i.title || 'Untitled'}</p>
+                  ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
+                </div>`,
+                )
+                .join('')}
+            </div>
+            <button type="button" class="notion-db-add-card-btn" data-notion-db-quick-add="${block.id}:${status}">${notionAddIcon()}Add card</button>
+          </div>`,
+        ).join('')}
+      </div>`
+    }
+
+    function notionDbCurrentMonth(block) {
+      if (!notionDbCalendarMonth[block.id]) {
+        const withDates = (block.items || []).filter((i) => i.date).sort((a, b) => (a.date < b.date ? -1 : 1))
+        notionDbCalendarMonth[block.id] = withDates.length > 0 ? withDates[0].date.slice(0, 7) : new Date().toISOString().slice(0, 7)
+      }
+      return notionDbCalendarMonth[block.id]
+    }
+
+    function renderNotionDbCalendar(block, items) {
+      const monthKey = notionDbCurrentMonth(block)
+      const [year, month] = monthKey.split('-').map(Number)
+      const firstDay = new Date(year, month - 1, 1)
+      const daysInMonth = new Date(year, month, 0).getDate()
+      const startWeekday = firstDay.getDay()
+      const itemsByDay = {}
+      items.forEach((i) => {
+        if (i.date && i.date.slice(0, 7) === monthKey) {
+          const d = Number(i.date.slice(8, 10))
+          itemsByDay[d] = itemsByDay[d] || []
+          itemsByDay[d].push(i)
+        }
+      })
+      const cells = []
+      for (let i = 0; i < startWeekday; i++) cells.push('<div class="notion-db-cal-cell empty"></div>')
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dayItems = itemsByDay[d] || []
+        const dateStr = monthKey + '-' + String(d).padStart(2, '0')
+        cells.push(`
+          <div class="notion-db-cal-cell" data-notion-db-cal-cell="${block.id}:${dateStr}">
+            <p class="notion-db-cal-daynum">${d}</p>
+            ${dayItems
+              .map(
+                (i) => `<span class="notion-db-cal-item" draggable="true" data-notion-db-cal-item="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}" title="${i.title || ''}">${i.title || 'Untitled'}</span>`,
+              )
+              .join('')}
+          </div>`)
+      }
+      const monthLabel = firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      return `
+        <div class="notion-db-cal-header">
+          <button type="button" class="icon-button" data-notion-db-cal-nav="${block.id}:prev" aria-label="Previous month">&lsaquo;</button>
+          <p class="notion-db-cal-month">${monthLabel}</p>
+          <button type="button" class="icon-button" data-notion-db-cal-nav="${block.id}:next" aria-label="Next month">&rsaquo;</button>
+        </div>
+        <div class="notion-db-cal-grid">
+          ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => `<div class="notion-db-cal-weekday">${d}</div>`).join('')}
+          ${cells.join('')}
+        </div>
+        <p class="notion-db-hint">Click a day to add an item, click an item to edit it, or drag an item to reschedule it.</p>`
+    }
+
+    function renderNotionDbTimeline(block, items) {
+      const dated = items.filter((i) => i.date)
+      if (dated.length === 0) return '<span class="section-empty">No dated items yet — add a date in Table view.</span>'
+      const toTime = (s) => new Date(s + 'T00:00:00').getTime()
+      const dayMs = 86400000
+      const minTime = Math.min(...dated.map((i) => toTime(i.date)))
+      const maxTime = Math.max(...dated.map((i) => toTime(i.endDate || i.date)))
+      const totalDays = Math.max(1, Math.round((maxTime - minTime) / dayMs) + 1)
+      const dayWidth = NOTION_TIMELINE_DAY_WIDTH
+      const trackWidth = totalDays * dayWidth
+      return `
+        <p class="notion-db-hint">Drag a bar to reschedule it, drag its right edge to resize, or click a title to edit.</p>
+        <div class="notion-db-timeline-scroll">
+          <div class="notion-db-timeline" style="min-width:${trackWidth}px;">
+            ${dated
+              .map((i) => {
+                const startOffset = Math.round((toTime(i.date) - minTime) / dayMs)
+                const duration = Math.max(1, Math.round((toTime(i.endDate || i.date) - toTime(i.date)) / dayMs) + 1)
+                return `
+                <div class="notion-db-timeline-row">
+                  <span class="notion-db-timeline-label" data-notion-db-open-item="${block.id}:${i.id}">${i.title || 'Untitled'}</span>
+                  <div class="notion-db-timeline-track" style="width:${trackWidth}px;">
+                    <span class="notion-db-timeline-bar" data-notion-db-timeline-bar="${block.id}:${i.id}" style="left:${startOffset * dayWidth}px; width:${duration * dayWidth}px; background:${notionDbStatusColor(i.status)};" title="${i.title || ''}">
+                      <span class="notion-db-timeline-handle" title="Drag to resize"></span>
+                    </span>
+                  </div>
+                </div>`
+              })
+              .join('')}
+          </div>
+        </div>`
+    }
+
+    function renderNotionDbGallery(block, items) {
+      const cards = items
+        .map(
+          (i) => `
+        <div class="notion-db-gallery-card" data-notion-db-open-item="${block.id}:${i.id}">
+          <div class="notion-db-gallery-cover" style="--notion-db-cover-color:${notionDbStatusColor(i.status)};"></div>
+          <p class="notion-db-gallery-title">${i.title || 'Untitled'}</p>
+          <div class="notion-db-gallery-meta">
+            <span class="notion-db-status-pill" style="background:${notionDbStatusColor(i.status)};">${i.status}</span>
+            ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
+          </div>
+        </div>`,
+        )
+        .join('')
+      return `<div class="notion-db-gallery">
+        ${cards}
+        <button type="button" class="notion-db-gallery-add-card" data-notion-db-quick-add="${block.id}">${notionAddIcon()}<span>Add card</span></button>
+      </div>`
+    }
+
+    function renderNotionDatabaseBlock(block, dragHandle, actions) {
+      const items = block.items || []
+      const view = block.view || 'table'
+      let content
+      if (view === 'board') content = renderNotionDbBoard(block, items)
+      else if (view === 'list') content = renderNotionDbList(block, items)
+      else if (view === 'calendar') content = renderNotionDbCalendar(block, items)
+      else if (view === 'timeline') content = renderNotionDbTimeline(block, items)
+      else if (view === 'gallery') content = renderNotionDbGallery(block, items)
+      else if (view === 'chart') content = `<div class="notion-db-chart" data-notion-db-chart="${block.id}"></div>`
+      else content = renderNotionDbTable(block)
+      return `
+        <div class="notion-block-wrap" id="notion-block-${block.id}">
+          <div class="notion-block notion-block-database" data-notion-block-id="${block.id}">
+            ${dragHandle}
+            <div class="notion-db-views">
+              ${NOTION_DB_VIEWS.map((v) => `<button type="button" class="notion-db-view-tab${view === v.key ? ' active' : ''}" data-notion-db-view="${block.id}:${v.key}">${v.label}</button>`).join('')}
+            </div>
+            <button type="button" class="notion-db-properties-btn" data-notion-db-properties-toggle="${block.id}">${notionSettingsIcon()}Properties</button>
+            ${actions}
+          </div>
+          <div class="notion-db-content">${content}</div>
+          ${notionPropertiesPanelHtml(block)}
+        </div>`
+    }
+
+    function renderNotionEditor(page) {
+      let numberedCounter = 0
+      const blocksHtml = page.blocks
+        .map((b, i) => {
+          numberedCounter = b.type === 'numbered' ? numberedCounter + 1 : 0
+          return renderNotionBlock(b, i, page.blocks.length, numberedCounter, page)
+        })
+        .join('')
+      return `
+        <div class="notion-editor-header">
+          <div class="notion-icon-picker-wrap">
+            <button type="button" class="notion-page-icon-btn" id="notion-page-icon-btn" aria-label="Change page icon">${page.icon || '📄'}</button>
+            <div class="notion-icon-picker-menu" id="notion-icon-picker-menu" style="display:none;">
+              ${NOTION_PAGE_ICONS.map((e) => `<button type="button" class="notion-icon-option" data-notion-icon-pick="${e}">${e}</button>`).join('')}
+            </div>
+          </div>
+          <input type="text" class="notion-title-input" id="notion-title-input" value="${page.title || ''}" placeholder="Untitled" />
+          <button type="button" class="icon-button" id="notion-delete-page-btn" aria-label="Delete page">${notionTrashIcon()}</button>
+        </div>
+        <p class="notion-updated-note">Last edited ${page.updatedDate || page.createdDate || ''}</p>
+        <div class="notion-blocks" id="notion-blocks">
+          ${page.blocks.length === 0
+            ? '<span class="section-empty">No content yet — add a block below, or type "/" in a block to pick a type.</span>'
+            : blocksHtml}
+        </div>
+        <div class="notion-add-block-row">
+          ${NOTION_BLOCK_TYPES.map((t) => `<button type="button" class="notion-add-block-btn" data-notion-add-block="${t.type}">${notionAddIcon()}${t.label}</button>`).join('')}
+        </div>`
+    }
+
+    function renderNotionBody() {
+      const allPages = Store.get().notionPages || []
+      if (!notionActivePageId || !allPages.some((p) => p.id === notionActivePageId)) {
+        notionActivePageId = allPages.length > 0 ? allPages[0].id : null
+      }
+      const term = notionPageSearch.trim().toLowerCase()
+      const pages = term ? allPages.filter((p) => (p.title || 'Untitled').toLowerCase().includes(term)) : allPages
+      const activePage = allPages.find((p) => p.id === notionActivePageId) || null
+      return `
+        <div class="detail-card">
+          <div class="notion-workspace">
+            <aside class="notion-sidebar">
+              <button type="button" class="solid-action-button" id="notion-new-page-btn">${notionAddIcon()}New page</button>
+              <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="notion-page-search" placeholder="Search pages" value="${notionPageSearch}" /></div>
+              <div class="notion-page-list">
+                ${pages.length === 0
+                  ? '<span class="section-empty">No pages found</span>'
+                  : pages
+                      .map(
+                        (p) => `
+                  <button type="button" class="notion-page-item${p.id === notionActivePageId ? ' active' : ''}" data-notion-page="${p.id}">
+                    <span class="notion-page-icon">${p.icon || '📄'}</span>
+                    <span class="notion-page-title">${p.title || 'Untitled'}</span>
+                  </button>`,
+                      )
+                      .join('')}
+              </div>
+            </aside>
+            <div class="notion-editor">
+              ${activePage ? renderNotionEditor(activePage) : '<span class="section-empty">No page selected. Create a page to get started.</span>'}
+            </div>
+          </div>
+        </div>`
+    }
+
+    function wireNotionBody() {
+      document.querySelectorAll('[data-notion-page]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          notionActivePageId = btn.getAttribute('data-notion-page')
+          renderPage()
+        }),
+      )
+      document.getElementById('notion-new-page-btn')?.addEventListener('click', () => {
+        const page = Store.addNotionPage({ title: 'Untitled' })
+        notionActivePageId = page.id
+        renderPage()
+      })
+      document.getElementById('notion-page-search')?.addEventListener('input', (event) => {
+        notionPageSearch = event.target.value
+        notionRefocusSearch = true
+        renderPage()
+      })
+      if (notionRefocusSearch) {
+        notionRefocusSearch = false
+        const searchInput = document.getElementById('notion-page-search')
+        if (searchInput) {
+          searchInput.focus()
+          searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length)
+        }
+      }
+
+      const titleInput = document.getElementById('notion-title-input')
+      if (titleInput) {
+        titleInput.addEventListener('input', () => {
+          Store.updateNotionPage(notionActivePageId, { title: titleInput.value })
+          const sidebarTitle = document.querySelector(`[data-notion-page="${notionActivePageId}"] .notion-page-title`)
+          if (sidebarTitle) sidebarTitle.textContent = titleInput.value.trim() || 'Untitled'
+        })
+      }
+      document.getElementById('notion-delete-page-btn')?.addEventListener('click', () => {
+        const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+        if (!page) return
+        UI.confirm({
+          message: `Delete <strong>${page.title || 'Untitled'}</strong>? This can't be undone.`,
+          onConfirm: () => {
+            Store.removeNotionPage(page.id)
+            notionActivePageId = null
+            renderPage()
+            UI.toast('Page deleted successfully!')
+          },
+        })
+      })
+
+      document.getElementById('notion-page-icon-btn')?.addEventListener('click', (event) => {
+        event.stopPropagation()
+        const menu = document.getElementById('notion-icon-picker-menu')
+        if (menu) menu.style.display = menu.style.display === 'none' ? '' : 'none'
+      })
+      document.querySelectorAll('[data-notion-icon-pick]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          Store.updateNotionPage(notionActivePageId, { icon: btn.getAttribute('data-notion-icon-pick') })
+          renderPage()
+        }),
+      )
+      if (!notionGlobalClickListenerAttached) {
+        notionGlobalClickListenerAttached = true
+        document.addEventListener('click', notionCloseFloatingPanels)
+        // `position: fixed` panels don't move when their scroll-parent
+        // scrolls (only the viewport, not the content, would move them) —
+        // closing on any scroll, rather than tracking it, is simpler and
+        // matches how most dropdowns behave. The capture phase is required
+        // since scroll events don't bubble, so this is the only way to
+        // hear scrolling on a nested container like .table-scroll.
+        document.addEventListener('scroll', notionCloseFloatingPanels, true)
+      }
+      if (!notionLiveWidgetIntervalAttached) {
+        notionLiveWidgetIntervalAttached = true
+        setInterval(notionTickLiveWidgets, 1000)
+        notionTickLiveWidgets()
+      }
+
+      // ---- Live widgets: clock (no config), Pomodoro timer, countdown, habit
+      document.querySelectorAll('[data-notion-timer-preset]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, minutes] = btn.getAttribute('data-notion-timer-preset').split(':')
+          Store.updateNotionBlock(notionActivePageId, blockId, { minutes: Number(minutes) })
+          notionTimerState[blockId] = { remaining: Number(minutes) * 60, running: false }
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-timer-toggle]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const blockId = btn.getAttribute('data-notion-timer-toggle')
+          const state = notionTimerState[blockId]
+          if (!state) return
+          state.running = !state.running
+          btn.textContent = state.running ? 'Pause' : 'Start'
+        }),
+      )
+      document.querySelectorAll('[data-notion-timer-reset]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const blockId = btn.getAttribute('data-notion-timer-reset')
+          const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+          const block = page && page.blocks.find((b) => b.id === blockId)
+          notionTimerState[blockId] = { remaining: (block ? block.minutes : 25) * 60, running: false }
+          notionTickLiveWidgets()
+          const wrap = document.getElementById('notion-block-' + blockId)
+          const toggleBtn = wrap && wrap.querySelector('[data-notion-timer-toggle]')
+          if (toggleBtn) toggleBtn.textContent = 'Start'
+        }),
+      )
+      document.querySelectorAll('[data-notion-countdown-target]').forEach((input) =>
+        input.addEventListener('change', () => {
+          const blockId = input.getAttribute('data-notion-countdown-target')
+          Store.updateNotionBlock(notionActivePageId, blockId, { target: input.value })
+          const display = document.querySelector(`#notion-block-${blockId} [data-notion-countdown]`)
+          if (display) {
+            display.setAttribute('data-notion-countdown', input.value)
+            display.textContent = notionFormatCountdown(input.value)
+          }
+        }),
+      )
+      document.querySelectorAll('[data-notion-habit-toggle]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, dayIndex] = btn.getAttribute('data-notion-habit-toggle').split(':')
+          const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+          const block = page && page.blocks.find((b) => b.id === blockId)
+          if (!block) return
+          const days = block.days && block.days.length === 7 ? block.days.slice() : NOTION_HABIT_DAYS.map(() => false)
+          days[Number(dayIndex)] = !days[Number(dayIndex)]
+          Store.updateNotionBlock(notionActivePageId, blockId, { days })
+          btn.classList.toggle('done', days[Number(dayIndex)])
+          btn.querySelector('.notion-habit-day-check').textContent = days[Number(dayIndex)] ? '✓' : ''
+        }),
+      )
+
+      document.querySelectorAll('[data-notion-block-text]').forEach((input) => {
+        input.addEventListener('input', () => {
+          const blockId = input.getAttribute('data-notion-block-text')
+          Store.updateNotionBlock(notionActivePageId, blockId, { text: input.value })
+          const mathPreview = document.querySelector(`#notion-block-${blockId} .notion-math-preview`)
+          if (mathPreview) mathPreview.innerHTML = notionRenderMath(input.value)
+          const menu = document.querySelector(`[data-notion-slash-menu="${blockId}"]`)
+          if (!menu) return
+          if (input.value.startsWith('/')) {
+            const filter = input.value.slice(1).toLowerCase()
+            let anyVisible = false
+            menu.querySelectorAll('[data-notion-slash-pick]').forEach((item) => {
+              const match = item.getAttribute('data-label').includes(filter)
+              item.style.display = match ? '' : 'none'
+              if (match) anyVisible = true
+            })
+            menu.style.display = anyVisible ? '' : 'none'
+          } else {
+            menu.style.display = 'none'
+          }
+        })
+        input.addEventListener('keydown', (event) => {
+          const blockId = input.getAttribute('data-notion-block-text')
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+            if (!page) return
+            const current = page.blocks.find((b) => b.id === blockId)
+            const nextType = current && NOTION_CONTINUABLE_TYPES.includes(current.type) ? current.type : 'text'
+            const nextData = nextType === 'todo' ? { type: nextType, text: '', checked: false } : { type: nextType, text: '' }
+            Store.insertNotionBlockAfter(notionActivePageId, blockId, nextData)
+            const updated = Store.get().notionPages.find((p) => p.id === notionActivePageId)
+            const idx = updated.blocks.findIndex((b) => b.id === blockId)
+            notionFocusBlockId = updated.blocks[idx + 1] ? updated.blocks[idx + 1].id : null
+            renderPage()
+          } else if (event.key === 'Backspace' && input.value === '') {
+            event.preventDefault()
+            const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+            if (!page) return
+            const idx = page.blocks.findIndex((b) => b.id === blockId)
+            Store.removeNotionBlock(notionActivePageId, blockId)
+            notionFocusBlockId = idx > 0 ? page.blocks[idx - 1].id : null
+            renderPage()
+          }
+        })
+      })
+
+      document.querySelectorAll('[data-notion-slash-pick]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, type] = btn.getAttribute('data-notion-slash-pick').split(':')
+          Store.updateNotionBlock(notionActivePageId, blockId, notionBlockData(type))
+          notionFocusBlockId = blockId
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-block-checked]').forEach((checkbox) =>
+        checkbox.addEventListener('change', () => {
+          const blockId = checkbox.getAttribute('data-notion-block-checked')
+          Store.updateNotionBlock(notionActivePageId, blockId, { checked: checkbox.checked })
+          checkbox.closest('.notion-block-todo')?.classList.toggle('checked', checkbox.checked)
+        }),
+      )
+      // Image/video/embed URL: commit on blur/Enter (not every keystroke) so
+      // pasting a link doesn't fight for focus, then re-render once to show
+      // the preview immediately.
+      document.querySelectorAll('[data-notion-block-url]').forEach((input) => {
+        input.addEventListener('change', () => {
+          Store.updateNotionBlock(notionActivePageId, input.getAttribute('data-notion-block-url'), { url: input.value })
+          renderPage()
+        })
+        input.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            input.blur()
+          }
+        })
+      })
+      document.querySelectorAll('[data-notion-toc-jump]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const target = document.getElementById('notion-block-' + btn.getAttribute('data-notion-toc-jump'))
+          if (!target) return
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          target.classList.add('notion-block-highlight')
+          setTimeout(() => target.classList.remove('notion-block-highlight'), 1200)
+        }),
+      )
+      document.querySelectorAll('[data-notion-move]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, direction] = btn.getAttribute('data-notion-move').split(':')
+          Store.moveNotionBlock(notionActivePageId, blockId, direction)
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-delete-block]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          Store.removeNotionBlock(notionActivePageId, btn.getAttribute('data-notion-delete-block'))
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-add-block]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const type = btn.getAttribute('data-notion-add-block')
+          Store.addNotionBlock(notionActivePageId, notionBlockData(type))
+          renderPage()
+        }),
+      )
+
+      // ---- Database block: view switcher, item CRUD, calendar nav, chart
+      document.querySelectorAll('[data-notion-db-view]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, view] = btn.getAttribute('data-notion-db-view').split(':')
+          Store.updateNotionBlock(notionActivePageId, blockId, { view })
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-add-item]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          Store.addNotionDatabaseItem(notionActivePageId, btn.getAttribute('data-notion-db-add-item'), { title: '', status: 'Not started', tag: '', date: '', endDate: '' })
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-delete-item]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, itemId] = btn.getAttribute('data-notion-db-delete-item').split(':')
+          Store.removeNotionDatabaseItem(notionActivePageId, blockId, itemId)
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-field]').forEach((el) => {
+        el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+          const [blockId, itemId, field] = el.getAttribute('data-notion-db-field').split(':')
+          Store.updateNotionDatabaseItem(notionActivePageId, blockId, itemId, { [field]: el.value })
+        })
+      })
+
+      // ---- Table view: dynamic columns (add/rename/delete properties)
+      document.querySelectorAll('[data-notion-db-rename-col]').forEach((input) =>
+        input.addEventListener('input', () => {
+          const [blockId, propId] = input.getAttribute('data-notion-db-rename-col').split(':')
+          Store.updateNotionDatabaseProperty(notionActivePageId, blockId, propId, { name: input.value })
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-properties-panel]').forEach((panel) =>
+        panel.addEventListener('click', (event) => event.stopPropagation()),
+      )
+      document.querySelectorAll('[data-notion-db-properties-toggle]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const blockId = btn.getAttribute('data-notion-db-properties-toggle')
+          document.querySelectorAll('[data-notion-db-properties-panel]').forEach((panel) => {
+            const isTarget = panel.getAttribute('data-notion-db-properties-panel') === blockId
+            if (isTarget && panel.style.display === 'none') {
+              panel.style.display = ''
+              notionPositionFloatingPanel(btn, panel)
+            } else {
+              panel.style.display = 'none'
+            }
+          })
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-delete-col]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const [blockId, propId] = btn.getAttribute('data-notion-db-delete-col').split(':')
+          Store.removeNotionDatabaseProperty(notionActivePageId, blockId, propId)
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-new-col-type]').forEach((select) =>
+        select.addEventListener('change', () => {
+          const blockId = select.getAttribute('data-notion-db-new-col-type')
+          const optionsField = document.querySelector(`[data-notion-db-new-col-options-field="${blockId}"]`)
+          if (optionsField) optionsField.style.display = select.value === 'select' ? '' : 'none'
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-add-col-confirm]').forEach((btn) =>
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const blockId = btn.getAttribute('data-notion-db-add-col-confirm')
+          const name = document.querySelector(`[data-notion-db-new-col-name="${blockId}"]`).value.trim()
+          if (!name) return
+          const type = document.querySelector(`[data-notion-db-new-col-type="${blockId}"]`).value
+          const property = { name, type }
+          if (type === 'select') {
+            const raw = document.querySelector(`[data-notion-db-new-col-options="${blockId}"]`).value
+            property.options = raw.split(',').map((s) => s.trim()).filter(Boolean)
+            if (property.options.length === 0) property.options = ['Option 1']
+          }
+          Store.addNotionDatabaseProperty(notionActivePageId, blockId, property)
+          renderPage()
+        }),
+      )
+
+      // Shared "open the edit modal" click, used by Board/List/Calendar/
+      // Timeline/Gallery. stopPropagation so it doesn't also trigger a
+      // parent's own click handler (e.g. a calendar day cell's "add on
+      // empty area" handler, or a draggable card's ancestor).
+      document.querySelectorAll('[data-notion-db-open-item]').forEach((el) =>
+        el.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const [blockId, itemId] = el.getAttribute('data-notion-db-open-item').split(':')
+          notionOpenItemModal(blockId, itemId)
+        }),
+      )
+      // Shared "add + open modal immediately" used by List/Board/Gallery —
+      // Table view uses [data-notion-db-add-item] instead, adding a blank
+      // inline row since it already edits every property in place.
+      document.querySelectorAll('[data-notion-db-quick-add]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, status] = btn.getAttribute('data-notion-db-quick-add').split(':')
+          notionAddDbItemAndEdit(blockId, status ? { status } : {})
+        }),
+      )
+      document.querySelectorAll('[data-notion-db-cal-nav]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const [blockId, dir] = btn.getAttribute('data-notion-db-cal-nav').split(':')
+          const [y, m] = notionDbCalendarMonth[blockId].split('-').map(Number)
+          const next = new Date(y, m - 1 + (dir === 'next' ? 1 : -1), 1)
+          notionDbCalendarMonth[blockId] = next.getFullYear() + '-' + String(next.getMonth() + 1).padStart(2, '0')
+          renderPage()
+        }),
+      )
+      // Calendar: click empty day space to add an item on that date; drag an
+      // item chip onto another day to reschedule it (reuses notionDraggedDbCard,
+      // the same "which item is being dragged" flag Board uses).
+      document.querySelectorAll('[data-notion-db-cal-cell]').forEach((cell) => {
+        cell.addEventListener('click', () => {
+          const [blockId, dateStr] = cell.getAttribute('data-notion-db-cal-cell').split(':')
+          notionAddDbItemAndEdit(blockId, { date: dateStr })
+        })
+        cell.addEventListener('dragover', (event) => {
+          event.preventDefault()
+          cell.classList.add('drag-over')
+        })
+        cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'))
+        cell.addEventListener('drop', (event) => {
+          event.preventDefault()
+          cell.classList.remove('drag-over')
+          if (!notionDraggedDbCard) return
+          const [cardBlockId, itemId] = notionDraggedDbCard.split(':')
+          const [cellBlockId, dateStr] = cell.getAttribute('data-notion-db-cal-cell').split(':')
+          if (cellBlockId === cardBlockId) Store.updateNotionDatabaseItem(notionActivePageId, cardBlockId, itemId, { date: dateStr })
+          notionDraggedDbCard = null
+          renderPage()
+        })
+      })
+      document.querySelectorAll('[data-notion-db-cal-item]').forEach((chip) => {
+        chip.addEventListener('dragstart', (event) => {
+          event.stopPropagation()
+          notionDraggedDbCard = chip.getAttribute('data-notion-db-cal-item')
+          chip.classList.add('dragging')
+        })
+        chip.addEventListener('dragend', (event) => {
+          event.stopPropagation()
+          chip.classList.remove('dragging')
+        })
+      })
+      // Timeline: mouse-based drag (reschedule) and resize (change duration)
+      // — needs pixel-level tracking, so it uses mousedown/move/up rather
+      // than native HTML5 drag-and-drop.
+      document.querySelectorAll('[data-notion-db-timeline-bar]').forEach((bar) => {
+        bar.addEventListener('mousedown', (event) => {
+          if (event.button !== 0) return
+          const [blockId, itemId] = bar.getAttribute('data-notion-db-timeline-bar').split(':')
+          const found = notionFindDbItem(blockId, itemId)
+          if (!found) return
+          event.preventDefault()
+          const isHandle = event.target.classList.contains('notion-db-timeline-handle')
+          notionTimelineDrag = {
+            blockId, itemId, el: bar,
+            mode: isHandle ? 'resize' : 'move',
+            startX: event.clientX,
+            originalDate: found.item.date,
+            originalEndDate: found.item.endDate || '',
+            originalLeft: parseFloat(bar.style.left) || 0,
+            originalWidth: parseFloat(bar.style.width) || NOTION_TIMELINE_DAY_WIDTH,
+            deltaDays: 0,
+          }
+          document.addEventListener('mousemove', notionTimelineOnMouseMove)
+          document.addEventListener('mouseup', notionTimelineOnMouseUp)
+        })
+      })
+      document.querySelectorAll('[data-notion-db-chart]').forEach((el) => {
+        const blockId = el.getAttribute('data-notion-db-chart')
+        if (notionDbChartInstances[blockId]) {
+          try { notionDbChartInstances[blockId].destroy() } catch (e) { /* already gone */ }
+          delete notionDbChartInstances[blockId]
+        }
+        const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+        const block = page && page.blocks.find((b) => b.id === blockId)
+        if (!block) return
+        const counts = NOTION_DB_STATUSES.map((s) => (block.items || []).filter((i) => i.status === s).length)
+        const chart = new ApexCharts(el, {
+          chart: { type: 'bar', height: 260, toolbar: { show: false } },
+          series: [{ name: 'Items', data: counts }],
+          xaxis: { categories: NOTION_DB_STATUSES },
+          colors: ['#7c3aed'],
+          plotOptions: { bar: { borderRadius: 6, columnWidth: '45%' } },
+          dataLabels: { enabled: true },
+        })
+        chart.render()
+        notionDbChartInstances[blockId] = chart
+      })
+
+      // Board view: drag a card onto another status column to reassign it.
+      // stopPropagation everywhere so this nested drag never bubbles into
+      // the outer block-reordering drag handlers below.
+      document.querySelectorAll('[data-notion-db-card]').forEach((el) => {
+        el.addEventListener('dragstart', (event) => {
+          event.stopPropagation()
+          notionDraggedDbCard = el.getAttribute('data-notion-db-card')
+          el.classList.add('dragging')
+        })
+        el.addEventListener('dragend', (event) => {
+          event.stopPropagation()
+          el.classList.remove('dragging')
+        })
+      })
+      document.querySelectorAll('[data-notion-db-board-col]').forEach((col) => {
+        col.addEventListener('dragover', (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          col.classList.add('drag-over')
+        })
+        col.addEventListener('dragleave', (event) => {
+          event.stopPropagation()
+          col.classList.remove('drag-over')
+        })
+        col.addEventListener('drop', (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          col.classList.remove('drag-over')
+          if (!notionDraggedDbCard) return
+          const [cardBlockId, itemId] = notionDraggedDbCard.split(':')
+          const [colBlockId, status] = col.getAttribute('data-notion-db-board-col').split(':')
+          if (colBlockId === cardBlockId) Store.updateNotionDatabaseItem(notionActivePageId, cardBlockId, itemId, { status })
+          notionDraggedDbCard = null
+          renderPage()
+        })
+      })
+
+      // Only the drag handle icon is draggable="true" (not the whole row) —
+      // otherwise a browser can hijack a click-drag started inside a block's
+      // own text input as "drag the block" instead of "select this text",
+      // since the drag surface would overlap the text itself. The block row
+      // stays a plain (non-draggable) drop target for dragover/drop.
+      document.querySelectorAll('.notion-drag-handle').forEach((handle) => {
+        handle.addEventListener('dragstart', () => {
+          const block = handle.closest('.notion-block')
+          notionDraggedBlockId = block && block.getAttribute('data-notion-block-id')
+          block && block.classList.add('dragging')
+        })
+        handle.addEventListener('dragend', () => {
+          const block = handle.closest('.notion-block')
+          block && block.classList.remove('dragging')
+        })
+      })
+      document.querySelectorAll('.notion-block').forEach((el) => {
+        el.addEventListener('dragover', (event) => {
+          if (!notionDraggedBlockId) return
+          event.preventDefault()
+          el.classList.add('drag-over')
+        })
+        el.addEventListener('dragleave', () => el.classList.remove('drag-over'))
+        el.addEventListener('drop', (event) => {
+          event.preventDefault()
+          el.classList.remove('drag-over')
+          const targetId = el.getAttribute('data-notion-block-id')
+          if (!notionDraggedBlockId || notionDraggedBlockId === targetId) return
+          const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
+          if (!page) return
+          const ids = page.blocks.map((b) => b.id)
+          const fromIdx = ids.indexOf(notionDraggedBlockId)
+          if (fromIdx === -1) return
+          ids.splice(fromIdx, 1)
+          const toIdx = ids.indexOf(targetId)
+          ids.splice(toIdx, 0, notionDraggedBlockId)
+          Store.reorderNotionBlocks(notionActivePageId, ids)
+          notionDraggedBlockId = null
+          renderPage()
+        })
+      })
+
+      if (notionFocusBlockId) {
+        const focusEl = document.querySelector(`[data-notion-block-text="${notionFocusBlockId}"]`)
+        if (focusEl) {
+          focusEl.focus()
+          focusEl.setSelectionRange(focusEl.value.length, focusEl.value.length)
+        }
+        notionFocusBlockId = null
+      }
     }
 
     // ------------------------------------------------------------- EMS
@@ -1519,7 +4146,8 @@
 
       const isPms = app.name === 'PMS'
       const isEms = app.name === 'EMS'
-      const isCustomDashboard = !isPms && !isEms && Boolean(app.hasCustomDashboard)
+      const isNotion = app.name === 'Notion'
+      const isCustomDashboard = !isPms && !isEms && !isNotion && Boolean(app.hasCustomDashboard)
       const data = Store.get()
       const devices = (app.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
       const assets = (app.assetIds || []).map((id) => data.assets.find((a) => a.id === id)).filter(Boolean)
@@ -1539,7 +4167,7 @@
           </div>
         </div>
 
-        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : isCustomDashboard ? renderCustomDashboardBody() : renderGenericBody(app, devices, assets)}`
+        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : isNotion ? renderNotionBody() : isCustomDashboard ? renderCustomDashboardBody() : renderGenericBody(app, devices, assets)}`
 
       document.getElementById('toggle-status-btn').addEventListener('click', () => {
         Store.toggleApplicationStatus(app.id)
@@ -1550,6 +4178,7 @@
       document.getElementById('delete-app-btn')?.addEventListener('click', confirmDelete)
       if (isPms) wirePmsBody()
       else if (isEms) wireEmsBody()
+      else if (isNotion) wireNotionBody()
       else if (isCustomDashboard) wireCustomDashboardBody(app)
       else wireGenericBody()
       // The palette FAB lives outside #app-detail-root (see the modal/FAB

@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v20'
+const STORAGE_KEY = 'univa-html-demo-v21'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -109,6 +109,7 @@ const DEFAULT_DATA = {
   applications: [
     { id: 'app0', name: 'PMS', description: 'Built-in system application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'dashboard', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_ems', name: 'EMS', description: 'Built-in energy management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    { id: 'app_notion', name: 'Notion', description: 'Built-in page workspace available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], groupNames: ['Vehicles'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
     { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], groupNames: ['HVAC units'], metadata: [], icon: 'users', createdDate: '2025-12-19 14:02:00' },
     { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], groupNames: [], metadata: [], icon: 'cloud-ota', createdDate: '2026-01-08 11:47:00' },
@@ -257,6 +258,61 @@ const DEFAULT_DATA = {
     { id: 'energy4', meterId: 'meter2', year: 2026, month: 'January', renewable: 4100, nonRenewable: 11200, renewablePercent: 26.8, nonRenewablePercent: 73.2 },
     { id: 'energy5', meterId: 'meter2', year: 2026, month: 'February', renewable: 4400, nonRenewable: 10600, renewablePercent: 29.3, nonRenewablePercent: 70.7 },
     { id: 'energy6', meterId: 'meter2', year: 2026, month: 'March', renewable: 4250, nonRenewable: 10950, renewablePercent: 27.9, nonRenewablePercent: 72.1 },
+  ],
+
+  // -------------------------------------------------- Notion (built-in app)
+  notionPages: [
+    {
+      id: 'np1', title: 'Getting started', icon: '📄', createdDate: '2025-11-01 08:00:00', updatedDate: '2025-11-01 08:00:00',
+      blocks: [
+        { id: 'nb1', type: 'heading', text: 'Welcome to Notion' },
+        { id: 'nb20', type: 'toc' },
+        { id: 'nb2', type: 'text', text: 'This is a lightweight page workspace built into Univa.' },
+        { id: 'nb3', type: 'callout', text: 'Type "/" at the start of a block to quickly change its type.' },
+        { id: 'nb4', type: 'heading2', text: 'Try these blocks' },
+        { id: 'nb5', type: 'todo', text: 'Try editing this to-do', checked: false },
+        { id: 'nb6', type: 'todo', text: 'Create a second page from the sidebar', checked: true },
+        { id: 'nb7', type: 'bullet', text: 'Bulleted list item' },
+        { id: 'nb8', type: 'numbered', text: 'Numbered list item' },
+        { id: 'nb9', type: 'quote', text: 'Blocks can be dragged to reorder, or press Enter / Backspace like a real editor.' },
+        { id: 'nb10', type: 'code', text: "console.log('Hello, Notion!')" },
+        { id: 'nb21', type: 'math', text: 'E = mc^2' },
+        { id: 'nb11', type: 'divider' },
+        { id: 'nb12', type: 'text', text: 'Headings, text, to-dos, bullets, numbered lists, quotes, callouts, code, and dividers are all supported blocks.' },
+        { id: 'nb22', type: 'heading2', text: 'Live widgets' },
+        { id: 'nb23', type: 'clock' },
+        { id: 'nb24', type: 'habit', text: 'Drink water', days: [true, true, false, true, false, false, false] },
+        { id: 'nb18', type: 'heading2', text: 'Project tracker' },
+        {
+          id: 'nb19', type: 'database', view: 'table',
+          properties: [
+            { id: 'title', name: 'Title', type: 'text' },
+            { id: 'status', name: 'Status', type: 'select', options: ['Not started', 'In progress', 'Done'] },
+            { id: 'tag', name: 'Tag', type: 'text' },
+            { id: 'date', name: 'Date', type: 'date' },
+            { id: 'endDate', name: 'End date', type: 'date' },
+          ],
+          items: [
+            { id: 'di1', title: 'Design review', status: 'In progress', tag: 'Design', date: '2026-03-18', endDate: '2026-03-20' },
+            { id: 'di2', title: 'Ship EMS meter dashboard', status: 'Done', tag: 'Engineering', date: '2026-03-10', endDate: '2026-03-15' },
+            { id: 'di3', title: 'Write onboarding docs', status: 'Not started', tag: 'Docs', date: '2026-03-25', endDate: '' },
+            { id: 'di4', title: 'QA pass on Notion app', status: 'In progress', tag: 'QA', date: '2026-03-20', endDate: '2026-03-24' },
+            { id: 'di5', title: 'Plan Q2 roadmap', status: 'Not started', tag: 'Planning', date: '2026-04-02', endDate: '' },
+            { id: 'di6', title: 'Customer demo prep', status: 'Done', tag: 'Sales', date: '2026-03-12', endDate: '2026-03-13' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'np2', title: 'Meeting notes', icon: '📝', createdDate: '2025-11-02 09:00:00', updatedDate: '2025-11-02 09:00:00',
+      blocks: [
+        { id: 'nb13', type: 'heading', text: 'Weekly sync' },
+        { id: 'nb14', type: 'bullet', text: 'Reviewed EMS meter rollout' },
+        { id: 'nb15', type: 'bullet', text: 'Discussed dashboard widget requests' },
+        { id: 'nb16', type: 'callout', text: 'Action item: follow up with the EMS team by Friday.' },
+        { id: 'nb17', type: 'text', text: 'Next sync scheduled for next Friday.' },
+      ],
+    },
   ],
 }
 
@@ -1020,6 +1076,162 @@ const Store = {
   removeEmsEnergyData(ids) {
     const store = loadData()
     store.emsEnergyData = store.emsEnergyData.filter((e) => !ids.includes(e.id))
+    saveData(store)
+  },
+
+  // ---------------------------------------------------- Notion (built-in app)
+  addNotionPage(data) {
+    const store = loadData()
+    const record = { id: uid('np'), title: (data && data.title) || 'Untitled', icon: (data && data.icon) || '📄', blocks: [], createdDate: nowStamp(), updatedDate: nowStamp() }
+    store.notionPages.push(record)
+    saveData(store)
+    return record
+  },
+  updateNotionPage(id, data) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === id)
+    if (page) {
+      Object.assign(page, data)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  removeNotionPage(id) {
+    const store = loadData()
+    store.notionPages = store.notionPages.filter((p) => p.id !== id)
+    saveData(store)
+  },
+  addNotionBlock(pageId, block) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    if (page) {
+      page.blocks.push(Object.assign({ id: uid('nb') }, block))
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  insertNotionBlockAfter(pageId, afterBlockId, block) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    if (page) {
+      const idx = page.blocks.findIndex((b) => b.id === afterBlockId)
+      const newBlock = Object.assign({ id: uid('nb') }, block)
+      if (idx > -1) page.blocks.splice(idx + 1, 0, newBlock)
+      else page.blocks.push(newBlock)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  updateNotionBlock(pageId, blockId, patch) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    const block = page && page.blocks.find((b) => b.id === blockId)
+    if (block) {
+      Object.assign(block, patch)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  removeNotionBlock(pageId, blockId) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    if (page) {
+      page.blocks = page.blocks.filter((b) => b.id !== blockId)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  moveNotionBlock(pageId, blockId, direction) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    if (page) {
+      const idx = page.blocks.findIndex((b) => b.id === blockId)
+      const swapWith = direction === 'up' ? idx - 1 : idx + 1
+      if (idx > -1 && swapWith >= 0 && swapWith < page.blocks.length) {
+        const tmp = page.blocks[idx]
+        page.blocks[idx] = page.blocks[swapWith]
+        page.blocks[swapWith] = tmp
+        page.updatedDate = nowStamp()
+      }
+    }
+    saveData(store)
+  },
+  reorderNotionBlocks(pageId, orderedBlockIds) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    if (page) {
+      const byId = new Map(page.blocks.map((b) => [b.id, b]))
+      page.blocks = orderedBlockIds.map((id) => byId.get(id)).filter(Boolean)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  addNotionDatabaseItem(pageId, blockId, item) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    const block = page && page.blocks.find((b) => b.id === blockId)
+    if (block) {
+      block.items = block.items || []
+      block.items.push(Object.assign({ id: uid('di') }, item))
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  updateNotionDatabaseItem(pageId, blockId, itemId, patch) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    const block = page && page.blocks.find((b) => b.id === blockId)
+    const item = block && block.items && block.items.find((i) => i.id === itemId)
+    if (item) {
+      Object.assign(item, patch)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  removeNotionDatabaseItem(pageId, blockId, itemId) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    const block = page && page.blocks.find((b) => b.id === blockId)
+    if (block) {
+      block.items = (block.items || []).filter((i) => i.id !== itemId)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  addNotionDatabaseProperty(pageId, blockId, property) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    const block = page && page.blocks.find((b) => b.id === blockId)
+    if (block) {
+      block.properties = block.properties || []
+      block.properties.push(Object.assign({ id: uid('prop') }, property))
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  updateNotionDatabaseProperty(pageId, blockId, propertyId, patch) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    const block = page && page.blocks.find((b) => b.id === blockId)
+    const property = block && (block.properties || []).find((p) => p.id === propertyId)
+    if (property) {
+      Object.assign(property, patch)
+      page.updatedDate = nowStamp()
+    }
+    saveData(store)
+  },
+  removeNotionDatabaseProperty(pageId, blockId, propertyId) {
+    const store = loadData()
+    const page = store.notionPages.find((p) => p.id === pageId)
+    const block = page && page.blocks.find((b) => b.id === blockId)
+    // The title property is required — every database keeps exactly one,
+    // same as Notion's own "Name" column, since Table/Board/List/etc. all
+    // fall back to it wherever an item has no other identifying label.
+    if (block && propertyId !== 'title') {
+      block.properties = (block.properties || []).filter((p) => p.id !== propertyId)
+      ;(block.items || []).forEach((item) => { delete item[propertyId] })
+      page.updatedDate = nowStamp()
+    }
     saveData(store)
   },
 }
