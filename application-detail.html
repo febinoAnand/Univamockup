@@ -311,6 +311,260 @@
       color: var(--accent-strong-text);
     }
 
+    /* ----------------------------------------------------------------- CMS
+       Machine management table reuses the EMS row-action/table styles above;
+       the Dashboard tab is a bespoke crane-fleet overview built from the
+       same detail-card/status-pill components used everywhere else on this
+       page, plus its own accent-bordered quick-stat cards below (matching
+       the Key Metrics cards on the per-machine dashboard page). */
+    .cms-quickstat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .cms-quickstat-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      padding: 1rem 1.1rem;
+      border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--cms-stat-accent, var(--border));
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cms-quickstat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .cms-quickstat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--cms-stat-icon-bg, var(--surface-alt));
+      color: var(--cms-stat-accent, var(--text-secondary));
+      flex-shrink: 0;
+    }
+    .cms-quickstat-value {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .cms-quickstat-value small {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      margin-left: 0.25rem;
+    }
+    .cms-quickstat-label {
+      margin: 0.3rem 0 0;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-subtle);
+    }
+    .cms-oee-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .cms-oee-item {
+      position: relative;
+      text-align: center;
+      padding-top: 0.25rem;
+    }
+    .cms-oee-item + .cms-oee-item::before {
+      content: '';
+      position: absolute;
+      left: -0.5rem;
+      top: 12%;
+      bottom: 28%;
+      width: 1px;
+      background: var(--border);
+    }
+    .cms-oee-item h4 {
+      margin: 0.5rem 0 0.15rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .cms-oee-item p {
+      margin: 0;
+      font-size: 0.7rem;
+      color: var(--text-faint);
+    }
+    .cms-state-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin: 0 0 1.25rem;
+    }
+    .cms-filter-chip {
+      padding: 0.5rem 1.15rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    }
+    .cms-filter-chip:hover {
+      background: var(--surface-alt);
+      transform: translateY(-1px);
+    }
+    .cms-filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.3);
+    }
+    .cms-filter-chip[data-cms-state-filter='working'].active {
+      background: #16a34a;
+      border-color: #16a34a;
+    }
+    .cms-filter-chip[data-cms-state-filter='idle'].active {
+      background: #d97706;
+      border-color: #d97706;
+    }
+    .cms-filter-chip[data-cms-state-filter='off'].active {
+      background: #57534e;
+      border-color: #57534e;
+    }
+    .cms-filter-chip[data-cms-state-filter='overload'].active {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+    .cms-filter-chip[data-cms-state-filter='errors'].active {
+      background: #7e22ce;
+      border-color: #7e22ce;
+    }
+    .cms-crane-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.1rem;
+    }
+    .cms-crane-card {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cms-crane-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--cms-card-accent, var(--accent));
+    }
+    .cms-crane-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+    .cms-crane-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cms-crane-card-header h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      flex: 1;
+    }
+    .cms-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+    }
+    .cms-status-dot-working {
+      background: #16a34a;
+      color: #16a34a;
+    }
+    .cms-status-dot-idle {
+      background: #d97706;
+      color: #d97706;
+    }
+    .cms-status-dot-off,
+    .cms-status-dot-overload {
+      background: #dc2626;
+      color: #dc2626;
+    }
+    .cms-status-dot-errors {
+      background: #7e22ce;
+      color: #7e22ce;
+    }
+    .cms-crane-id-badge {
+      display: inline-flex;
+      margin-top: 0.4rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 6px;
+      background: var(--surface-alt);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--text-secondary);
+    }
+    .cms-load-strip {
+      margin-top: 0.9rem;
+    }
+    .cms-load-strip-track {
+      height: 6px;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      overflow: hidden;
+    }
+    .cms-load-strip-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .cms-load-strip-label {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-faint);
+    }
+    .cms-crane-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-faint);
+    }
+    .cms-details-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-weight: 700;
+      color: var(--accent-strong-text);
+      font-size: 0.75rem;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .cms-crane-card:hover .cms-details-link {
+      background: var(--accent);
+      color: #fff;
+    }
+
     /* ------------------------------------------------------------- Notion
        A lightweight page-workspace: a sidebar of pages plus a block editor
        (heading/text/to-do/bullet/divider) for the selected page. Sits inside
@@ -1628,6 +1882,42 @@
     </div>
   </div>
 
+  <!-- CMS: Add/edit machine -->
+  <div class="modal-overlay" id="cms-machine-modal">
+    <div class="modal-card" style="max-width:680px;">
+      <div class="modal-header">
+        <h2 id="cms-machine-modal-title">Add Machine</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('cms-machine-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="cms-machine-form">
+          <div class="modal-field-grid">
+            <div class="modal-field"><label for="cms-machine-id">Machine ID*</label><input id="cms-machine-id" type="text" placeholder="Enter Machine ID" required /></div>
+            <div class="modal-field"><label for="cms-machine-device-id">Device ID</label><input id="cms-machine-device-id" type="text" placeholder="Enter Device ID" /></div>
+            <div class="modal-field"><label for="cms-machine-name">Machine Name*</label><input id="cms-machine-name" type="text" placeholder="Enter Machine Name" required /></div>
+            <div class="modal-field"><label for="cms-machine-manufacturer">Manufacturer</label><input id="cms-machine-manufacturer" type="text" placeholder="Enter Manufacturer" /></div>
+            <div class="modal-field"><label for="cms-machine-model">Model</label><input id="cms-machine-model" type="text" placeholder="Enter Model" /></div>
+            <div class="modal-field"><label for="cms-machine-line">Line</label><input id="cms-machine-line" type="text" placeholder="Enter Line" /></div>
+            <div class="modal-field"><label for="cms-machine-max-capacity">Max Capacity (kg)</label><input id="cms-machine-max-capacity" type="number" step="any" placeholder="Enter Max Capacity" /></div>
+            <div class="modal-field"><label for="cms-machine-safe-working-load">Safe Working Load (kg)</label><input id="cms-machine-safe-working-load" type="number" step="any" placeholder="Enter Safe Working Load" /></div>
+            <div class="modal-field"><label for="cms-machine-max-hoist-height">Max Hoist Height (m)</label><input id="cms-machine-max-hoist-height" type="number" step="any" placeholder="Enter Max Hoist Height" /></div>
+            <div class="modal-field"><label for="cms-machine-hoist-load-power">Hoist Load Power (kW)</label><input id="cms-machine-hoist-load-power" type="number" step="any" placeholder="Enter Hoist Load Power" /></div>
+            <div class="modal-field"><label for="cms-machine-ct-load-power">CT Load Power (kW)</label><input id="cms-machine-ct-load-power" type="number" step="any" placeholder="Enter CT Load Power" /></div>
+            <div class="modal-field"><label for="cms-machine-lt-load-power">LT Load Power (kW)</label><input id="cms-machine-lt-load-power" type="number" step="any" placeholder="Enter LT Load Power" /></div>
+            <div class="modal-field"><label for="cms-machine-warning-threshold">Warning Threshold (%)</label><input id="cms-machine-warning-threshold" type="number" step="any" placeholder="Enter Warning Threshold" /></div>
+            <div class="modal-field"><label for="cms-machine-upper-threshold">Upper Threshold (%)</label><input id="cms-machine-upper-threshold" type="number" step="any" placeholder="Enter Upper Threshold" /></div>
+            <div class="modal-field"><label for="cms-machine-crane-speed">Crane Speed (m/min)</label><input id="cms-machine-crane-speed" type="number" step="any" placeholder="Enter Crane Speed" /></div>
+            <div class="modal-field"><label for="cms-machine-energy-cost">Energy Cost (per kWh)</label><input id="cms-machine-energy-cost" type="number" step="any" placeholder="Enter Energy Cost" /></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('cms-machine-modal')">Cancel</button>
+        <button type="submit" form="cms-machine-form" class="modal-button primary" id="cms-machine-save-btn">Add Machine</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notion: edit a database item (opened from Board/List/Calendar/Timeline/Gallery) -->
   <div class="modal-overlay" id="notion-db-item-modal">
     <div class="modal-card">
@@ -1717,6 +2007,7 @@
     const initialHashParts = window.location.hash.slice(1).split(':')
     let applicationId = initialHashParts[0]
     let pendingEmsTab = initialHashParts[1] || null
+    let pendingCmsTab = initialHashParts[1] || null
 
     function getApp() {
       return Store.get().applications.find((a) => a.id === applicationId)
@@ -1745,6 +2036,7 @@
       const hashParts = window.location.hash.slice(1).split(':')
       applicationId = hashParts[0]
       if (hashParts[1] && EMS_TABS.some((t) => t.key === hashParts[1])) emsActiveTab = hashParts[1]
+      if (hashParts[1] && CMS_TABS.some((t) => t.key === hashParts[1])) cmsActiveTab = hashParts[1]
       const app = getApp()
       Layout.setBreadcrumbs(breadcrumbsForApp(app))
       Layout.setActive(app ? `application-${app.id}` : 'applications')
@@ -4131,6 +4423,402 @@
       renderPage()
     })
 
+    // ----------------------------------------------------------------- CMS
+    const CMS_TABS = [
+      { key: 'dashboard', label: 'Dashboard' },
+      { key: 'machine', label: 'Machine' },
+    ]
+    const CMS_PER_PAGE = 10
+    const CMS_MACHINE_FIELD_IDS = {
+      machineId: 'cms-machine-id',
+      deviceId: 'cms-machine-device-id',
+      name: 'cms-machine-name',
+      manufacturer: 'cms-machine-manufacturer',
+      model: 'cms-machine-model',
+      line: 'cms-machine-line',
+      maxCapacity: 'cms-machine-max-capacity',
+      safeWorkingLoad: 'cms-machine-safe-working-load',
+      maxHoistHeight: 'cms-machine-max-hoist-height',
+      hoistLoadPower: 'cms-machine-hoist-load-power',
+      ctLoadPower: 'cms-machine-ct-load-power',
+      ltLoadPower: 'cms-machine-lt-load-power',
+      warningThreshold: 'cms-machine-warning-threshold',
+      upperThreshold: 'cms-machine-upper-threshold',
+      craneSpeed: 'cms-machine-crane-speed',
+      energyCost: 'cms-machine-energy-cost',
+    }
+    const CMS_MACHINE_NUMERIC_FIELDS = ['maxCapacity', 'safeWorkingLoad', 'maxHoistHeight', 'hoistLoadPower', 'ctLoadPower', 'ltLoadPower', 'warningThreshold', 'upperThreshold', 'craneSpeed', 'energyCost']
+
+    let cmsActiveTab = CMS_TABS.some((t) => t.key === pendingCmsTab) ? pendingCmsTab : 'dashboard'
+    let cmsMachineSearch = ''
+    let cmsMachinePage = 1
+
+    function cmsPaginationHtml(page, totalPages) {
+      const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+      return `
+        <div class="pagination">
+          <button type="button" class="page-btn" data-cms-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>Previous</button>
+          ${pages.map((p) => `<button type="button" class="page-btn${p === page ? ' active' : ''}" data-cms-page="${p}">${p}</button>`).join('')}
+          <button type="button" class="page-btn" data-cms-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''}>Next</button>
+        </div>`
+    }
+
+    function cmsMachineStatusPill(machine) {
+      return `<span class="status-pill status-${machine.connected ? 'active' : 'offline'}">${machine.connected ? 'Online' : 'Offline'}</span>`
+    }
+
+    function cmsEnergyIcon() {
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    }
+    function cmsCostIcon() {
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 8h4a2 2 0 1 1 0 4H9m0-4v9m0-5h5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    }
+    function cmsActiveIcon() {
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    }
+    function cmsIdleIcon() {
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>'
+    }
+
+    // ------------------------------------------------------- CMS: machine
+    function renderCmsMachinePanel() {
+      const term = cmsMachineSearch.trim().toLowerCase()
+      const all = Store.get().cmsMachines
+      const filtered = term
+        ? all.filter((m) => m.name.toLowerCase().includes(term) || m.machineId.toLowerCase().includes(term) || (m.line || '').toLowerCase().includes(term))
+        : all
+      const { pageRows, totalPages, page } = emsPaginate(filtered, cmsMachinePage, CMS_PER_PAGE)
+      cmsMachinePage = page
+      const rowsHtml =
+        pageRows.length === 0
+          ? '<tr><td colspan="9" class="empty-table-note">No machines match your search.</td></tr>'
+          : pageRows
+              .map(
+                (m, i) => `
+        <tr>
+          <td>${(page - 1) * CMS_PER_PAGE + i + 1}</td>
+          <td>${m.machineId}</td>
+          <td>${m.deviceId || '—'}</td>
+          <td>${m.name}</td>
+          <td>${m.manufacturer || '—'}</td>
+          <td>${m.model || '—'}</td>
+          <td>${m.line || '—'}</td>
+          <td>${cmsMachineStatusPill(m)}</td>
+          <td>
+            <button type="button" class="ems-row-action-btn" data-cms-machine-edit="${m.id}" aria-label="Edit machine">${emsEditIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-cms-machine-delete="${m.id}" aria-label="Delete machine">${emsDeleteIcon()}</button>
+            <button type="button" class="ems-row-action-btn" data-cms-machine-view="${m.id}" aria-label="Open machine dashboard">${emsViewIcon()}</button>
+          </td>
+        </tr>`,
+              )
+              .join('')
+      return `
+        <div class="detail-toolbar-row">
+          <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="cms-machine-search" placeholder="Search machines" value="${cmsMachineSearch}" /></div>
+          <div class="detail-toolbar-actions">
+            <button type="button" class="solid-action-button" id="cms-machine-add-btn">${emsAddIcon()}Add</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>S.No</th><th>Machine ID</th><th>Device ID</th><th>Name</th><th>Manufacturer</th><th>Model</th><th>Line</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        ${cmsPaginationHtml(page, totalPages)}`
+    }
+
+    function cmsOpenMachineAdd() {
+      document.getElementById('cms-machine-modal-title').textContent = 'Add Machine'
+      document.getElementById('cms-machine-save-btn').textContent = 'Add Machine'
+      document.getElementById('cms-machine-form').dataset.editingId = ''
+      Object.values(CMS_MACHINE_FIELD_IDS).forEach((id) => {
+        document.getElementById(id).value = ''
+      })
+      UI.openModal('cms-machine-modal')
+    }
+
+    function cmsOpenMachineEdit(id) {
+      const machine = Store.get().cmsMachines.find((m) => m.id === id)
+      if (!machine) return
+      document.getElementById('cms-machine-modal-title').textContent = 'Edit Machine'
+      document.getElementById('cms-machine-save-btn').textContent = 'Save changes'
+      document.getElementById('cms-machine-form').dataset.editingId = id
+      Object.entries(CMS_MACHINE_FIELD_IDS).forEach(([field, elId]) => {
+        document.getElementById(elId).value = machine[field] ?? ''
+      })
+      UI.openModal('cms-machine-modal')
+    }
+
+    function wireCmsMachinePanel() {
+      document.getElementById('cms-machine-search').addEventListener('input', (event) => {
+        cmsMachineSearch = event.target.value
+        cmsMachinePage = 1
+        renderPage()
+      })
+      document.getElementById('cms-machine-add-btn').addEventListener('click', cmsOpenMachineAdd)
+      document.querySelectorAll('[data-cms-machine-edit]').forEach((btn) => btn.addEventListener('click', () => cmsOpenMachineEdit(btn.getAttribute('data-cms-machine-edit'))))
+      document.querySelectorAll('[data-cms-machine-delete]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-cms-machine-delete')
+          const machine = Store.get().cmsMachines.find((m) => m.id === id)
+          UI.confirm({
+            message: `Delete "${machine ? machine.name : 'this machine'}"? This can't be undone.`,
+            onConfirm: () => {
+              Store.removeCmsMachine(id)
+              UI.toast('Machine deleted successfully!')
+              renderPage()
+            },
+          })
+        }),
+      )
+      document.querySelectorAll('[data-cms-machine-view]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          window.location.href = 'cms-machine-dashboard.html#' + btn.getAttribute('data-cms-machine-view')
+        }),
+      )
+      document.querySelectorAll('[data-cms-page]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          cmsMachinePage = Number(btn.getAttribute('data-cms-page'))
+          renderPage()
+        }),
+      )
+    }
+
+    // ----------------------------------------------------- CMS: dashboard
+    // A bespoke crane-fleet overview (quick stats, OEE-style gauges, a
+    // state filter, and per-crane cards) — built from this project's own
+    // detail-card/status-pill/count-tile components, not a copy of any
+    // reference screenshot's color scheme.
+    let cmsDashboardStateFilter = 'all'
+    const CMS_STATE_FILTERS = [
+      { key: 'all', label: 'All Cranes' },
+      { key: 'working', label: 'Working' },
+      { key: 'idle', label: 'Idle' },
+      { key: 'off', label: 'Off' },
+      { key: 'overload', label: 'Overload' },
+      { key: 'errors', label: 'Errors' },
+    ]
+    const cmsOeeChartInstances = {}
+
+    function cmsMachineState(machine) {
+      if (!machine.connected) return 'off'
+      if ((machine.alerts || []).length > 0) return 'errors'
+      const pct = machine.maxCapacity ? (machine.currentLoad / machine.maxCapacity) * 100 : 0
+      if (pct >= (machine.upperThreshold || 95)) return 'overload'
+      if ((machine.currentLoad || 0) > 0 || (machine.power || 0) > 0) return 'working'
+      return 'idle'
+    }
+
+    function cmsStatePill(state) {
+      const variant = state === 'working' ? 'active' : state === 'idle' ? 'maintenance' : 'suspended'
+      return `<span class="status-pill status-${variant}">${state.toUpperCase()}</span>`
+    }
+
+    const CMS_STATE_COLORS = { working: '#16a34a', idle: '#d97706', off: '#dc2626', overload: '#dc2626', errors: '#7e22ce' }
+
+    function renderCmsDashboardPanel() {
+      const all = Store.get().cmsMachines
+      const withState = all.map((m) => ({ machine: m, state: cmsMachineState(m) }))
+      const activeCount = withState.filter((s) => s.state === 'working').length
+      const idleCount = withState.filter((s) => s.state === 'idle').length
+      const connectedCount = all.filter((m) => m.connected).length
+      const todayEnergy = all.reduce((sum, m) => sum + (m.power || 0), 0)
+      const todayCost = all.reduce((sum, m) => sum + (m.power || 0) * (m.energyCost || 0), 0)
+      const availability = all.length ? (connectedCount / all.length) * 100 : 0
+      const productivity = connectedCount ? (activeCount / connectedCount) * 100 : 0
+      const oee = (availability / 100) * (productivity / 100) * 100
+
+      const filtered = cmsDashboardStateFilter === 'all' ? withState : withState.filter((s) => s.state === cmsDashboardStateFilter)
+
+      return `
+        <div class="detail-overview-row">
+          <div class="detail-card detail-overview-card">
+            <h2><span class="section-icon">${iconSvg('report')}</span>Quick Stats<a href="#" id="cms-refresh-btn" style="margin-left:auto;font-size:0.78rem;font-weight:700;text-decoration:none;">Refresh</a></h2>
+            <div class="cms-quickstat-grid">
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#7c3aed;--cms-stat-icon-bg:#ede9fe;">
+                <span class="cms-quickstat-icon">${cmsEnergyIcon()}</span>
+                <span><p class="cms-quickstat-value">${todayEnergy.toFixed(1)}<small>kWh</small></p><p class="cms-quickstat-label">Today's Energy</p></span>
+              </div>
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#0284c7;--cms-stat-icon-bg:#e0f2fe;">
+                <span class="cms-quickstat-icon">${cmsCostIcon()}</span>
+                <span><p class="cms-quickstat-value">${todayCost.toFixed(1)}<small>Rs</small></p><p class="cms-quickstat-label">Today's Cost</p></span>
+              </div>
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#16a34a;--cms-stat-icon-bg:#dcfce7;">
+                <span class="cms-quickstat-icon">${cmsActiveIcon()}</span>
+                <span><p class="cms-quickstat-value">${activeCount}<small>/ ${all.length}</small></p><p class="cms-quickstat-label">Active Cranes</p></span>
+              </div>
+              <div class="cms-quickstat-card" style="--cms-stat-accent:#d97706;--cms-stat-icon-bg:#fef3c7;">
+                <span class="cms-quickstat-icon">${cmsIdleIcon()}</span>
+                <span><p class="cms-quickstat-value">${idleCount}<small>/ ${all.length}</small></p><p class="cms-quickstat-label">Idle Cranes</p></span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-card detail-overview-stats">
+            <h2><span class="section-icon">${iconSvg('dashboard')}</span>Overall Equipment Effectiveness</h2>
+            <div class="cms-oee-grid">
+              <div class="cms-oee-item">
+                <div id="cms-oee-chart"></div>
+                <h4 style="color:#4f46e5;">OEE</h4>
+                <p>Overall equipment effectiveness</p>
+              </div>
+              <div class="cms-oee-item">
+                <div id="cms-availability-chart"></div>
+                <h4 style="color:#0ea5e9;">Availability</h4>
+                <p>Uptime vs planned production</p>
+              </div>
+              <div class="cms-oee-item">
+                <div id="cms-productivity-chart"></div>
+                <h4 style="color:#2563eb;">Productivity</h4>
+                <p>Speed vs ideal cycle time</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cms-state-filter-row">
+          ${CMS_STATE_FILTERS.map((f) => `<button type="button" class="cms-filter-chip${cmsDashboardStateFilter === f.key ? ' active' : ''}" data-cms-state-filter="${f.key}">${f.label}</button>`).join('')}
+        </div>
+
+        <div class="cms-crane-grid">
+          ${
+            filtered.length === 0
+              ? '<p class="empty-table-note">No cranes match this filter.</p>'
+              : filtered
+                  .map(
+                    ({ machine: m, state }) => `
+          <div class="detail-card cms-crane-card" data-cms-crane-id="${m.id}" role="button" tabindex="0" style="--cms-card-accent:${CMS_STATE_COLORS[state]};">
+            <div class="cms-crane-card-header">
+              <span class="cms-status-dot cms-status-dot-${state}"></span>
+              <h3>${m.name}</h3>
+              ${cmsStatePill(state)}
+            </div>
+            <span class="cms-crane-id-badge">ID: ${m.machineId}</span>
+            <div class="cms-load-strip">
+              <div class="cms-load-strip-track"><div class="cms-load-strip-fill" style="width:${cmsLoadPct(m)}%;background:${CMS_STATE_COLORS[state]};"></div></div>
+              <div class="cms-load-strip-label"><span>${m.currentLoad} kg load</span><span>${m.maxCapacity} kg cap.</span></div>
+            </div>
+            <div class="detail-meta-grid" style="margin-top:0.85rem;">
+              <div class="detail-meta-item"><p class="label">Power</p><p class="value no-transform">${m.power} kW</p></div>
+              <div class="detail-meta-item"><p class="label">Current Operation</p><p class="value">${m.currentOperation || '—'}</p></div>
+            </div>
+            <div class="cms-crane-card-footer">
+              <span>${m.lastUpdated || '—'}</span>
+              <span class="cms-details-link">Details &rarr;</span>
+            </div>
+          </div>`,
+                  )
+                  .join('')
+          }
+        </div>`
+    }
+
+    function cmsLoadPct(machine) {
+      return machine.maxCapacity ? Math.max(0, Math.min(100, (machine.currentLoad / machine.maxCapacity) * 100)) : 0
+    }
+
+    function cmsRenderOeeGauge(elId, pct, color) {
+      if (cmsOeeChartInstances[elId]) {
+        cmsOeeChartInstances[elId].destroy()
+        delete cmsOeeChartInstances[elId]
+      }
+      const el = document.querySelector('#' + elId)
+      if (!el) return
+      cmsOeeChartInstances[elId] = new ApexCharts(el, {
+        chart: { type: 'radialBar', height: 170, toolbar: { show: false } },
+        series: [Math.round(pct)],
+        colors: [color],
+        // A round line cap draws a filled dot at the arc's start point even
+        // at 0% (a zero-length "round" stroke is still a circle) — floating
+        // above the track with nothing connecting it. Flat caps avoid that.
+        stroke: { lineCap: 'butt' },
+        plotOptions: {
+          radialBar: {
+            hollow: { size: '62%' },
+            track: { background: '#e7e5e4' },
+            dataLabels: { name: { show: false }, value: { show: true, fontSize: '1.15rem', fontWeight: 800, color: '#1c1917', formatter: (v) => v + '%' } },
+          },
+        },
+      })
+      cmsOeeChartInstances[elId].render()
+    }
+
+    function wireCmsDashboardPanel() {
+      const all = Store.get().cmsMachines
+      const withState = all.map((m) => ({ machine: m, state: cmsMachineState(m) }))
+      const activeCount = withState.filter((s) => s.state === 'working').length
+      const connectedCount = all.filter((m) => m.connected).length
+      const availability = all.length ? (connectedCount / all.length) * 100 : 0
+      const productivity = connectedCount ? (activeCount / connectedCount) * 100 : 0
+      const oee = (availability / 100) * (productivity / 100) * 100
+      cmsRenderOeeGauge('cms-oee-chart', oee, '#4f46e5')
+      cmsRenderOeeGauge('cms-availability-chart', availability, '#0ea5e9')
+      cmsRenderOeeGauge('cms-productivity-chart', productivity, '#2563eb')
+
+      document.getElementById('cms-refresh-btn').addEventListener('click', (event) => {
+        event.preventDefault()
+        renderPage()
+      })
+      document.querySelectorAll('[data-cms-state-filter]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          cmsDashboardStateFilter = btn.getAttribute('data-cms-state-filter')
+          renderPage()
+        }),
+      )
+      document.querySelectorAll('[data-cms-crane-id]').forEach((card) => {
+        const go = () => {
+          window.location.href = 'cms-machine-dashboard.html#' + card.getAttribute('data-cms-crane-id')
+        }
+        card.addEventListener('click', go)
+        card.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            go()
+          }
+        })
+      })
+    }
+
+    function renderCmsBody() {
+      const panel = cmsActiveTab === 'machine' ? renderCmsMachinePanel() : renderCmsDashboardPanel()
+      return `
+        <div class="detail-tabs">
+          ${CMS_TABS.map((t) => `<button type="button" class="detail-tab-button${cmsActiveTab === t.key ? ' active' : ''}" data-cms-tab="${t.key}">${t.label}</button>`).join('')}
+        </div>
+        ${cmsActiveTab === 'machine' ? `<div class="detail-card">${panel}</div>` : panel}`
+    }
+
+    function wireCmsBody() {
+      document.querySelectorAll('[data-cms-tab]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          cmsActiveTab = btn.getAttribute('data-cms-tab')
+          renderPage()
+        }),
+      )
+      if (cmsActiveTab === 'machine') wireCmsMachinePanel()
+      else wireCmsDashboardPanel()
+    }
+
+    document.getElementById('cms-machine-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const data = {}
+      Object.entries(CMS_MACHINE_FIELD_IDS).forEach(([field, elId]) => {
+        const raw = document.getElementById(elId).value
+        data[field] = CMS_MACHINE_NUMERIC_FIELDS.includes(field) ? (raw === '' ? 0 : Number(raw)) : raw.trim()
+      })
+      if (!data.name || !data.machineId) return
+      const editingId = this.dataset.editingId
+      if (editingId) {
+        Store.updateCmsMachine(editingId, data)
+        UI.toast('Machine updated successfully!')
+      } else {
+        Store.addCmsMachine(data)
+        UI.toast('Machine added successfully!')
+      }
+      UI.closeModal('cms-machine-modal')
+      renderPage()
+    })
+
     function renderPage() {
       const app = getApp()
       const root = document.getElementById('app-detail-root')
@@ -4147,7 +4835,8 @@
       const isPms = app.name === 'PMS'
       const isEms = app.name === 'EMS'
       const isNotion = app.name === 'Notion'
-      const isCustomDashboard = !isPms && !isEms && !isNotion && Boolean(app.hasCustomDashboard)
+      const isCms = app.name === 'CMS'
+      const isCustomDashboard = !isPms && !isEms && !isNotion && !isCms && Boolean(app.hasCustomDashboard)
       const data = Store.get()
       const devices = (app.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
       const assets = (app.assetIds || []).map((id) => data.assets.find((a) => a.id === id)).filter(Boolean)
@@ -4167,7 +4856,7 @@
           </div>
         </div>
 
-        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : isNotion ? renderNotionBody() : isCustomDashboard ? renderCustomDashboardBody() : renderGenericBody(app, devices, assets)}`
+        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : isNotion ? renderNotionBody() : isCms ? renderCmsBody() : isCustomDashboard ? renderCustomDashboardBody() : renderGenericBody(app, devices, assets)}`
 
       document.getElementById('toggle-status-btn').addEventListener('click', () => {
         Store.toggleApplicationStatus(app.id)
@@ -4179,6 +4868,7 @@
       if (isPms) wirePmsBody()
       else if (isEms) wireEmsBody()
       else if (isNotion) wireNotionBody()
+      else if (isCms) wireCmsBody()
       else if (isCustomDashboard) wireCustomDashboardBody(app)
       else wireGenericBody()
       // The palette FAB lives outside #app-detail-root (see the modal/FAB

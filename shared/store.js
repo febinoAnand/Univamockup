@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v21'
+const STORAGE_KEY = 'univa-html-demo-v22'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -110,6 +110,7 @@ const DEFAULT_DATA = {
     { id: 'app0', name: 'PMS', description: 'Built-in system application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'dashboard', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_ems', name: 'EMS', description: 'Built-in energy management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_notion', name: 'Notion', description: 'Built-in page workspace available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    { id: 'app_cms', name: 'CMS', description: 'Built-in crane management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'device', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], groupNames: ['Vehicles'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
     { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], groupNames: ['HVAC units'], metadata: [], icon: 'users', createdDate: '2025-12-19 14:02:00' },
     { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], groupNames: [], metadata: [], icon: 'cloud-ota', createdDate: '2026-01-08 11:47:00' },
@@ -312,6 +313,41 @@ const DEFAULT_DATA = {
         { id: 'nb16', type: 'callout', text: 'Action item: follow up with the EMS team by Friday.' },
         { id: 'nb17', type: 'text', text: 'Next sync scheduled for next Friday.' },
       ],
+    },
+  ],
+
+  // -------------------------------------------------- CMS (built-in app)
+  cmsMachines: [
+    {
+      id: 'cm1', machineId: 'CRANE-04', deviceId: '13', name: 'Crane-04', manufacturer: 'INNOSPACE', model: '0.3.10', line: 'Line 4',
+      maxCapacity: 10000, safeWorkingLoad: 9000, maxHoistHeight: 24, hoistLoadPower: 45, ctLoadPower: 15, ltLoadPower: 22,
+      warningThreshold: 80, upperThreshold: 95, craneSpeed: 30, energyCost: 8.5,
+      status: 'offline', currentOperation: 'Emergency Stop', currentLoad: 0, power: 0, connected: false,
+      lastUpdated: '2026-03-18 14:22:00', cumulativeHours: 4820, nonWorkingTime: 62, dutyCycle: 38,
+      motors: {
+        ct: { status: 'stopped', power: 0 },
+        lt: { status: 'stopped', power: 0 },
+        hoist: { status: 'stopped', power: 0 },
+      },
+      alerts: [
+        { id: 'cma1', severity: 'critical', message: 'Stale data — no telemetry received', createdDate: '2026-03-18 14:20:00' },
+        { id: 'cma2', severity: 'critical', message: 'Stale data — no telemetry received', createdDate: '2026-03-18 13:55:00' },
+        { id: 'cma3', severity: 'warning', message: 'Stale data — connection retry failed', createdDate: '2026-03-18 13:30:00' },
+        { id: 'cma4', severity: 'warning', message: 'Stale data — connection retry failed', createdDate: '2026-03-18 13:05:00' },
+      ],
+    },
+    {
+      id: 'cm2', machineId: 'CRANE-03', deviceId: '15', name: 'Crane-03', manufacturer: 'INNOSPACE', model: '0.3.10', line: 'Line 1',
+      maxCapacity: 100, safeWorkingLoad: 90, maxHoistHeight: 12, hoistLoadPower: 5, ctLoadPower: 2, ltLoadPower: 3,
+      warningThreshold: 80, upperThreshold: 95, craneSpeed: 20, energyCost: 8.5,
+      status: 'offline', currentOperation: 'Hoist Up', currentLoad: 0, power: 0, connected: false,
+      lastUpdated: '2026-03-18 14:10:00', cumulativeHours: 2140, nonWorkingTime: 28, dutyCycle: 54,
+      motors: {
+        ct: { status: 'stopped', power: 0 },
+        lt: { status: 'stopped', power: 0 },
+        hoist: { status: 'stopped', power: 0 },
+      },
+      alerts: [],
     },
   ],
 }
@@ -1232,6 +1268,52 @@ const Store = {
       ;(block.items || []).forEach((item) => { delete item[propertyId] })
       page.updatedDate = nowStamp()
     }
+    saveData(store)
+  },
+
+  // ------------------------------------------------------ CMS (built-in)
+  addCmsMachine(data) {
+    const store = loadData()
+    const record = {
+      id: uid('cm'), machineId: data.machineId, deviceId: data.deviceId, name: data.name,
+      manufacturer: data.manufacturer, model: data.model, line: data.line,
+      maxCapacity: Number(data.maxCapacity) || 0, safeWorkingLoad: Number(data.safeWorkingLoad) || 0,
+      maxHoistHeight: Number(data.maxHoistHeight) || 0, hoistLoadPower: Number(data.hoistLoadPower) || 0,
+      ctLoadPower: Number(data.ctLoadPower) || 0, ltLoadPower: Number(data.ltLoadPower) || 0,
+      warningThreshold: Number(data.warningThreshold) || 0, upperThreshold: Number(data.upperThreshold) || 0,
+      craneSpeed: Number(data.craneSpeed) || 0, energyCost: Number(data.energyCost) || 0,
+      status: 'offline', currentOperation: 'Idle', currentLoad: 0, power: 0, connected: false,
+      lastUpdated: nowStamp(), cumulativeHours: 0, nonWorkingTime: 0, dutyCycle: 0,
+      motors: {
+        ct: { status: 'stopped', power: 0 },
+        lt: { status: 'stopped', power: 0 },
+        hoist: { status: 'stopped', power: 0 },
+      },
+      alerts: [],
+    }
+    store.cmsMachines.push(record)
+    saveData(store)
+    return record
+  },
+  updateCmsMachine(id, data) {
+    const store = loadData()
+    const machine = store.cmsMachines.find((m) => m.id === id)
+    if (machine) {
+      Object.assign(machine, {
+        machineId: data.machineId, deviceId: data.deviceId, name: data.name,
+        manufacturer: data.manufacturer, model: data.model, line: data.line,
+        maxCapacity: Number(data.maxCapacity) || 0, safeWorkingLoad: Number(data.safeWorkingLoad) || 0,
+        maxHoistHeight: Number(data.maxHoistHeight) || 0, hoistLoadPower: Number(data.hoistLoadPower) || 0,
+        ctLoadPower: Number(data.ctLoadPower) || 0, ltLoadPower: Number(data.ltLoadPower) || 0,
+        warningThreshold: Number(data.warningThreshold) || 0, upperThreshold: Number(data.upperThreshold) || 0,
+        craneSpeed: Number(data.craneSpeed) || 0, energyCost: Number(data.energyCost) || 0,
+      })
+    }
+    saveData(store)
+  },
+  removeCmsMachine(id) {
+    const store = loadData()
+    store.cmsMachines = store.cmsMachines.filter((m) => m.id !== id)
     saveData(store)
   },
 }

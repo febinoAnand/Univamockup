@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/dashboard.css" />
+  <title>Machine dashboard — Univa</title>
+  <style>
+    /* Same "detail card" visual language as the CMS/EMS/PMS tabs on
+       application-detail.html, reproduced here since this page renders
+       standalone (each .html page is its own JS runtime in this project,
+       so shared layout comes from shared/app.css but page-specific card
+       styling is kept local, matching every other *-detail.html page). */
+    .detail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .detail-card h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin: 0 0 1.1rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .section-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: var(--accent-soft);
+      color: var(--accent-strong-text);
+      flex-shrink: 0;
+    }
+    .not-found-block {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-subtle);
+    }
+
+    /* -------------------------------------------------------- back button */
+    .cms-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: inherit;
+      color: var(--text-secondary);
+      cursor: pointer;
+      margin-bottom: 1.25rem;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cms-back-btn:hover {
+      background: var(--surface-alt);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* --------------------------------------------------------- hero header */
+    .cms-header-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .cms-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .cms-header-title-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .cms-header-left h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .cms-header-subtitle {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--text-subtle);
+    }
+    .cms-status-badge {
+      display: inline-flex;
+      padding: 0.4rem 1.1rem;
+      border-radius: 999px;
+      background: var(--cms-badge-color, var(--accent));
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--cms-badge-color, var(--accent)) 16%, transparent);
+    }
+    .cms-header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .cms-last-updated {
+      font-size: 0.8rem;
+      color: var(--text-faint);
+      white-space: nowrap;
+    }
+
+    /* --------------------------------------------------- Operating States */
+    .cms-panel-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .cms-panel-header-row h2 {
+      margin: 0;
+      padding: 0;
+      border: none;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cms-date-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .cms-date-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    .cms-date-nav-btn:hover:not(:disabled) {
+      background: var(--surface-alt);
+    }
+    .cms-date-nav-btn:disabled {
+      color: var(--text-faint);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    .cms-date-nav input[type='date'] {
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-family: inherit;
+      color: var(--text-secondary);
+      background: var(--surface);
+    }
+    .cms-timeline-track {
+      position: relative;
+      display: flex;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--surface-alt);
+      /* No overflow:hidden here — a hover tooltip needs to pop up above a
+         segment without being clipped (same gotcha as the Notion database's
+         floating panels earlier). Rounded corners come from the first/last
+         segment instead. */
+    }
+    .cms-timeline-block {
+      position: relative;
+      height: 100%;
+      cursor: default;
+    }
+    .cms-timeline-block:first-child {
+      border-radius: 8px 0 0 8px;
+    }
+    .cms-timeline-block:last-child {
+      border-radius: 0 8px 8px 0;
+    }
+    .cms-timeline-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 128px;
+      padding: 0.5rem 0.65rem;
+      background: #1c1917;
+      color: #f5f5f4;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      line-height: 1.5;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.12s ease;
+      z-index: 5;
+    }
+    .cms-timeline-block:hover .cms-timeline-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+    .cms-timeline-tooltip-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 700;
+    }
+    .cms-timeline-tooltip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cms-timeline-tooltip-range {
+      margin-top: 0.2rem;
+      color: #a8a29e;
+    }
+    .cms-timeline-now {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: var(--text);
+      transform: translateX(-1px);
+    }
+    .cms-timeline-now-marker {
+      position: absolute;
+      top: -13px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 7px solid var(--text);
+      transform: translateX(-6px);
+    }
+    .cms-timeline-axis {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.68rem;
+      color: var(--text-faint);
+    }
+    .cms-timeline-legend {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      margin-top: 1rem;
+      padding-top: 0.9rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .cms-timeline-legend i {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      margin-right: 0.4rem;
+    }
+    .cms-timeline-total {
+      margin-left: auto;
+      color: var(--text-faint);
+      font-weight: 700;
+    }
+
+    /* ------------------------------------------------------- main 2-col layout */
+    .cms-main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .cms-main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .cms-section-title {
+      margin: 0 0 0.9rem;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cms-metric-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .cms-metric-card {
+      padding: 1rem 1.1rem;
+      border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--cms-metric-accent, var(--border));
+      box-shadow: var(--shadow-sm);
+    }
+    .cms-metric-card .label {
+      margin: 0 0 0.55rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .cms-metric-card .value {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .cms-metric-card .value small {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      margin-left: 0.2rem;
+    }
+    .cms-metric-card .tag {
+      display: inline-flex;
+      margin-top: 0.6rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 6px;
+      background: var(--surface-alt);
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .cms-metric-highlight {
+      box-shadow: 0 0 0 2px var(--cms-metric-accent, var(--border));
+    }
+    .cms-metric-value-box {
+      display: inline-flex;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      background: var(--cms-metric-accent, var(--accent));
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* --------------------------------------------------------- side column */
+    .cms-side-col .detail-card:last-child {
+      margin-bottom: 0;
+    }
+    .cms-empty-state {
+      padding: 1.5rem 0.5rem;
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.85rem;
+    }
+    .cms-alert-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 0.35rem;
+      border-radius: 999px;
+      background: #dc2626;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      margin-left: auto;
+    }
+    .cms-alert-list,
+    .cms-activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .cms-alert-row,
+    .cms-activity-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+    .cms-alert-dot,
+    .cms-activity-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 0.4rem;
+      flex-shrink: 0;
+    }
+    .cms-alert-message,
+    .cms-activity-text {
+      flex: 1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .cms-alert-time,
+    .cms-activity-time {
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      white-space: nowrap;
+    }
+
+    /* ------------------------------------------------------------- motors */
+    .cms-motor-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cms-motor-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .cms-motor-row:first-child {
+      padding-top: 0;
+    }
+    .cms-motor-row-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cms-motor-row-header .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cms-motor-row-header h4 {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cms-motor-row-status {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cms-motor-bar-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      overflow: hidden;
+    }
+    .cms-motor-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+    .cms-motor-bar-caption {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent-strong-text);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div id="cms-machine-root"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.49.1/apexcharts.min.js"></script>
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script>
+    const machineId = window.location.hash.slice(1)
+    const machine = (Store.get().cmsMachines || []).find((m) => m.id === machineId)
+
+    document.title = (machine ? machine.name : 'Machine') + ' dashboard — Univa'
+
+    Layout.mount({
+      active: 'application-app_cms',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'CMS', href: 'application-detail.html#app_cms' },
+        { label: 'Machine', href: 'application-detail.html#app_cms:machine' },
+        { label: machine ? machine.name : 'Machine' },
+      ],
+    })
+
+    function hashString(value) {
+      let hash = 0x811c9dc5
+      for (let i = 0; i < value.length; i++) {
+        hash ^= value.charCodeAt(i)
+        hash = Math.imul(hash, 0x01000193)
+      }
+      return hash >>> 0
+    }
+    function mulberry32(seed) {
+      let t = seed
+      return function random() {
+        t |= 0
+        t = (t + 0x6d2b79f5) | 0
+        let r = Math.imul(t ^ (t >>> 15), 1 | t)
+        r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r
+        return ((r ^ (r >>> 14)) >>> 0) / 4294967296
+      }
+    }
+    function seededSeries(seedKey, baseline, amplitude, points) {
+      return Array.from({ length: points }, (_, i) => {
+        const rng = mulberry32(hashString(seedKey + ':' + i))
+        const trend = Math.sin(i / 3) * amplitude
+        const noise = (rng() - 0.5) * amplitude * 0.4
+        return Number(Math.max(0, baseline + trend + noise).toFixed(1))
+      })
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, '0')
+    }
+    function formatHMS(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds))
+      const h = Math.floor(s / 3600)
+      const m = Math.floor((s % 3600) / 60)
+      const sec = s % 60
+      return `${pad2(h)}:${pad2(m)}:${pad2(sec)}`
+    }
+    function motorAccent(status) {
+      return status === 'running' ? '#16a34a' : '#a8a29e'
+    }
+    function severityDotColor(severity) {
+      return severity === 'critical' ? '#dc2626' : '#d97706'
+    }
+
+    // Same state/color mapping as the CMS Dashboard tab on
+    // application-detail.html — kept in sync since this page is its own
+    // standalone JS runtime and can't import from there.
+    const CMS_STATE_COLORS = { working: '#16a34a', idle: '#d97706', off: '#dc2626', overload: '#dc2626', errors: '#7e22ce' }
+    function cmsMachineState(m) {
+      if (!m.connected) return 'off'
+      if ((m.alerts || []).length > 0) return 'errors'
+      const pct = m.maxCapacity ? (m.currentLoad / m.maxCapacity) * 100 : 0
+      if (pct >= (m.upperThreshold || 95)) return 'overload'
+      if ((m.currentLoad || 0) > 0 || (m.power || 0) > 0) return 'working'
+      return 'idle'
+    }
+
+    function goBack() {
+      window.location.href = 'application-detail.html#app_cms:dashboard'
+    }
+
+    const TIMELINE_STATE_COLORS = { working: '#16a34a', idle: '#d97706', off: '#78716c', overload: '#dc2626' }
+    const TIMELINE_STATE_LABELS = { working: 'Working', idle: 'Idle', off: 'Stop', overload: 'Overload' }
+    let cmsSelectedDate = localDateIso(new Date())
+    const cmsChartInstances = {}
+
+    function renderChart(elId, options) {
+      if (cmsChartInstances[elId]) {
+        cmsChartInstances[elId].destroy()
+        delete cmsChartInstances[elId]
+      }
+      const el = document.querySelector('#' + elId)
+      if (!el) return
+      cmsChartInstances[elId] = new ApexCharts(el, options)
+      cmsChartInstances[elId].render()
+    }
+
+    // Deterministic per (machine, day) — same date always reproduces the
+    // same pattern instead of reshuffling on every re-render, mirroring the
+    // seededSeries() approach used for the charts above.
+    function generateDayTimeline(machine, dateIso) {
+      const rng = mulberry32(hashString(machine.id + ':' + dateIso))
+      const segments = []
+      let t = 0
+      while (t < 1440) {
+        const dur = Math.min(1440 - t, 20 + Math.floor(rng() * 160))
+        const r = rng()
+        let state
+        if (!machine.connected) {
+          state = r < 0.8 ? 'off' : r < 0.94 ? 'idle' : 'working'
+        } else {
+          state = r < 0.5 ? 'working' : r < 0.8 ? 'idle' : r < 0.93 ? 'off' : 'overload'
+        }
+        segments.push({ startMin: t, endMin: t + dur, state })
+        t += dur
+      }
+      return segments
+    }
+
+    function formatDurationShort(totalSeconds) {
+      const s = Math.round(totalSeconds)
+      if (s < 60) return s + 's'
+      const h = Math.floor(s / 3600)
+      const m = Math.floor((s % 3600) / 60)
+      return h > 0 ? `${h}h ${m}m` : `${m}m`
+    }
+
+    function minutesToClock(min) {
+      return pad2(Math.floor(min / 60) % 24) + ':' + pad2(min % 60)
+    }
+
+    // "YYYY-MM-DD" from LOCAL calendar date components — not
+    // date.toISOString().slice(0,10), which is UTC and silently shifts by a
+    // day for any non-zero timezone offset once you round-trip it through a
+    // local-time Date (new Date(iso+'T00:00:00') parses as local time, but
+    // toISOString() prints UTC — mixing the two is what caused prev/next to
+    // drift by a day).
+    function localDateIso(date) {
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+    }
+    // Pure calendar-day arithmetic done entirely in UTC so it never touches
+    // the local timezone offset at all.
+    function shiftDateIso(iso, days) {
+      const [y, m, d] = iso.split('-').map(Number)
+      const dt = new Date(Date.UTC(y, m - 1, d))
+      dt.setUTCDate(dt.getUTCDate() + days)
+      return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`
+    }
+
+    function renderMachineDashboard() {
+      const root = document.getElementById('cms-machine-root')
+      if (!machine) {
+        root.innerHTML = `
+          <button type="button" class="cms-back-btn" onclick="goBack()">&larr; Dashboard</button>
+          <div class="not-found-block">
+            <h2>Machine not found</h2>
+            <p>It may have been deleted.</p>
+          </div>`
+        return
+      }
+
+      const motors = machine.motors || { ct: {}, lt: {}, hoist: {} }
+      const alerts = machine.alerts || []
+      const hourLabels = Array.from({ length: 12 }, (_, i) => `${11 - i}h ago`).reverse()
+      const loadSeries = seededSeries('cms-load-' + machine.id, machine.currentLoad || machine.maxCapacity * 0.3, (machine.maxCapacity || 100) * 0.12, 12)
+      const powerSeries = seededSeries('cms-power-' + machine.id, machine.power || machine.hoistLoadPower * 0.4 || 5, (machine.hoistLoadPower || 10) * 0.2, 12)
+      const state = cmsMachineState(machine)
+      const stateColor = CMS_STATE_COLORS[state]
+
+      // "Today so far" figures, since this mockup has no real historical
+      // event log — deterministic, derived from the machine's own stored
+      // duty cycle rather than fabricated per-render.
+      const now = new Date()
+      const elapsedSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+      const elapsedPct = (elapsedSeconds / 86400) * 100
+      const workingFraction = machine.connected ? (machine.dutyCycle || 0) / 100 : 0
+      const workingSeconds = elapsedSeconds * workingFraction
+      const nonWorkingSeconds = elapsedSeconds - workingSeconds
+      const dutyCycleToday = Math.round(workingFraction * 100)
+      const todayIso = localDateIso(now)
+      const hourTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24].map((h) => (h === 24 ? '00:00' : pad2(h) + ':00'))
+
+      const isToday = cmsSelectedDate === todayIso
+      const timelineSegments = generateDayTimeline(machine, cmsSelectedDate)
+      const timelineTotals = { working: 0, idle: 0, off: 0, overload: 0 }
+      timelineSegments.forEach((seg) => {
+        timelineTotals[seg.state] += (seg.endMin - seg.startMin) * 60
+      })
+
+      root.innerHTML = `
+        <button type="button" class="cms-back-btn" onclick="goBack()">&larr; Dashboard</button>
+
+        <div class="detail-card cms-header-card">
+          <div class="cms-header-left">
+            <div class="cms-header-title-row">
+              <h1>${machine.name}</h1>
+              <span class="cms-status-badge" style="--cms-badge-color:${stateColor};">${(machine.currentOperation || state).toUpperCase()}</span>
+            </div>
+            <p class="cms-header-subtitle">${machine.machineId} · ${machine.line || '—'} · ${machine.manufacturer || '—'} ${machine.model || ''}</p>
+          </div>
+          <div class="cms-header-right">
+            <span class="status-pill status-${machine.connected ? 'active' : 'offline'}">● ${machine.connected ? 'Connected' : 'Disconnected'}</span>
+            <span class="cms-last-updated">Last updated: ${machine.lastUpdated || '—'}</span>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="cms-panel-header-row">
+            <h2>Operating States</h2>
+            <div class="cms-date-nav">
+              <button type="button" class="cms-date-nav-btn" id="cms-date-prev" aria-label="Previous day">&larr;</button>
+              <input type="date" id="cms-date-input" value="${cmsSelectedDate}" max="${todayIso}" />
+              <button type="button" class="cms-date-nav-btn" id="cms-date-next" aria-label="Next day" ${isToday ? 'disabled' : ''}>&rarr;</button>
+            </div>
+          </div>
+          <div class="cms-timeline-track">
+            ${timelineSegments
+              .map(
+                (seg) => `
+            <div class="cms-timeline-block" style="flex:0 0 ${((seg.endMin - seg.startMin) / 1440) * 100}%;background:${TIMELINE_STATE_COLORS[seg.state]};">
+              <div class="cms-timeline-tooltip">
+                <div class="cms-timeline-tooltip-status"><span class="cms-timeline-tooltip-dot" style="background:${TIMELINE_STATE_COLORS[seg.state]};"></span>${TIMELINE_STATE_LABELS[seg.state]}</div>
+                <div class="cms-timeline-tooltip-range">${minutesToClock(seg.startMin)} – ${minutesToClock(seg.endMin)}</div>
+              </div>
+            </div>`,
+              )
+              .join('')}
+            ${isToday ? `<div class="cms-timeline-now" style="left:${elapsedPct}%;"></div><div class="cms-timeline-now-marker" style="left:${elapsedPct}%;"></div>` : ''}
+          </div>
+          <div class="cms-timeline-axis">${hourTicks.map((t) => `<span>${t}</span>`).join('')}</div>
+          <div class="cms-timeline-legend">
+            <span><i style="background:#16a34a;"></i>Working: ${formatDurationShort(timelineTotals.working)}</span>
+            <span><i style="background:#d97706;"></i>Idle: ${formatDurationShort(timelineTotals.idle)}</span>
+            <span><i style="background:#78716c;"></i>Stop: ${formatDurationShort(timelineTotals.off)}</span>
+            <span><i style="background:#dc2626;"></i>Overload: ${formatDurationShort(timelineTotals.overload)}</span>
+            <span class="cms-timeline-total">Total: 24h 00m</span>
+          </div>
+        </div>
+
+        <div class="cms-main-grid">
+          <div class="cms-main-col">
+            <h2 class="cms-section-title">Key Metrics</h2>
+            <div class="cms-metric-row">
+              <div class="cms-metric-card" style="--cms-metric-accent:#2563eb;">
+                <p class="label">Cumulative Hours</p>
+                <p class="value">${formatHMS(workingSeconds)}<small>hrs</small></p>
+                <span class="tag">Today</span>
+              </div>
+              <div class="cms-metric-card cms-metric-highlight" style="--cms-metric-accent:${stateColor};">
+                <p class="label">Live Status</p>
+                <span class="cms-metric-value-box">${(machine.currentOperation || state).toUpperCase()}</span>
+                <div><span class="tag">Live</span></div>
+              </div>
+              <div class="cms-metric-card" style="--cms-metric-accent:#dc2626;">
+                <p class="label">Non-Working Time</p>
+                <p class="value">${formatHMS(nonWorkingSeconds)}<small>hrs</small></p>
+                <span class="tag">Today</span>
+              </div>
+              <div class="cms-metric-card" style="--cms-metric-accent:#d97706;">
+                <p class="label">Duty Cycle</p>
+                <p class="value">${dutyCycleToday}<small>%</small></p>
+                <span class="tag">Efficiency</span>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <h2><span class="section-icon">${iconSvg('asset')}</span>Load vs Capacity</h2>
+              <div id="cms-load-chart"></div>
+            </div>
+
+            <div class="detail-card">
+              <h2><span class="section-icon">${iconSvg('report')}</span>Energy vs Load</h2>
+              <div id="cms-energy-chart"></div>
+            </div>
+          </div>
+
+          <div class="cms-side-col">
+            <div class="detail-card">
+              <h2><span class="section-icon">${iconSvg('dashboard')}</span>Date Range</h2>
+              <select id="cms-date-range-select">
+                <option value="today" ${isToday ? 'selected' : ''}>Today</option>
+                <option value="yesterday" ${!isToday ? 'selected' : ''}>Yesterday</option>
+              </select>
+            </div>
+
+            <div class="detail-card">
+              <h2><span class="section-icon">${iconSvg('report')}</span>Activity Timeline</h2>
+              ${
+                timelineSegments.length < 2
+                  ? `<div class="cms-empty-state">No recent activity</div>`
+                  : `<div class="cms-activity-list">
+                      ${timelineSegments
+                        .slice(1)
+                        .slice(-8)
+                        .reverse()
+                        .map(
+                          (seg) => `
+                      <div class="cms-activity-row">
+                        <span class="cms-activity-dot" style="background:${TIMELINE_STATE_COLORS[seg.state]};"></span>
+                        <span class="cms-activity-text">Switched to ${TIMELINE_STATE_LABELS[seg.state]}</span>
+                        <span class="cms-activity-time">${minutesToClock(seg.startMin)}</span>
+                      </div>`,
+                        )
+                        .join('')}
+                    </div>`
+              }
+            </div>
+
+            <div class="detail-card">
+              <h2><span class="section-icon">${iconSvg('device')}</span>Motor Status</h2>
+              ${['ct', 'lt', 'hoist']
+                .map((key) => {
+                  const motor = motors[key] || {}
+                  const label = key === 'ct' ? 'CT' : key === 'lt' ? 'LT' : 'Hoist'
+                  const accent = motorAccent(motor.status)
+                  const rated = machine[key + 'LoadPower'] || 0
+                  const fillPct = rated ? Math.min(100, ((motor.power || 0) / rated) * 100) : 0
+                  return `
+              <div class="cms-motor-row">
+                <div class="cms-motor-row-header"><span class="dot" style="background:${accent};"></span><h4>${label}</h4></div>
+                <p class="cms-motor-row-status" style="color:${accent};">${motor.status === 'running' ? 'Running' : 'Stopped'}</p>
+                <div class="cms-motor-bar-track"><div class="cms-motor-bar-fill" style="width:${fillPct}%;background:${accent};"></div></div>
+                <span class="cms-motor-bar-caption">${motor.status === 'running' ? motor.power + ' kW' : 'N/A'}</span>
+              </div>`
+                })
+                .join('')}
+            </div>
+
+            <div class="detail-card">
+              <h2><span class="section-icon">${iconSvg('shield')}</span>Active Alerts${alerts.length ? `<span class="cms-alert-count">${alerts.length}</span>` : ''}</h2>
+              ${
+                alerts.length === 0
+                  ? `<div class="cms-empty-state">No active alerts</div>`
+                  : `<div class="cms-alert-list">
+                      ${alerts
+                        .map(
+                          (a) => `
+                      <div class="cms-alert-row">
+                        <span class="cms-alert-dot" style="background:${severityDotColor(a.severity)};"></span>
+                        <span class="cms-alert-message">${a.message}</span>
+                        <span class="cms-alert-time">${a.createdDate}</span>
+                      </div>`,
+                        )
+                        .join('')}
+                    </div>`
+              }
+            </div>
+          </div>
+        </div>`
+
+      renderChart('cms-load-chart', {
+        chart: { type: 'line', height: 260, toolbar: { show: false } },
+        series: [
+          { name: 'Load (kg)', data: loadSeries },
+          { name: 'Capacity (kg)', data: loadSeries.map(() => machine.maxCapacity) },
+        ],
+        xaxis: { categories: hourLabels },
+        yaxis: { title: { text: 'Load (kg)' } },
+        colors: ['#2563eb', '#dc2626'],
+        stroke: { curve: 'smooth', width: [2.5, 2], dashArray: [0, 6] },
+        markers: { size: 0 },
+        dataLabels: { enabled: false },
+        legend: { position: 'top', fontWeight: 600 },
+        grid: { borderColor: '#e7e5e4', strokeDashArray: 4 },
+      })
+
+      renderChart('cms-energy-chart', {
+        chart: { type: 'area', height: 280, toolbar: { show: false } },
+        series: [
+          { name: 'Load (kg)', data: loadSeries },
+          { name: 'Power (kW)', data: powerSeries },
+        ],
+        xaxis: { categories: hourLabels },
+        yaxis: [
+          { title: { text: 'Load (kg)' } },
+          { opposite: true, title: { text: 'Power (kW)' } },
+        ],
+        colors: ['#4f46e5', '#16a34a'],
+        stroke: { curve: 'smooth', width: 2.5 },
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
+        markers: { size: 3, strokeWidth: 0 },
+        dataLabels: { enabled: false },
+        legend: { position: 'top', fontWeight: 600 },
+        grid: { borderColor: '#e7e5e4', strokeDashArray: 4 },
+      })
+
+      document.getElementById('cms-date-prev').addEventListener('click', () => {
+        cmsSelectedDate = shiftDateIso(cmsSelectedDate, -1)
+        renderMachineDashboard()
+      })
+      document.getElementById('cms-date-next').addEventListener('click', () => {
+        const nextIso = shiftDateIso(cmsSelectedDate, 1)
+        cmsSelectedDate = nextIso > todayIso ? todayIso : nextIso
+        renderMachineDashboard()
+      })
+      document.getElementById('cms-date-input').addEventListener('change', (event) => {
+        if (!event.target.value) return
+        cmsSelectedDate = event.target.value > todayIso ? todayIso : event.target.value
+        renderMachineDashboard()
+      })
+      document.getElementById('cms-date-range-select').addEventListener('change', (event) => {
+        if (event.target.value === 'yesterday') {
+          cmsSelectedDate = shiftDateIso(todayIso, -1)
+        } else {
+          cmsSelectedDate = todayIso
+        }
+        renderMachineDashboard()
+      })
+    }
+
+    renderMachineDashboard()
+  </script>
+</body>
+</html>
