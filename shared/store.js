@@ -526,7 +526,7 @@ const Store = {
   // -------------------------------------------------------- applications
   addApplication(data) {
     const store = loadData()
-    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? [], icon: data.icon || 'app', createdDate: nowStamp() }
+    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? [], icon: data.icon || 'app', hasCustomDashboard: Boolean(data.hasCustomDashboard), createdDate: nowStamp() }
     store.applications.push(record)
     saveData(store)
     return record
@@ -534,7 +534,7 @@ const Store = {
   updateApplication(id, data) {
     const store = loadData()
     const app = store.applications.find((a) => a.id === id)
-    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? app.metadata, icon: data.icon || app.icon })
+    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? app.metadata, icon: data.icon || app.icon, hasCustomDashboard: Boolean(data.hasCustomDashboard) })
     saveData(store)
   },
   toggleApplicationStatus(id) {

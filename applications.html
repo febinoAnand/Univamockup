@@ -98,6 +98,11 @@
           </div>
 
           <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="metadata-fields"></div></div>
+
+          <div class="modal-field">
+            <label class="modal-checkbox"><input type="checkbox" id="app-custom-dashboard" /> Custom dashboard</label>
+            <p class="section-empty">Adds a "Custom dashboard" tab to this application where widgets, graphs, and gauges can be added and arranged, same as the main dashboard.</p>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -338,6 +343,7 @@
       document.getElementById('save-btn').textContent = 'Create'
       document.getElementById('app-name').value = ''
       document.getElementById('app-description').value = ''
+      document.getElementById('app-custom-dashboard').checked = false
       document.getElementById('app-devices-search').value = ''
       document.getElementById('app-assets-search').value = ''
       document.getElementById('app-groups-search').value = ''
@@ -360,6 +366,7 @@
       document.getElementById('save-btn').textContent = 'Save changes'
       document.getElementById('app-name').value = a.name
       document.getElementById('app-description').value = a.description || ''
+      document.getElementById('app-custom-dashboard').checked = Boolean(a.hasCustomDashboard)
       document.getElementById('app-devices-search').value = ''
       document.getElementById('app-assets-search').value = ''
       document.getElementById('app-groups-search').value = ''
@@ -396,16 +403,17 @@
       const name = document.getElementById('app-name').value.trim()
       if (!name) return
       const description = document.getElementById('app-description').value.trim()
+      const hasCustomDashboard = document.getElementById('app-custom-dashboard').checked
       const deviceIds = Array.from(document.querySelectorAll('#app-devices-list input:checked')).map((el) => el.getAttribute('data-device'))
       const assetIds = Array.from(document.querySelectorAll('#app-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
       const groupNames = Array.from(document.querySelectorAll('#app-groups-list input:checked')).map((el) => el.getAttribute('data-group'))
       const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
 
       if (editingId) {
-        Store.updateApplication(editingId, { name, description, deviceIds, assetIds, groupNames, metadata, icon: selectedIcon })
+        Store.updateApplication(editingId, { name, description, hasCustomDashboard, deviceIds, assetIds, groupNames, metadata, icon: selectedIcon })
         UI.toast(`"${name}" updated successfully!`)
       } else {
-        Store.addApplication({ name, description, deviceIds, assetIds, groupNames, metadata, icon: selectedIcon })
+        Store.addApplication({ name, description, hasCustomDashboard, deviceIds, assetIds, groupNames, metadata, icon: selectedIcon })
         UI.toast(`"${name}" application created successfully!`)
       }
       UI.closeModal('app-modal')

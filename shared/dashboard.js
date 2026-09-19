@@ -396,6 +396,11 @@ let DASHBOARD_METER_ID = null
 // widgets" canvas (device/asset/application detail pages) starts with no
 // widgets at all instead of the generic device fleet showcase.
 let DASHBOARD_EMPTY_DEFAULT = false
+// Set via bootDashboard({deviceIds: [...]}) — restricts the toolbar's Device
+// picker (and its auto-selected fallback) to a specific set of devices, e.g.
+// only the devices linked to the application this dashboard belongs to,
+// instead of every device in the system.
+let DASHBOARD_DEVICE_SCOPE = null
 const NEW_WIDGET_SORT_Y = 9999
 let widgetIdCounter = 0
 
@@ -515,6 +520,10 @@ function saveLayoutToStorage(list) {
 /* Plain-function port of src/modules/dashboard/widgets/dataHooks.js */
 
 function getDevices() { return Store.get().devices || [] }
+function getPickerDevices() {
+  const all = getDevices()
+  return DASHBOARD_DEVICE_SCOPE ? all.filter((d) => DASHBOARD_DEVICE_SCOPE.includes(d.id)) : all
+}
 function getAssets() { return Store.get().assets || [] }
 function getRuleEngines() { return Store.get().ruleEngines || [] }
 function getRuleEngineExecutions() { return Store.get().ruleEngineExecutions || [] }
@@ -1245,7 +1254,7 @@ function saveSelectedDevice(id) {
 function initDashboardState() {
   widgets = loadLayoutFromStorage() || getDefaultWidgets()
   selectedDeviceId = loadSelectedDevice()
-  const devices = getDevices()
+  const devices = getPickerDevices()
   if (devices.length > 0 && !devices.some((d) => d.id === selectedDeviceId)) {
     selectedDeviceId = devices[0].id
     saveSelectedDevice(selectedDeviceId)
@@ -1295,7 +1304,7 @@ function resetToDefault() {
    ============================================================ */
 
 function renderToolbar() {
-  const devices = getDevices()
+  const devices = getPickerDevices()
   const count = widgets.length
   document.getElementById('dashboard-toolbar').innerHTML = `
     <div class="dashboard-toolbar-left">
@@ -1981,6 +1990,7 @@ function bootDashboard(options) {
   if (options.title) DASHBOARD_TITLE = options.title
   DASHBOARD_METER_ID = options.meterId || null
   DASHBOARD_EMPTY_DEFAULT = Boolean(options.emptyDefault)
+  DASHBOARD_DEVICE_SCOPE = options.deviceIds || null
   initDashboardState()
   renderDashboard()
   initWidgetPalette()

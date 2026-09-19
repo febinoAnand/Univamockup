@@ -246,116 +246,12 @@
       border-bottom-color: var(--accent);
     }
 
-    /* ------------------------------------------------------- PMS tabs */
-    .pms-tabs {
-      display: flex;
-      gap: 1.5rem;
-      border-bottom: 1px solid var(--border);
-      margin: 0 0 1.25rem;
-    }
-    .pms-tab-button {
-      padding: 0.6rem 0.1rem;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text-faint);
-      cursor: pointer;
-    }
-    .pms-tab-button.active {
-      color: var(--text);
-      border-bottom-color: var(--accent);
-    }
-    .pms-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 1.25rem;
-    }
-    .pms-panel-header {
-      padding: 0.75rem 1.1rem;
-      background: var(--surface-alt);
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .pms-panel-body {
-      padding: 1rem 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-    .pms-select,
-    .pms-date-input {
-      padding: 0.5rem 0.7rem;
-      border: 1px solid var(--border-strong);
-      border-radius: 6px;
-      font-size: 0.85rem;
-      color: var(--text);
-      background: var(--surface);
-    }
-    .pms-search-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 37px;
-      height: 37px;
-      border: none;
-      border-radius: 6px;
-      background: #2a7ab5;
-      color: #ffffff;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .pms-search-btn:hover {
-      background: #236a9e;
-    }
-    .pms-table-wrap {
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .pms-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    .pms-table th {
-      position: sticky;
-      top: 0;
-      padding: 0.65rem 1.1rem;
-      background: #2a7ab5;
-      color: #ffffff;
-      font-weight: 700;
-      text-align: left;
-      white-space: nowrap;
-    }
-    .pms-table td {
-      padding: 0.6rem 1.1rem;
-      color: var(--text);
-      border-bottom: 1px solid var(--border);
-    }
-    .pms-table tbody tr:nth-child(even) {
-      background: var(--surface-alt);
-    }
-    .pms-table tr.pms-total-row td {
-      font-weight: 700;
-      color: #2a7ab5;
-      border-bottom: none;
-    }
-    .pms-table td.pms-highlight {
-      font-weight: 700;
-      color: #2a7ab5;
-    }
-
-    /* ------------------------------------------------------------- EMS
-       Reuses the page's existing .detail-tabs / .data-table / .table-scroll
-       components (same ones the generic tabs above use) — these rules only
-       cover the bits those components don't already provide. */
-    .ems-toolbar {
+    /* -------------------------------------------------- PMS / EMS
+       Both built-in applications reuse the page's existing .detail-tabs /
+       .detail-card / .data-table / .table-scroll components (same ones the
+       generic tabs above use) — these rules only cover the bits those
+       components don't already provide. */
+    .detail-toolbar-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -363,10 +259,27 @@
       flex-wrap: wrap;
       margin-bottom: 1rem;
     }
-    .ems-toolbar-actions {
+    .detail-toolbar-row:last-child {
+      margin-bottom: 0;
+    }
+    .detail-toolbar-actions,
+    .detail-toolbar-filters {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .detail-toolbar-row input,
+    .detail-toolbar-row select {
+      width: auto;
+    }
+    .total-row td {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .highlight-cell {
+      font-weight: 700;
+      color: var(--accent-strong-text);
     }
     .ems-cell-btn {
       border: none;
@@ -901,18 +814,10 @@
       { key: 'assets', label: 'Assets', icon: 'asset' },
       { key: 'groups', label: 'Groups', icon: 'group' },
       { key: 'devices', label: 'Linked devices', icon: 'device' },
-      { key: 'widgets', label: 'Custom widgets', icon: 'dashboard' },
     ]
     let genericActiveTab = 'devices'
 
     function renderGenericTabPanel(tab, app, devices, assets, groupNames, metadata) {
-      if (tab === 'widgets') {
-        return `
-          <div class="dashboard-page" style="padding:0;">
-            <div class="dashboard-toolbar" id="dashboard-toolbar"></div>
-            <div class="dashboard-canvas" id="dashboard-canvas"></div>
-          </div>`
-      }
       if (tab === 'devices') {
         return devices.length === 0
           ? '<span class="section-empty">No devices linked to this application</span>'
@@ -984,10 +889,23 @@
           renderPage()
         }),
       )
-      if (genericActiveTab === 'widgets') {
-        const app = getApp()
-        bootDashboard({ scopeId: 'app-' + app.id, title: app.name + ' — Custom widgets', emptyDefault: true })
-      }
+    }
+
+    // ------------------------------------------------- Custom dashboard apps
+    // When "Custom dashboard" is enabled in the Add/Edit application modal,
+    // the entire body of this page (below the header) is the same widget
+    // dashboard as dashboard.html — same default 40+ widget layout, device
+    // picker, and "Reset to default" — no metadata/assets/groups/devices tabs.
+    function renderCustomDashboardBody() {
+      return `
+        <div class="dashboard-page" style="padding:0;">
+          <div class="dashboard-toolbar" id="dashboard-toolbar"></div>
+          <div class="dashboard-canvas" id="dashboard-canvas"></div>
+        </div>`
+    }
+
+    function wireCustomDashboardBody(app) {
+      bootDashboard({ scopeId: 'app-' + app.id, title: app.name, deviceIds: app.deviceIds || [] })
     }
 
     // ------------------------------------------------------------- PMS
@@ -1013,23 +931,27 @@
     }
 
     function renderPmsProductionPanel() {
-      const rows = PMS_WORK_CENTERS.map((wc) => `<tr><td>${wc}</td><td>0</td><td>0</td><td>0</td><td class="pms-highlight">0</td></tr>`).join('')
+      const rows = PMS_WORK_CENTERS.map((wc) => `<tr><td>${wc}</td><td>0</td><td>0</td><td>0</td><td class="highlight-cell">0</td></tr>`).join('')
       return `
-        <div class="pms-panel">
-          <div class="pms-panel-header">Production</div>
-          <div class="pms-panel-body">
-            <input type="date" class="pms-date-input" id="pms-production-date" value="${todayIso()}" />
-            <button type="button" class="pms-search-btn" id="pms-production-search" aria-label="Search">${pmsSearchIcon()}</button>
+        <div class="detail-card">
+          <h2><span class="section-icon">${iconSvg('report')}</span>Production</h2>
+          <div class="detail-toolbar-row">
+            <div class="detail-toolbar-filters">
+              <input type="date" id="pms-production-date" value="${todayIso()}" />
+            </div>
+            <div class="detail-toolbar-actions">
+              <button type="button" class="icon-button" id="pms-production-search" aria-label="Search">${pmsSearchIcon()}</button>
+            </div>
           </div>
         </div>
-        <div class="pms-panel">
-          <div class="pms-panel-header">HSGMI</div>
-          <div class="pms-table-wrap">
-            <table class="pms-table">
+        <div class="detail-card">
+          <h2><span class="section-icon">${iconSvg('device')}</span>HSGMI</h2>
+          <div class="table-scroll">
+            <table class="data-table">
               <thead><tr><th>WORK CENTER</th><th>Shift 1</th><th>Shift 2</th><th>Shift 3</th><th>Total</th></tr></thead>
               <tbody>
                 ${rows}
-                <tr class="pms-total-row"><td>Total</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr class="total-row"><td>Total</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
               </tbody>
             </table>
           </div>
@@ -1040,14 +962,14 @@
       const shiftTables = Object.entries(PMS_SHIFT_SLOTS)
         .map(
           ([shiftName, slots]) => `
-        <div class="pms-panel">
-          <div class="pms-panel-header">${shiftName}</div>
-          <div class="pms-table-wrap">
-            <table class="pms-table">
+        <div class="detail-card">
+          <h2><span class="section-icon">${iconSvg('report')}</span>${shiftName}</h2>
+          <div class="table-scroll">
+            <table class="data-table">
               <thead><tr><th>Time</th><th>Production Count</th><th>Target Count</th><th>Differences</th></tr></thead>
               <tbody>
-                ${slots.map((slot) => `<tr><td>${slot}</td><td>0</td><td>0</td><td class="pms-highlight">0</td></tr>`).join('')}
-                <tr class="pms-total-row"><td>Total</td><td>0</td><td>0</td><td>0</td></tr>
+                ${slots.map((slot) => `<tr><td>${slot}</td><td>0</td><td>0</td><td class="highlight-cell">0</td></tr>`).join('')}
+                <tr class="total-row"><td>Total</td><td>0</td><td>0</td><td>0</td></tr>
               </tbody>
             </table>
           </div>
@@ -1056,15 +978,19 @@
         .join('')
 
       return `
-        <div class="pms-panel">
-          <div class="pms-panel-header">Shift Report</div>
-          <div class="pms-panel-body">
-            <select class="pms-select" id="pms-shift-machine">
-              <option value="">Select Machine</option>
-              ${PMS_WORK_CENTERS.map((wc) => `<option value="${wc}">${wc}</option>`).join('')}
-            </select>
-            <input type="date" class="pms-date-input" id="pms-shift-date" value="${todayIso()}" />
-            <button type="button" class="pms-search-btn" id="pms-shift-search" aria-label="Search">${pmsSearchIcon()}</button>
+        <div class="detail-card">
+          <h2><span class="section-icon">${iconSvg('report')}</span>Shift Report</h2>
+          <div class="detail-toolbar-row">
+            <div class="detail-toolbar-filters">
+              <select id="pms-shift-machine">
+                <option value="">Select Machine</option>
+                ${PMS_WORK_CENTERS.map((wc) => `<option value="${wc}">${wc}</option>`).join('')}
+              </select>
+              <input type="date" id="pms-shift-date" value="${todayIso()}" />
+            </div>
+            <div class="detail-toolbar-actions">
+              <button type="button" class="icon-button" id="pms-shift-search" aria-label="Search">${pmsSearchIcon()}</button>
+            </div>
           </div>
         </div>
         ${shiftTables}`
@@ -1072,9 +998,9 @@
 
     function renderPmsBody() {
       return `
-        <div class="pms-tabs">
-          <button type="button" class="pms-tab-button${pmsActiveTab === 'production' ? ' active' : ''}" data-pms-tab="production">Production</button>
-          <button type="button" class="pms-tab-button${pmsActiveTab === 'shift-report' ? ' active' : ''}" data-pms-tab="shift-report">Shift Report</button>
+        <div class="detail-tabs">
+          <button type="button" class="detail-tab-button${pmsActiveTab === 'production' ? ' active' : ''}" data-pms-tab="production">Production</button>
+          <button type="button" class="detail-tab-button${pmsActiveTab === 'shift-report' ? ' active' : ''}" data-pms-tab="shift-report">Shift Report</button>
         </div>
         <div id="pms-tab-content">
           ${pmsActiveTab === 'production' ? renderPmsProductionPanel() : renderPmsShiftPanel()}
@@ -1127,7 +1053,7 @@
     }
     const EMS_METER_NUMERIC_FIELDS = ['vpnMin', 'vpnMax', 'vppMin', 'vppMax', 'iMin', 'iMax', 'kwMin', 'kwMax', 'kvaMin', 'kvaMax', 'freqMin', 'freqMax']
 
-    let emsActiveTab = EMS_TABS.some((t) => t.key === pendingEmsTab) ? pendingEmsTab : 'todgrid'
+    let emsActiveTab = EMS_TABS.some((t) => t.key === pendingEmsTab) ? pendingEmsTab : 'meters'
     let emsTodPage = 1
     let emsTodSearch = ''
     let emsMeterPage = 1
@@ -1192,9 +1118,9 @@
               )
               .join('')
       return `
-        <div class="ems-toolbar">
+        <div class="detail-toolbar-row">
           <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="ems-tod-search" placeholder="Search by date" value="${emsTodSearch}" /></div>
-          <div class="ems-toolbar-actions">
+          <div class="detail-toolbar-actions">
             <button type="button" class="solid-action-button" id="ems-tod-add-btn">${emsAddIcon()}Add</button>
           </div>
         </div>
@@ -1276,9 +1202,9 @@
               .join('')
       const allOnPageSelected = pageRows.length > 0 && pageRows.every((m) => emsMeterSelected.has(m.id))
       return `
-        <div class="ems-toolbar">
+        <div class="detail-toolbar-row">
           <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="ems-meter-search" placeholder="Search meters" value="${emsMeterSearch}" /></div>
-          <div class="ems-toolbar-actions">
+          <div class="detail-toolbar-actions">
             <button type="button" class="solid-action-button danger" id="ems-meter-delete-btn" ${emsMeterSelected.size === 0 ? 'disabled' : ''}>${emsDeleteIcon()}Delete</button>
             <button type="button" class="solid-action-button" id="ems-meter-add-btn">${emsAddIcon()}Add</button>
           </div>
@@ -1386,9 +1312,9 @@
               )
               .join('')
       return `
-        <div class="ems-toolbar">
+        <div class="detail-toolbar-row">
           <div class="table-search-wrap" style="margin-bottom:0;">${emsSearchIcon()}<input type="text" id="ems-energy-search" placeholder="Search by year or month" value="${emsEnergySearch}" /></div>
-          <div class="ems-toolbar-actions">
+          <div class="detail-toolbar-actions">
             <button type="button" class="solid-action-button danger" id="ems-energy-delete-btn" ${emsEnergySelected.size === 0 ? 'disabled' : ''}>${emsDeleteIcon()}Delete</button>
             <button type="button" class="solid-action-button" id="ems-energy-add-btn">${emsAddIcon()}Add</button>
           </div>
@@ -1593,6 +1519,7 @@
 
       const isPms = app.name === 'PMS'
       const isEms = app.name === 'EMS'
+      const isCustomDashboard = !isPms && !isEms && Boolean(app.hasCustomDashboard)
       const data = Store.get()
       const devices = (app.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
       const assets = (app.assetIds || []).map((id) => data.assets.find((a) => a.id === id)).filter(Boolean)
@@ -1612,7 +1539,7 @@
           </div>
         </div>
 
-        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : renderGenericBody(app, devices, assets)}`
+        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : isCustomDashboard ? renderCustomDashboardBody() : renderGenericBody(app, devices, assets)}`
 
       document.getElementById('toggle-status-btn').addEventListener('click', () => {
         Store.toggleApplicationStatus(app.id)
@@ -1623,11 +1550,12 @@
       document.getElementById('delete-app-btn')?.addEventListener('click', confirmDelete)
       if (isPms) wirePmsBody()
       else if (isEms) wireEmsBody()
+      else if (isCustomDashboard) wireCustomDashboardBody(app)
       else wireGenericBody()
       // The palette FAB lives outside #app-detail-root (see the modal/FAB
       // markup near the bottom of <body>) so it survives this rewrite —
-      // only show it for a generic app's own Custom widgets tab.
-      document.getElementById('widget-palette-fab').classList.toggle('hidden', isPms || isEms || genericActiveTab !== 'widgets')
+      // only show it for a "Custom dashboard" application's own page.
+      document.getElementById('widget-palette-fab').classList.toggle('hidden', !isCustomDashboard)
     }
 
     renderPage()
