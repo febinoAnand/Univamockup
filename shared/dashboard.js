@@ -159,6 +159,8 @@ const GAUGE_VARIANTS = [
   { id: 'digital', label: 'Digital readout' },
   { id: 'led', label: 'LED segments' },
   { id: 'badge', label: 'Badge' },
+  { id: 'thermometer', label: 'Thermometer' },
+  { id: 'zone-arc', label: 'Zone arc' },
 ]
 
 const CHART_VARIANTS = [
@@ -188,6 +190,8 @@ const METRIC_VARIANTS = [
   { id: 'label-top', label: 'Label on top' },
   { id: 'split-unit', label: 'Split unit' },
   { id: 'ring-accent', label: 'Ring accent' },
+  { id: 'sparkline-metric', label: 'Sparkline' },
+  { id: 'dual-value', label: 'Dual value' },
 ]
 
 const TABLE_VARIANTS = [
@@ -241,6 +245,10 @@ const EXTRA_VARIANTS = [
   { id: 'health-score', label: 'Health score', layout: { w: 2, h: 3, minW: 2, minH: 2 } },
   { id: 'network-status', label: 'Network status', layout: { w: 4, h: 2, minW: 3, minH: 2 } },
   { id: 'weather', label: 'Weather', layout: { w: 2, h: 2, minW: 2, minH: 2 } },
+  { id: 'countdown', label: 'Countdown timer', layout: { w: 3, h: 2, minW: 2, minH: 2 } },
+  { id: 'world-clock', label: 'World clock', layout: { w: 3, h: 2, minW: 2, minH: 2 } },
+  { id: 'calendar-mini', label: 'Mini calendar', layout: { w: 3, h: 4, minW: 2, minH: 3 } },
+  { id: 'activity-feed', label: 'Activity feed', layout: { w: 3, h: 4, minW: 2, minH: 3 } },
 ]
 
 const VARIANT_FAMILIES = {
@@ -721,6 +729,21 @@ function renderGaugeContent(config) {
     }
     case 'badge':
       return `<div class="gauge-widget gauge-badge"><span class="gauge-badge-pill" style="background:${color}1a;color:${color}">${value}${unit}</span><div class="gauge-label">${label}</div></div>`
+    case 'thermometer':
+      return `<div class="gauge-widget gauge-thermometer"><div class="thermometer-shell"><div class="thermometer-tube"><div class="thermometer-fill" style="height:${pct}%;background:${color}"></div></div><div class="thermometer-bulb" style="background:${color}"></div></div><div class="gauge-value">${value}<span class="gauge-unit">${unit}</span></div><div class="gauge-label">${label}</div></div>`
+    case 'zone-arc': {
+      const sweep = 270
+      const start = -sweep / 2
+      const zoneStops = [0, 60, 85, 100]
+      const zoneColorList = ['#16a34a', '#d97706', '#dc2626']
+      let zonesSvg = ''
+      for (let i = 0; i < 3; i++) {
+        const zStart = start + (sweep * zoneStops[i]) / 100
+        const zEnd = start + (sweep * zoneStops[i + 1]) / 100
+        zonesSvg += `<path d="${describeArc(60, 60, 46, zStart, zEnd)}" fill="none" stroke="${zoneColorList[i]}" stroke-width="9" stroke-opacity="0.32" stroke-linecap="round"/>`
+      }
+      return `<div class="gauge-widget gauge-zone-arc"><svg viewBox="0 0 120 90" class="gauge-svg">${zonesSvg}${gaugeNeedleSvg(pct, sweep)}</svg><div class="gauge-value">${value}<span class="gauge-unit">${unit}</span></div><div class="gauge-label">${label}</div></div>`
+    }
     case 'speedometer':
     default:
       return `<div class="gauge-widget gauge-speedometer">${gaugeArcSvg(pct, color, 270, 9, gaugeNeedleSvg(pct, 270))}<div class="gauge-value">${value}<span class="gauge-unit">${unit}</span></div><div class="gauge-label">${label}</div></div>`
@@ -756,6 +779,27 @@ function renderMetricContent(config) {
   if (variant === 'ring-accent') {
     const pct = clampPercent(value, settings.max || 100)
     return `<div class="metric-widget metric-ring-accent"><svg viewBox="0 0 36 36" class="metric-ring-svg"><circle cx="18" cy="18" r="15.5" fill="none" stroke="#e7e5e4" stroke-width="3"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(pct / 100) * 97.4} 97.4" transform="rotate(-90 18 18)"/></svg><div class="metric-ring-center"><span class="metric-value">${value}</span><span class="metric-unit">${unit}</span></div><div class="metric-caption">${label}</div></div>`
+  }
+  if (variant === 'sparkline-metric') {
+    const device = findDevice(config.dataSource && config.dataSource.deviceId)
+    const series = widgetSeries(device, config.dataSource && config.dataSource.metricKey, '1h')
+    const values = series.points.map((p) => p.value)
+    let sparkSvg = ''
+    if (values.length > 1) {
+      const min = Math.min.apply(null, values)
+      const max = Math.max.apply(null, values)
+      const range = max - min || 1
+      const coords = values.map((v, i) => `${(i / (values.length - 1)) * 100},${20 - ((v - min) / range) * 16 - 2}`)
+      sparkSvg = `<svg viewBox="0 0 100 20" preserveAspectRatio="none" class="metric-sparkline-svg"><polyline points="${coords.join(' ')}" fill="none" stroke="#7c3aed" stroke-width="2"/></svg>`
+    }
+    return `<div class="metric-widget metric-sparkline-metric"><div class="metric-value-row"><span class="metric-value">${value}</span><span class="metric-unit">${unit}</span></div><div class="metric-caption">${label}</div>${sparkSvg}</div>`
+  }
+  if (variant === 'dual-value') {
+    const device = findDevice(config.dataSource && config.dataSource.deviceId)
+    const series = widgetSeries(device, config.dataSource && config.dataSource.metricKey, '1h')
+    const values = series.points.map((p) => p.value)
+    const avg = values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : value
+    return `<div class="metric-widget metric-dual-value"><div class="metric-value-row"><span class="metric-value">${value}</span><span class="metric-unit">${unit}</span></div><div class="metric-dual-secondary"><span class="metric-dual-secondary-value">${avg.toFixed(1)}${unit}</span><span class="metric-dual-secondary-label">avg (1h)</span></div><div class="metric-caption">${label}</div></div>`
   }
 
   const modifier = METRIC_MODIFIER_CLASS[variant] || 'metric-big-number'
@@ -1002,6 +1046,59 @@ function renderExtraContent(config) {
         return `<div class="network-node"><span class="network-line"></span><span class="network-dot${online ? ' online' : ''}" title="${escapeHtml(d.name)} — ${online ? 'Online' : 'Offline'}"></span></div>`
       }).join('')}</div>`
     }
+    case 'countdown': {
+      const target = (config.settings && config.settings.targetDate) || ''
+      const targetLabel = (config.settings && config.settings.targetLabel) || 'Target date'
+      let unitsHtml = '<span class="countdown-placeholder">Set a target date below</span>'
+      if (target) {
+        const diff = Math.max(0, new Date(target + 'T00:00:00').getTime() - Date.now())
+        if (diff <= 0) {
+          unitsHtml = '<span class="countdown-reached">Reached</span>'
+        } else {
+          const pad2 = (n) => String(n).padStart(2, '0')
+          const days = Math.floor(diff / 86400000)
+          const hours = Math.floor((diff % 86400000) / 3600000)
+          const minutes = Math.floor((diff % 3600000) / 60000)
+          const seconds = Math.floor((diff % 60000) / 1000)
+          unitsHtml = `<div class="countdown-units">
+            <div class="countdown-unit"><span class="countdown-value">${days}</span><span class="countdown-unit-label">days</span></div>
+            <div class="countdown-unit"><span class="countdown-value">${pad2(hours)}</span><span class="countdown-unit-label">hrs</span></div>
+            <div class="countdown-unit"><span class="countdown-value">${pad2(minutes)}</span><span class="countdown-unit-label">min</span></div>
+            <div class="countdown-unit"><span class="countdown-value">${pad2(seconds)}</span><span class="countdown-unit-label">sec</span></div>
+          </div>`
+        }
+      }
+      return `<div class="extra-widget extra-countdown"><p class="countdown-caption">${escapeHtml(targetLabel)}</p>${unitsHtml}<input type="date" class="countdown-target-input" data-countdown-target value="${target}" /></div>`
+    }
+    case 'world-clock': {
+      const now = new Date()
+      const zones = [{ label: 'Local', tz: undefined }, { label: 'UTC', tz: 'UTC' }, { label: 'Tokyo', tz: 'Asia/Tokyo' }]
+      return `<div class="extra-widget extra-world-clock">${zones.map((z) => `<div class="world-clock-zone"><span class="world-clock-time">${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: z.tz })}</span><span class="world-clock-label">${z.label}</span></div>`).join('')}</div>`
+    }
+    case 'calendar-mini': {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth()
+      const today = now.getDate()
+      const firstWeekday = new Date(year, month, 1).getDay()
+      const daysInMonth = new Date(year, month + 1, 0).getDate()
+      const monthLabel = now.toLocaleDateString([], { month: 'long', year: 'numeric' })
+      let cells = ''
+      for (let i = 0; i < firstWeekday; i++) cells += '<span class="calendar-mini-cell empty"></span>'
+      for (let d = 1; d <= daysInMonth; d++) cells += `<span class="calendar-mini-cell${d === today ? ' today' : ''}">${d}</span>`
+      return `<div class="extra-widget extra-calendar-mini"><p class="calendar-mini-month">${monthLabel}</p><div class="calendar-mini-weekdays">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<span>${d}</span>`).join('')}</div><div class="calendar-mini-grid">${cells}</div></div>`
+    }
+    case 'activity-feed': {
+      const data = Store.get()
+      const items = []
+      ;(data.devices || []).forEach((d) => items.push({ date: d.createdDate, label: d.name, kind: 'Device added' }))
+      ;(data.assets || []).forEach((a) => items.push({ date: a.createdDate, label: a.name, kind: 'Asset added' }))
+      ;(data.applications || []).forEach((a) => items.push({ date: a.createdDate, label: a.name, kind: 'Application added' }))
+      items.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      const rows = items.slice(0, 6)
+      if (rows.length === 0) return '<div class="widget-empty-note">No activity yet.</div>'
+      return `<ul class="extra-activity-feed">${rows.map((r) => `<li><span class="activity-feed-kind">${escapeHtml(r.kind)}</span><span class="activity-feed-label">${escapeHtml(r.label)}</span><span class="activity-feed-date">${escapeHtml((r.date || '').slice(0, 10))}</span></li>`).join('')}</ul>`
+    }
     case 'weather':
     default: {
       const day = new Date().getDate()
@@ -1196,6 +1293,13 @@ function wireExtraWidgetEvents(bodyEl, config) {
       updateWidgetSettings(config.id, { text: note.value })
     })
   }
+  const countdownInput = bodyEl.querySelector('[data-countdown-target]')
+  if (countdownInput) {
+    countdownInput.addEventListener('change', function () {
+      updateWidgetSettings(config.id, { targetDate: countdownInput.value })
+      refreshWidgetBody(config.id)
+    })
+  }
   bodyEl.querySelectorAll('.extra-task-list li').forEach((li) => {
     li.addEventListener('click', function () {
       const taskId = li.getAttribute('data-task-id')
@@ -1228,6 +1332,8 @@ function widgetRefreshMs(config) {
         case 'leaderboard': return 10000
         case 'health-score': return 8000
         case 'network-status': return 6000
+        case 'countdown': return 1000
+        case 'world-clock': return 30000
         default: return 0
       }
     default: return 0
@@ -1909,7 +2015,7 @@ function initWidgetPalette() {
   let drillTile = null
 
   function openDrawer() { backdrop.classList.add('open'); drawer.classList.add('open') }
-  function closeDrawer() { backdrop.classList.remove('open'); drawer.classList.remove('open'); drillTile = null; renderPaletteBody() }
+  function closeDrawer() { backdrop.classList.remove('open'); drawer.classList.remove('open'); drillTile = null; renderPaletteHeader(); renderPaletteBody() }
 
   function renderPaletteHeader() {
     if (drillTile) {

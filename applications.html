@@ -236,7 +236,7 @@
       tbody.innerHTML = apps
         .map(
           (a) => `
-        <tr class="clickable-row" data-open="${a.id}">
+        <tr class="clickable-row" data-open="${a.name === 'Notion' ? 'notion.html#' + a.id : 'application-detail.html#' + a.id}">
           <td class="card-title-cell"><div class="group-name-cell"><span>${a.name}${a.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}</span>${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
           <td data-label="Devices">${(a.deviceIds || []).length}</td>
           <td data-label="Assets">${(a.assetIds || []).length}</td>
@@ -273,7 +273,7 @@
 
       document.querySelectorAll('[data-open]').forEach((row) =>
         row.addEventListener('click', () => {
-          window.location.href = 'application-detail.html#' + row.getAttribute('data-open')
+          window.location.href = row.getAttribute('data-open')
         }),
       )
       document.querySelectorAll('[data-toggle-status]').forEach((btn) =>

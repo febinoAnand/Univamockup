@@ -124,7 +124,7 @@ function renderSidebar(active) {
     if (section.dynamicChildren === 'applications') {
       const apps = (window.Store ? Store.get().applications : []) || []
       sectionChildren = sectionChildren.concat(
-        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: `application-detail.html#${a.id}` })),
+        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: a.name === 'Notion' ? `notion.html#${a.id}` : `application-detail.html#${a.id}` })),
       )
     }
     const children = sectionChildren
