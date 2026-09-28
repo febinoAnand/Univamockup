@@ -74,6 +74,23 @@ const APPLICATION_ICON_OPTIONS = [
   'package', 'list', 'tag', 'star', 'flag', 'target', 'book', 'link',
 ]
 
+// Which page an application opens on. The Custom App page workspace
+// (notion.html) is the home of the built-in Custom App and of every
+// user-created application except those built from a template. Default
+// applications (PMS, EMS, CMS) keep their own screens, and so does an
+// application built from a template (its KPIs and reports are the point of
+// the template). application-detail.html stays reachable for all of them as
+// the "Manage" page (edit, linked devices/assets, delete).
+function appUsesWorkspace(app) {
+  if (!app) return false
+  if (app.id === 'app_notion') return true
+  return !app.isDefault && !app.templateKey
+}
+
+function applicationHref(app) {
+  return `${appUsesWorkspace(app) ? 'notion.html' : 'application-detail.html'}#${app.id}`
+}
+
 function iconSvg(name) {
   const icons = {
     dashboard:
@@ -218,7 +235,7 @@ function renderSidebar(active) {
     if (section.dynamicChildren === 'applications') {
       const apps = (window.Store ? Store.get().applications : []) || []
       sectionChildren = sectionChildren.concat(
-        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: a.id === 'app_notion' ? `notion.html#${a.id}` : `application-detail.html#${a.id}` })),
+        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: applicationHref(a) })),
       )
     }
     const children = sectionChildren

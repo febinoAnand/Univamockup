@@ -18,11 +18,14 @@
        as cms-machine-dashboard.html and ems-meter-dashboard.html. Notion
        used to render inline inside application-detail.html like every other
        built-in app, but its block-editor code was ~1500 lines on its own,
-       so it gets its own page instead — see applications.html and
-       shared/layout.js's sidebar, which link straight here for the Notion
-       app. application-detail.html#app_notion still works too (falls
-       through to the generic app-record view — Edit/devices/assets/Delete
-       for the Notion application record itself live there, unchanged). */
+       so it gets its own page instead.
+
+       This page is the home of the Custom App and of every other
+       application that has no more specific screen (see appUsesWorkspace()
+       in shared/layout.js, which applications.html and the sidebar use to
+       link here) — the application id is in the URL hash and each
+       application has its own pages. application-detail.html#<id> is still
+       the "Manage" page for all of them (Edit/devices/assets/Delete). */
     .detail-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -1404,19 +1407,23 @@
   <script>
     // The application id travels in the URL hash — see device-detail.html
     // for why (a hash survives a static-file server in a way a query string
-    // used with clean-URL rewriting might not).
-    const applicationId = window.location.hash.slice(1)
+    // used with clean-URL rewriting might not). Every application that uses
+    // this page shares this one document, so a sidebar click from one to
+    // another only changes the hash and never reloads — the 'hashchange'
+    // listener at the bottom of this script is what switches applications.
+    let applicationId = window.location.hash.slice(1)
 
     function getApp() {
       return Store.get().applications.find((a) => a.id === applicationId)
     }
 
     // ---------------------------------------------------------- Notion
-    // Notion is the third built-in application: a lightweight page
-    // workspace (sidebar of searchable pages + a block editor) instead of
-    // the generic device/asset/metadata summary. Typing/checking a block
-    // never triggers a full renderPage() (it would drop input focus) —
-    // only structural changes (add/delete/move/convert/switch page) do.
+    // The page workspace (tabs of pages + a block editor) is the home of
+    // the Custom App and of every application without a more specific
+    // screen, instead of the generic device/asset/metadata summary. Each
+    // application has its own pages. Typing/checking a block never
+    // triggers a full renderPage() (it would drop input focus) — only
+    // structural changes (add/delete/move/convert/switch page) do.
     let notionActivePageId = null
     let notionFocusBlockId = null
     let notionDraggedBlockId = null
@@ -2312,7 +2319,7 @@
     }
 
     function renderNotionBody() {
-      const pages = Store.get().notionPages || []
+      const pages = Store.notionPagesFor(applicationId)
       if (!notionActivePageId || !pages.some((p) => p.id === notionActivePageId)) {
         notionActivePageId = pages.length > 0 ? pages[0].id : null
       }
@@ -2345,7 +2352,7 @@
         }),
       )
       document.getElementById('notion-new-page-btn')?.addEventListener('click', () => {
-        const page = Store.addNotionPage({ title: 'Untitled' })
+        const page = Store.addNotionPage({ title: 'Untitled', appId: applicationId })
         notionActivePageId = page.id
         renderPage()
         const title = document.getElementById('notion-title-input')
@@ -2933,6 +2940,7 @@
         return
       }
 
+      document.title = `${app.name} — Univa`
       root.innerHTML = `
         <a class="detail-back-link" href="applications.html">&larr; Back to Applications</a>
         <div class="page-header">
@@ -2957,13 +2965,28 @@
       wireNotionBody()
     }
 
-    Layout.mount({
-      active: `application-${applicationId}`,
-      breadcrumbs: [
+    function breadcrumbsForApp(app) {
+      return [
         { label: 'Home', href: 'dashboard.html' },
         { label: 'Applications', href: 'applications.html' },
-        { label: (getApp() || {}).name || 'Custom App' },
-      ],
+        { label: (app || {}).name || 'Custom App' },
+      ]
+    }
+
+    Layout.mount({
+      active: `application-${applicationId}`,
+      breadcrumbs: breadcrumbsForApp(getApp()),
+    })
+
+    // Clicking another application's sidebar entry while on this page only
+    // changes the hash (a same-document navigation, so no reload) — switch
+    // to that application's pages here.
+    window.addEventListener('hashchange', () => {
+      applicationId = window.location.hash.slice(1)
+      notionActivePageId = null
+      Layout.setBreadcrumbs(breadcrumbsForApp(getApp()))
+      Layout.setActive(`application-${applicationId}`)
+      renderPage()
     })
     renderPage()
   </script>

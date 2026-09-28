@@ -389,9 +389,11 @@ const DEFAULT_DATA = {
   ],
 
   // -------------------------------------------------- Notion (built-in app)
+  // Pages belong to one application (appId): the Custom App and every other
+  // application that opens the page workspace each get their own set.
   notionPages: [
     {
-      id: 'np1', title: 'Getting started', icon: '📄', createdDate: '2025-11-01 08:00:00', updatedDate: '2025-11-01 08:00:00',
+      id: 'np1', appId: 'app_notion', title: 'Getting started', icon: '📄', createdDate: '2025-11-01 08:00:00', updatedDate: '2025-11-01 08:00:00',
       blocks: [
         { id: 'nb1', type: 'heading', text: 'Welcome to Custom App' },
         { id: 'nb20', type: 'toc' },
@@ -434,7 +436,7 @@ const DEFAULT_DATA = {
     // Live data page bound to PMS: telemetry blocks read the device-data
     // table; manual columns / the form write PMS's own applicationRecords.
     {
-      id: 'np3', title: 'Line A shift log', icon: '📊', createdDate: '2026-02-06 08:00:00', updatedDate: '2026-02-06 08:00:00',
+      id: 'np3', appId: 'app_notion', title: 'Line A shift log', icon: '📊', createdDate: '2026-02-06 08:00:00', updatedDate: '2026-02-06 08:00:00',
       blocks: [
         { id: 'nb30', type: 'heading', text: 'Production line A — shift log' },
         { id: 'nb31', type: 'callout', text: 'Output and downtime fill in automatically from machine telemetry. Scrap, rejects, operator, and remarks are typed in and saved to the PMS application.' },
@@ -470,7 +472,7 @@ const DEFAULT_DATA = {
       ],
     },
     {
-      id: 'np2', title: 'Meeting notes', icon: '📝', createdDate: '2025-11-02 09:00:00', updatedDate: '2025-11-02 09:00:00',
+      id: 'np2', appId: 'app_notion', title: 'Meeting notes', icon: '📝', createdDate: '2025-11-02 09:00:00', updatedDate: '2025-11-02 09:00:00',
       blocks: [
         { id: 'nb13', type: 'heading', text: 'Weekly sync' },
         { id: 'nb14', type: 'bullet', text: 'Reviewed EMS meter rollout' },
@@ -875,6 +877,7 @@ const Store = {
     if (app?.isDefault) return
     store.applications = store.applications.filter((a) => a.id !== id)
     store.applicationRecords = (store.applicationRecords || []).filter((r) => r.appId !== id)
+    store.notionPages = (store.notionPages || []).filter((p) => p.appId !== id)
     saveData(store)
   },
 
@@ -1358,9 +1361,14 @@ const Store = {
   },
 
   // ---------------------------------------------------- Notion (built-in app)
+  // The pages of one application. Pages saved before pages were
+  // per-application have no appId and belong to the built-in Custom App.
+  notionPagesFor(appId) {
+    return (loadData().notionPages || []).filter((p) => (p.appId || 'app_notion') === appId)
+  },
   addNotionPage(data) {
     const store = loadData()
-    const record = { id: uid('np'), title: (data && data.title) || 'Untitled', icon: (data && data.icon) || '📄', blocks: [], createdDate: nowStamp(), updatedDate: nowStamp() }
+    const record = { id: uid('np'), appId: (data && data.appId) || 'app_notion', title: (data && data.title) || 'Untitled', icon: (data && data.icon) || '📄', blocks: [], createdDate: nowStamp(), updatedDate: nowStamp() }
     store.notionPages.push(record)
     saveData(store)
     return record

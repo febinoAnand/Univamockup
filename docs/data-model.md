@@ -140,6 +140,8 @@ Templates use manual data in KPIs with `{ agg: 'manual', manual: '<key>' }`. For
 
 Custom App pages (the built-in page workspace; `notion_pages.blocks`, JSONB) can embed four live-data blocks from `shared/notion-data-blocks.js`. Each block stores an `appId` and reads that application's bound assets.
 
+A page belongs to one application (`notion_pages.app_id`). The Custom App (`app_notion`) and every other application that has no more specific screen open this workspace, each with its own pages. Default applications (PMS, EMS, CMS) and applications built from a template keep their own screens. `appUsesWorkspace()` in `shared/layout.js` is the one rule for this. A block's `appId` is separate from the page's application: it names the template application the block reads data from.
+
 | block | reads | writes |
 |---|---|---|
 | `data-cards` | `device_data` aggregates, app manual entries | — |

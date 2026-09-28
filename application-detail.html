@@ -1192,10 +1192,11 @@
     }
 
     // ------------------------------------------------- Custom dashboard apps
-    // When "Custom dashboard" is enabled in the Add/Edit application modal,
-    // the entire body of this page (below the header) is the same widget
-    // dashboard as dashboard.html — same default 40+ widget layout, device
-    // picker, and "Reset to default" — no metadata/assets/groups/devices tabs.
+    // The Add/Edit application modal no longer offers "Custom dashboard",
+    // but an application that already has hasCustomDashboard saved still
+    // shows the same widget dashboard as dashboard.html here (below the
+    // header) — same default 40+ widget layout, device picker, and "Reset to
+    // default" — instead of the metadata/assets/groups/devices tabs.
     function renderCustomDashboardBody() {
       return `
         <div class="dashboard-page" style="padding:0;">
@@ -2118,11 +2119,12 @@
       const isTemplate = Boolean(template)
       const isEms = !isTemplate && app.name === 'EMS'
       const isCms = !isTemplate && app.name === 'CMS'
-      // Notion moved to its own standalone page (notion.html — see
-      // applications.html and shared/layout.js's sidebar, which link there
-      // directly) since its block-editor code was ~1500 lines on its own.
-      // application-detail.html#app_notion still works as a fallback and
-      // just falls through to the generic app-record view below.
+      // The Custom App and every application without a more specific
+      // screen live on their own standalone page (notion.html — see
+      // appUsesWorkspace() in shared/layout.js; the applications list and
+      // the sidebar link there directly). For those, this page is the
+      // "Manage" view (edit, linked devices/assets/groups, delete), so it
+      // falls through to the generic app-record view below.
       const isCustomDashboard = !isTemplate && !isEms && !isCms && Boolean(app.hasCustomDashboard)
       const data = Store.get()
       const devices = (app.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
