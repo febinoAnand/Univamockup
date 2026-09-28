@@ -548,10 +548,13 @@
 
 /* Widget palette */
 
+/* Stacked directly above the floating chat button (shared/chatbot.css: 56px,
+   1.5rem from the bottom-right corner) so the two never overlap. The right
+   offset lines the 52px button's centre up with the chat button's. */
 .widget-palette-fab {
   position: fixed;
-  right: 2rem;
-  bottom: 2rem;
+  right: 1.625rem;
+  bottom: 6rem;
   width: 52px;
   height: 52px;
   display: flex;
@@ -772,10 +775,13 @@
   .widget-palette-drawer {
     width: 100vw;
   }
+}
 
+/* The chat button moves closer to the corner below 480px (chatbot.css). */
+@media (max-width: 480px) {
   .widget-palette-fab {
-    right: 1.1rem;
-    bottom: 1.1rem;
+    right: 1.125rem;
+    bottom: 5.25rem;
   }
 }
 
