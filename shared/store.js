@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v25'
+const STORAGE_KEY = 'univa-html-demo-v26'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -201,8 +201,6 @@ const DEFAULT_DATA = {
     { id: 'app_notion', name: 'Custom App', description: 'Built-in page workspace for notes, logs, and live data — available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_cms', name: 'CMS', description: 'Built-in crane management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'device', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], groupNames: ['Vehicles'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
-    { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], groupNames: ['HVAC units'], metadata: [], icon: 'users', createdDate: '2025-12-19 14:02:00' },
-    { id: 'app3', name: 'Telemetry Ingest', description: 'Ingests and normalizes incoming device telemetry.', status: 'suspended', deviceIds: ['d1', 'd2', 'd3', 'd4', 'd5'], assetIds: [], groupNames: [], metadata: [], icon: 'cloud-ota', createdDate: '2026-01-08 11:47:00' },
   ],
   assets: [
     { id: 'a1', name: 'Forklift Unit 3', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'operational', location: 'North Yard', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2025-11-05 10:00:00' },
