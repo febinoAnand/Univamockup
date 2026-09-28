@@ -285,6 +285,11 @@
   color: #dc2626;
 }
 
+/* Leading checkbox column (tenant detail → Applications access list). */
+.data-table-check-col {
+  width: 2.75rem;
+}
+
 .modal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -263,8 +263,12 @@ const DEFAULT_DATA = {
     { id: 'rx3', ruleEngineName: 'High temperature alert', triggeredAt: '2026-03-18 14:03:57', triggerType: 'Telemetry received', deviceName: 'HVAC Compressor A', condition: 'temperature > 30', actionType: 'Create alarm', actionDetail: 'Critical', durationMs: 88, outcome: 'failed', failReason: 'Alarm creation failed: an active alarm of this type already exists for this device.' },
     { id: 'rx4', ruleEngineName: 'Environmental combo alert', triggeredAt: '2026-03-17 06:41:12', triggerType: 'Telemetry received', deviceName: 'Rooftop HVAC unit', condition: 'humidity > 70 OR temperature > 35', actionType: 'Send notification', actionDetail: 'Humidity or temperature out of range', durationMs: 2210, outcome: 'failed', failReason: 'Notification delivery timed out after 2s: push notification service did not respond.' },
   ],
+  // applicationIds is the system administrator's selection of which
+  // applications (by id) the tenant may view (admin-tenant-detail.html →
+  // Applications). organizationId is what the tenant's users enter on the
+  // login page, which is how a session is tied to its tenant.
   tenants: [
-    { id: 't1', title: 'Northbridge Logistics', email: 'admin@northbridge.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Enterprise', deviceCount: 128, status: 'active', createdDate: '2025-11-02 09:14:00',
+    { id: 't1', organizationId: 'NORTHBRIDGE', title: 'Northbridge Logistics', email: 'admin@northbridge.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Enterprise', deviceCount: 128, status: 'active', createdDate: '2025-11-02 09:14:00',
       users: [
         { id: 'tu1', name: 'Dana Whitfield', email: 'dana.whitfield@northbridge.com', role: 'Owner', status: 'active', createdDate: '2025-11-02 09:20:00' },
         { id: 'tu2', name: 'Omar Salim', email: 'omar.salim@northbridge.com', role: 'Admin', status: 'active', createdDate: '2025-12-01 10:05:00' },
@@ -276,11 +280,9 @@ const DEFAULT_DATA = {
       assets: [
         { id: 'tas1', name: 'Forklift Unit 3', status: 'operational', createdDate: '2025-11-05 10:00:00' },
       ],
-      applications: [
-        { id: 'ta1', name: 'Fleet Tracker', status: 'active', createdDate: '2025-11-06 08:00:00' },
-      ],
+      applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms', 'app1'],
     },
-    { id: 't2', title: 'Cradlewell Facilities', email: 'admin@cradlewell.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United Kingdom', tenantProfileName: 'Default', deviceCount: 42, status: 'active', createdDate: '2025-12-19 14:02:00',
+    { id: 't2', organizationId: 'CRADLEWELL', title: 'Cradlewell Facilities', email: 'admin@cradlewell.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United Kingdom', tenantProfileName: 'Default', deviceCount: 42, status: 'active', createdDate: '2025-12-19 14:02:00',
       users: [
         { id: 'tu3', name: 'Isla Brennan', email: 'isla.brennan@cradlewell.com', role: 'Owner', status: 'active', createdDate: '2025-12-19 14:10:00' },
       ],
@@ -290,12 +292,10 @@ const DEFAULT_DATA = {
       assets: [
         { id: 'tas2', name: 'HVAC Compressor A', status: 'operational', createdDate: '2025-12-20 09:30:00' },
       ],
-      applications: [
-        { id: 'ta2', name: 'Facilities Dashboard', status: 'active', createdDate: '2025-12-21 11:00:00' },
-      ],
+      applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms'],
     },
-    { id: 't3', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00', users: [], devices: [], assets: [], applications: [] },
-    { id: 't4', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00', users: [], devices: [], assets: [], applications: [] },
+    { id: 't3', organizationId: 'HARBORDOCK', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00', users: [], devices: [], assets: [], applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms'] },
+    { id: 't4', organizationId: 'EASTDEPOT', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00', users: [], devices: [], assets: [], applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms'] },
   ],
   tenantProfiles: [
     { id: 'tp1', name: 'Default', description: 'Default tenant profile with standard platform limits.', isDefault: true, maxDevices: 500, maxAssets: 500, maxUsers: 50, maxDashboards: 50, maxApplications: 50, createdDate: '2025-11-02 09:10:00' },
@@ -556,9 +556,64 @@ function findTenant(store, tenantId) {
   return store.tenants.find((t) => t.id === tenantId)
 }
 
+function slugId(text) {
+  return String(text || '').replace(/[^a-z0-9]/gi, '').toUpperCase()
+}
+
+// A tenant's Organization ID — what its users enter on the login page. It is
+// stored on the record; a tenant saved before that existed falls back to the
+// first label of its contact email's domain (admin@northbridge.com becomes
+// NORTHBRIDGE).
+function tenantOrganizationId(tenant) {
+  if (tenant.organizationId) return tenant.organizationId
+  const domain = String(tenant.email || '').split('@')[1] || ''
+  return slugId(domain.split('.')[0] || tenant.title || tenant.id)
+}
+
+// The ids of the applications a tenant may view. A tenant with no saved
+// selection (saved before application access existed) keeps every
+// application, as it had before.
+function tenantApplicationIds(store, tenant) {
+  return Array.isArray(tenant.applicationIds) ? tenant.applicationIds.slice() : store.applications.map((a) => a.id)
+}
+
+// The applications the signed-in session may see. A session tied to a tenant
+// (signed in with its Organization ID) only gets the applications the system
+// administrator enabled for that tenant; the plain demo login isn't tied to a
+// tenant and sees all of them.
+function applicationsVisibleToSession(data) {
+  const tenantId = data.auth && data.auth.tenantId
+  if (!tenantId) return data.applications
+  const tenant = findTenant(data, tenantId)
+  if (!tenant) return []
+  const allowed = tenantApplicationIds(data, tenant)
+  return data.applications.filter((a) => allowed.includes(a.id))
+}
+
+function newApplicationRecord(data) {
+  return { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? [], icon: data.icon || 'app', hasCustomDashboard: Boolean(data.hasCustomDashboard), createdDate: nowStamp() }
+}
+
+// A tenant can always view an application it creates itself.
+function grantApplicationToSessionTenant(store, appId) {
+  const tenant = store.auth && store.auth.tenantId ? findTenant(store, store.auth.tenantId) : null
+  if (tenant && Array.isArray(tenant.applicationIds) && !tenant.applicationIds.includes(appId)) tenant.applicationIds.push(appId)
+}
+
 const Store = {
+  // Only the applications the signed-in tenant may view (see
+  // applicationsVisibleToSession). Nothing here is written back — every
+  // mutator below re-reads with loadData() — so filtering is display-only.
   get() {
-    return loadData()
+    const data = loadData()
+    data.applications = applicationsVisibleToSession(data)
+    const tenant = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : null
+    if (tenant) {
+      data.users = (tenant.users || []).map((user) => Object.assign({}, user, {
+        groupNames: Array.isArray(user.groupNames) ? user.groupNames.slice() : [],
+      }))
+    }
+    return data
   },
 
   reset() {
@@ -566,8 +621,31 @@ const Store = {
   },
 
   // ---------------------------------------------------------------- auth
-  login(username, password) {
+  login(username, password, organizationId) {
     const key = username.trim().toLowerCase()
+    const data = loadData()
+    const org = slugId(organizationId)
+    const tenant = org ? data.tenants.find((t) => tenantOrganizationId(t).toUpperCase() === org) : null
+
+    if (tenant) {
+      const tenantUser = (tenant.users || []).find((user) => String(user.email || '').trim().toLowerCase() === key)
+      if (tenantUser) {
+        if (tenant.status !== 'active' || tenantUser.status !== 'active' || password !== '12345') {
+          return { ok: false, error: 'Invalid username or password' }
+        }
+        data.auth = {
+          loggedIn: true,
+          username: key,
+          pendingApproval: false,
+          tenantId: tenant.id,
+          tenantUserId: tenantUser.id,
+          role: tenantUser.role,
+        }
+        saveData(data)
+        return { ok: true }
+      }
+    }
+
     const account = DEMO_ACCOUNTS[key]
     if (!account || account.password !== password) {
       return { ok: false, error: 'Invalid username or password' }
@@ -575,8 +653,14 @@ const Store = {
     if (account.pendingApproval) {
       return { ok: false, pendingApproval: true }
     }
-    const data = loadData()
-    data.auth = { loggedIn: true, username: key, pendingApproval: false }
+    data.auth = {
+      loggedIn: true,
+      username: key,
+      pendingApproval: false,
+      tenantId: tenant ? tenant.id : '',
+      tenantUserId: '',
+      role: 'Owner',
+    }
     saveData(data)
     return { ok: true }
   },
@@ -589,6 +673,35 @@ const Store = {
 
   isLoggedIn() {
     return loadData().auth.loggedIn === true
+  },
+
+  getRolePermissions(roleName) {
+    const data = loadData()
+    const scope = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : data
+    const permissions = scope && scope.rolePermissions && scope.rolePermissions[String(roleName || '').toLowerCase()]
+    return permissions ? structuredCloneSafe(permissions) : null
+  },
+
+  setRolePermissions(roleName, permissions) {
+    const data = loadData()
+    const scope = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : data
+    if (!scope) return
+    if (!scope.rolePermissions) scope.rolePermissions = {}
+    scope.rolePermissions[String(roleName || '').toLowerCase()] = structuredCloneSafe(permissions)
+    saveData(data)
+  },
+
+  hasPermission(moduleKey, action) {
+    const auth = loadData().auth || {}
+    const role = String(auth.role || 'Owner').toLowerCase()
+    const configured = Store.getRolePermissions(role)
+    if (configured && configured[moduleKey]) return configured[moduleKey][action] === true
+
+    if (role === 'owner') return true
+    if (role === 'admin') return !(moduleKey === 'users' && action === 'delete')
+    if (role === 'member') return action === 'view' || (['devices', 'assets'].includes(moduleKey) && ['create', 'edit'].includes(action))
+    if (role === 'viewer') return action === 'view'
+    return false
   },
 
   requireAuth() {
@@ -788,8 +901,9 @@ const Store = {
   // -------------------------------------------------------- applications
   addApplication(data) {
     const store = loadData()
-    const record = { id: uid('apn'), name: data.name, description: data.description, status: 'active', deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], groupNames: data.groupNames ?? [], metadata: data.metadata ?? [], icon: data.icon || 'app', hasCustomDashboard: Boolean(data.hasCustomDashboard), createdDate: nowStamp() }
+    const record = newApplicationRecord(data)
     store.applications.push(record)
+    grantApplicationToSessionTenant(store, record.id)
     saveData(store)
     return record
   },
@@ -816,6 +930,7 @@ const Store = {
       templateKey: data.templateKey, bindings: bindings, settings: data.settings || {}, createdDate: nowStamp(),
     }
     store.applications.push(record)
+    grantApplicationToSessionTenant(store, record.id)
     saveData(store)
     return record
   },
@@ -876,6 +991,9 @@ const Store = {
     store.applications = store.applications.filter((a) => a.id !== id)
     store.applicationRecords = (store.applicationRecords || []).filter((r) => r.appId !== id)
     store.notionPages = (store.notionPages || []).filter((p) => p.appId !== id)
+    store.tenants.forEach((t) => {
+      if (Array.isArray(t.applicationIds)) t.applicationIds = t.applicationIds.filter((appId) => appId !== id)
+    })
     saveData(store)
   },
 
@@ -1008,9 +1126,16 @@ const Store = {
   },
 
   // -------------------------------------------------------------- tenants
+  // A new tenant starts with every built-in (default) application enabled;
+  // the system administrator narrows that down on its detail page.
   addTenant(data) {
     const store = loadData()
-    const record = { id: uid('t'), ...data, deviceCount: 0, status: 'active', createdDate: nowStamp(), users: [], devices: [], assets: [], applications: [] }
+    const record = { id: uid('t'), ...data, deviceCount: 0, status: 'active', createdDate: nowStamp(), users: [], devices: [], assets: [], applicationIds: store.applications.filter((a) => a.isDefault).map((a) => a.id) }
+    // The Organization ID is the login key, so it has to be unique.
+    const taken = store.tenants.map((t) => tenantOrganizationId(t).toUpperCase())
+    const base = slugId(record.title) || slugId(record.id)
+    record.organizationId = base
+    for (let n = 2; taken.includes(record.organizationId); n++) record.organizationId = base + n
     store.tenants.push(record)
     saveData(store)
     return record
@@ -1018,7 +1143,12 @@ const Store = {
   updateTenant(id, data) {
     const store = loadData()
     const record = store.tenants.find((t) => t.id === id)
-    if (record) Object.assign(record, data)
+    if (record) {
+      // Pin a derived Organization ID first, so editing the contact email
+      // can't change what the tenant's users log in with.
+      if (!record.organizationId) record.organizationId = tenantOrganizationId(record)
+      Object.assign(record, data)
+    }
     saveData(store)
   },
   toggleTenantStatus(id) {
@@ -1149,39 +1279,59 @@ const Store = {
     saveData(store)
   },
 
+  // ------------------------------------------------ tenant application access
+  // Every application on the platform, whichever tenant is signed in — the
+  // system administrator's access list needs the whole catalogue, whereas
+  // Store.get() only returns what the signed-in tenant may view.
+  allApplications() {
+    return loadData().applications
+  },
+  tenantApplicationIds(tenantId) {
+    const store = loadData()
+    const tenant = findTenant(store, tenantId)
+    return tenant ? tenantApplicationIds(store, tenant) : []
+  },
+  tenantOrganizationId(tenantId) {
+    const tenant = findTenant(loadData(), tenantId)
+    return tenant ? tenantOrganizationId(tenant) : ''
+  },
+  // The system administrator adding a custom application from a tenant's
+  // Applications tab. It joins the platform's applications and is enabled for
+  // that tenant; other tenants can be given it later by ticking it.
   addTenantApplication(tenantId, data) {
     const store = loadData()
     const tenant = findTenant(store, tenantId)
     if (!tenant) return
-    const record = { id: uid('ta'), name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], status: 'active', metadata: data.metadata ?? [], createdDate: nowStamp() }
-    tenant.applications.push(record)
+    const record = newApplicationRecord(data)
+    const allowed = tenantApplicationIds(store, tenant)
+    store.applications.push(record)
+    tenant.applicationIds = allowed.concat(record.id)
     saveData(store)
     return record
   },
-  updateTenantApplication(tenantId, appId, data) {
-    const store = loadData()
-    const app = findTenant(store, tenantId)?.applications.find((a) => a.id === appId)
-    if (app) Object.assign(app, { name: data.name, description: data.description, deviceIds: data.deviceIds ?? [], assetIds: data.assetIds ?? [], metadata: data.metadata ?? app.metadata })
-    saveData(store)
-  },
-  toggleTenantApplicationStatus(tenantId, appId) {
-    const store = loadData()
-    const app = findTenant(store, tenantId)?.applications.find((a) => a.id === appId)
-    if (app) app.status = app.status === 'active' ? 'suspended' : 'active'
-    saveData(store)
-  },
-  removeTenantApplication(tenantId, appId) {
+  // Allow (or stop allowing) a tenant to view one application, or several at
+  // once. The tenant's first explicit selection starts from what it could
+  // already view, so it never loses access to anything by accident.
+  setTenantApplicationAccess(tenantId, appIds, allowed) {
     const store = loadData()
     const tenant = findTenant(store, tenantId)
-    if (tenant) tenant.applications = tenant.applications.filter((a) => a.id !== appId)
+    if (!tenant) return
+    const ids = tenantApplicationIds(store, tenant)
+    ;[].concat(appIds).forEach((appId) => {
+      const at = ids.indexOf(appId)
+      if (allowed && at === -1) ids.push(appId)
+      if (!allowed && at !== -1) ids.splice(at, 1)
+    })
+    tenant.applicationIds = ids
     saveData(store)
   },
 
   // ---------------------------------------------------------------- users
   addUser({ name, email, role, groupNames, mode }) {
     const data = loadData()
+    const tenant = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : null
     const record = {
-      id: uid('u'),
+      id: uid(tenant ? 'tu' : 'u'),
       name,
       email,
       role,
@@ -1189,14 +1339,17 @@ const Store = {
       status: mode === 'add' ? 'active' : 'invited',
       createdDate: nowStamp(),
     }
-    data.users.push(record)
+    if (tenant) tenant.users.push(record)
+    else data.users.push(record)
     saveData(data)
     return record
   },
 
   updateUser(id, { name, email, role, groupNames }) {
     const data = loadData()
-    const user = data.users.find((u) => u.id === id)
+    const tenant = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : null
+    const users = tenant ? tenant.users : data.users
+    const user = users.find((u) => u.id === id)
     if (user) Object.assign(user, { name, email, role, groupNames: groupNames ?? [] })
     saveData(data)
     return user
@@ -1204,14 +1357,18 @@ const Store = {
 
   toggleUserStatus(id) {
     const data = loadData()
-    const user = data.users.find((u) => u.id === id)
+    const tenant = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : null
+    const users = tenant ? tenant.users : data.users
+    const user = users.find((u) => u.id === id)
     if (user) user.status = user.status === 'active' ? 'suspended' : 'active'
     saveData(data)
   },
 
   deleteUser(id) {
     const data = loadData()
-    data.users = data.users.filter((u) => u.id !== id)
+    const tenant = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : null
+    if (tenant) tenant.users = tenant.users.filter((u) => u.id !== id)
+    else data.users = data.users.filter((u) => u.id !== id)
     saveData(data)
   },
 

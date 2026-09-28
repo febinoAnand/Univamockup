@@ -224,9 +224,36 @@ function iconSvg(name) {
   return icons[name] || ''
 }
 
+function permissionModuleForKey(key) {
+  const applicationMatch = /^application-(.+)$/.exec(key)
+  if (applicationMatch) return 'app:' + applicationMatch[1]
+  const modules = {
+    dashboard: 'dashboard',
+    applications: 'applications',
+    devices: 'devices',
+    'device-data': 'devices',
+    'device-profiles': 'deviceProfiles',
+    credentials: 'credentials',
+    'software-ota': 'softwareOta',
+    assets: 'assets',
+    'asset-groups': 'assetGroups',
+    'asset-profiles': 'assetProfiles',
+    'shift-management': 'shifts',
+    'shift-schedules': 'shiftSchedules',
+    'shift-instances': 'shiftInstances',
+    'rule-engines': 'ruleEngines',
+    'rule-engine-reports': 'ruleEngineReports',
+    users: 'users',
+    'user-groups': 'userGroups',
+    roles: 'rolesPermissions',
+  }
+  return modules[key] || key
+}
+
 function renderSidebar(active) {
   const items = NAV_SECTIONS.map((section) => {
     if (!section.children) {
+      if (window.Store && !Store.hasPermission(permissionModuleForKey(section.key), 'view')) return ''
       const isActive = section.key === active
       return `<a class="sidebar-link${isActive ? ' active' : ''}" href="${section.href}" title="${section.label}">${iconSvg(section.icon)}<span>${section.label}</span></a>`
     }
@@ -238,6 +265,10 @@ function renderSidebar(active) {
         apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: applicationHref(a) })),
       )
     }
+    if (window.Store) {
+      sectionChildren = sectionChildren.filter((child) => Store.hasPermission(permissionModuleForKey(child.key), 'view'))
+    }
+    if (!sectionChildren.length) return ''
     const children = sectionChildren
       .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}" title="${child.label}">${iconSvg(child.icon)}<span>${child.label}</span></a>`)
       .join('')
@@ -355,10 +386,15 @@ const Layout = {
 
   mount({ active, breadcrumbs }) {
     Store.requireAuth()
+    if (!Store.isLoggedIn()) return
 
     const shell = document.getElementById('app-shell')
     const contentHost = document.getElementById('app-content')
     if (!shell || !contentHost) return
+    if (!Store.hasPermission(permissionModuleForKey(active), 'view')) {
+      contentHost.textContent = 'You do not have permission to view this page.'
+      return
+    }
 
     shell.insertAdjacentHTML('afterbegin', renderSidebar(active))
     contentHost.insertAdjacentHTML('beforebegin', renderTopBar(breadcrumbs || []))

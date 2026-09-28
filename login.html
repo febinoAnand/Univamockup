@@ -35,12 +35,12 @@
         </div>
 
         <div class="field">
-          <label for="username">Username</label>
+          <label for="username">Email address or username</label>
           <div class="input-wrap">
             <span class="input-icon">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c1.4-3.8 4.4-6 7.5-6s6.1 2.2 7.5 6" stroke-linecap="round"/></svg>
             </span>
-            <input id="username" type="text" placeholder="Enter your username" />
+            <input id="username" type="text" placeholder="Enter your email address" autocomplete="username" />
           </div>
         </div>
 
@@ -50,7 +50,7 @@
             <span class="input-icon">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
             </span>
-            <input id="password" type="password" placeholder="Enter your password" />
+            <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" />
           </div>
         </div>
 
@@ -86,6 +86,7 @@
     document.getElementById('login-form').addEventListener('submit', function (event) {
       event.preventDefault()
       const submitBtn = event.target.querySelector('.login-button')
+      const organizationId = document.getElementById('organizationId').value
       const username = document.getElementById('username').value
       const password = document.getElementById('password').value
       const errorEl = document.getElementById('login-error')
@@ -94,7 +95,7 @@
       noticeEl.classList.add('hidden')
 
       UI.runWithLoading(submitBtn, () => {
-        const result = Store.login(username, password)
+        const result = Store.login(username, password, organizationId)
         if (result.ok) {
           window.location.href = 'dashboard.html'
           return

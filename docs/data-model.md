@@ -155,6 +155,22 @@ A block's config (cards, series, sheet columns with `telemetry | manual | formul
 
 Roles & permissions lists one module per template application. It has one field per template view (`view:overview`, `view:downtime`, …), plus `manualEntries` for manual data entry. This allows tab-level access control and a separate permission to enter data.
 
+## 9. Tenant application access
+
+The system administrator decides which applications each tenant can view. On a tenant's detail page (`admin-tenant-detail.html`), the Applications tab lists every application on the platform, default and custom, each with a checkbox. Only the ticked ones can be viewed by that tenant. **Add application** on that tab creates a custom application on the platform and enables it for that tenant. A custom application can be edited, suspended, or deleted from its row menu, and other tenants get it by ticking it in their own tab. The default applications are built in, so they only have the checkbox.
+
+```sql
+CREATE TABLE tenant_applications (
+  tenant_id       uuid NOT NULL,
+  application_id  uuid NOT NULL,
+  PRIMARY KEY (tenant_id, application_id)
+);
+```
+
+In the mockup this is `tenants[].applicationIds`. A tenant with no saved list can view every application, as it could before this existed. A new tenant starts with the default applications ticked, and an application a tenant creates itself is added to its list.
+
+A session is tied to a tenant by the **Organization ID** on the login page (`tenants[].organizationId`, shown on the tenant's detail page). `Store.get()` in `shared/store.js` then returns only that tenant's applications. The sidebar, the applications list, and direct links to any other application (which show "Application not found") all follow the same rule. A blank or unknown Organization ID gives the plain demo session, which is not tied to a tenant and sees every application.
+
 ## Migration notes
 
 - **PMS** runs on this model today (template `production-monitoring`).

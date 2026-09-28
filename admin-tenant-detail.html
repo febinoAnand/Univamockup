@@ -210,9 +210,10 @@
                 </button>
               </div>
             </div>
+            <p class="modal-intro">Tick the applications this tenant's users can open. Anything left unticked is hidden from them.</p>
             <div class="table-scroll" id="applications-table-scroll">
               <table class="data-table">
-                <thead><tr><th>Name</th><th>Devices</th><th>Assets</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
+                <thead><tr><th class="data-table-check-col"><input type="checkbox" id="applications-select-all" title="Select all" aria-label="Select all applications" /></th><th>Application</th><th>Type</th><th>Devices</th><th>Assets</th><th>Status</th><th>Created Date</th><th class="data-table-menu-col"></th></tr></thead>
                 <tbody id="applications-tbody"></tbody>
               </table>
             </div>
@@ -239,6 +240,7 @@
               <option>Owner</option>
               <option>Admin</option>
               <option>Member</option>
+              <option>Viewer</option>
             </select>
           </div>
         </form>
@@ -432,10 +434,19 @@
       badge.classList.toggle('limit-reached', atLimit)
     }
 
+    // How many of a resource the tenant has. Its applications are the ones
+    // enabled for it (the ticked rows), not everything on the platform.
+    function resourceCount(key) {
+      if (key === 'applications') {
+        const allowed = new Set(Store.tenantApplicationIds(tenantId))
+        return Store.allApplications().filter((a) => allowed.has(a.id)).length
+      }
+      return getTenant()[key].length
+    }
+
     function isAtLimit(key) {
-      const t = getTenant()
       const max = getLimits()[key]
-      return Number.isFinite(max) && t[key].length >= max
+      return Number.isFinite(max) && resourceCount(key) >= max
     }
 
     const LIMIT_LABELS = { users: 'users', devices: 'devices', assets: 'assets', applications: 'applications' }
@@ -454,6 +465,7 @@
       document.getElementById('tenant-meta').innerHTML = [
         ['Phone', t.phone || '—'],
         ['Country', t.country || '—'],
+        ['Organization ID', Store.tenantOrganizationId(tenantId)],
         ['Tenant profile', t.tenantProfileName || '—'],
         ['Registered devices', t.deviceCount],
         ['Created date', t.createdDate],
@@ -998,40 +1010,49 @@
     })
 
     // ------------------------------------------------------- applications
+    // The Applications tab is this tenant's application access list: every
+    // application on the platform (the built-in default ones first, then the
+    // custom ones) with a checkbox. Only the ticked ones can be viewed by the
+    // tenant — a session signed in with its Organization ID is given just
+    // those (see Store.get() in shared/store.js). Ticking saves immediately.
+    // "Add application" creates a custom application and enables it for this
+    // tenant; a custom application can be edited, suspended, or deleted from
+    // its row menu (the default ones are built in, so they have no menu).
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+    }
+
+    function applicationCatalog() {
+      const apps = Store.allApplications()
+      return apps.filter((a) => a.isDefault).concat(apps.filter((a) => !a.isDefault))
+    }
+
+    // The catalogue narrowed by the search box.
+    function visibleApplications() {
+      const term = document.getElementById('applications-search').value.trim().toLowerCase()
+      const catalog = applicationCatalog()
+      return term ? catalog.filter((a) => a.name.toLowerCase().includes(term)) : catalog
+    }
+
+    // The devices and assets an application links to are the platform's own —
+    // the same ones the tenant-facing app links its applications to.
     function renderAppDevicesList(selectedIds) {
-      const t = getTenant()
+      const devices = Store.get().devices
       document.getElementById('ta-devices-list').innerHTML =
-        t.devices.length === 0
-          ? '<span class="section-empty">No devices in this tenant yet</span>'
-          : t.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+        devices.length === 0
+          ? '<span class="section-empty">No devices available</span>'
+          : devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${esc(d.name)}</label>`).join('')
     }
     function renderAppAssetsList(selectedIds) {
-      const t = getTenant()
+      const assets = Store.get().assets
       document.getElementById('ta-assets-list').innerHTML =
-        t.assets.length === 0
-          ? '<span class="section-empty">No assets in this tenant yet</span>'
-          : t.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
+        assets.length === 0
+          ? '<span class="section-empty">No assets available</span>'
+          : assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${esc(a.name)}</label>`).join('')
     }
-    function renderApplications() {
-      const t = getTenant()
-      const term = document.getElementById('applications-search').value.trim().toLowerCase()
-      const apps = term ? t.applications.filter((a) => a.name.toLowerCase().includes(term)) : t.applications
-      updateLimitBadge('applications', t.applications.length)
-      const tbody = document.getElementById('applications-tbody')
-      if (apps.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-table-note">No applications for this tenant yet.</td></tr>'
-        return
-      }
-      tbody.innerHTML = apps
-        .map(
-          (a) => `
-        <tr>
-          <td class="card-title-cell"><div class="group-name-cell">${a.name}${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
-          <td data-label="Devices">${(a.deviceIds || []).length}</td>
-          <td data-label="Assets">${(a.assetIds || []).length}</td>
-          <td data-label="Status"><span class="status-pill status-${a.status}" title="${a.status}">${a.status}</span></td>
-          <td data-label="Created Date">${a.createdDate}</td>
-          <td class="data-table-menu-col">
+
+    function applicationMenuHtml(a) {
+      return `
             <div class="row-menu">
               <button type="button" class="row-menu-button" data-menu-toggle>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
@@ -1052,29 +1073,88 @@
                   Delete
                 </button>
               </div>
-            </div>
-          </td>
-        </tr>`,
-        )
+            </div>`
+    }
+
+    function renderApplications() {
+      const catalog = applicationCatalog()
+      const allowed = new Set(Store.tenantApplicationIds(tenantId))
+      const apps = visibleApplications()
+      updateLimitBadge('applications', resourceCount('applications'))
+
+      const selectAll = document.getElementById('applications-select-all')
+      const ticked = apps.filter((a) => allowed.has(a.id)).length
+      selectAll.checked = apps.length > 0 && ticked === apps.length
+      selectAll.indeterminate = ticked > 0 && ticked < apps.length
+      selectAll.disabled = apps.length === 0
+
+      const tbody = document.getElementById('applications-tbody')
+      if (apps.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-table-note">${catalog.length === 0 ? 'There are no applications on the platform yet.' : 'No applications match your search.'}</td></tr>`
+        return
+      }
+      tbody.innerHTML = apps
+        .map((a) => {
+          const custom = !a.isDefault
+          return `
+        <tr>
+          <td class="data-table-check-col" data-label="Access"><input type="checkbox" data-app-access="${a.id}" aria-label="Allow ${esc(a.name)}" ${allowed.has(a.id) ? 'checked' : ''} /></td>
+          <td class="card-title-cell"><div class="group-name-cell">${esc(a.name)}${custom && a.description ? `<p class="group-description">${esc(a.description)}</p>` : ''}</div></td>
+          <td data-label="Type">${custom ? 'Custom' : '<span class="default-profile-badge" title="Built-in default application">Default</span>'}</td>
+          <td data-label="Devices">${custom ? (a.deviceIds || []).length : '—'}</td>
+          <td data-label="Assets">${custom ? (a.assetIds || []).length : '—'}</td>
+          <td data-label="Status"><span class="status-pill status-${a.status}" title="${a.status}">${a.status}</span></td>
+          <td data-label="Created Date">${a.createdDate}</td>
+          <td class="data-table-menu-col">${custom ? applicationMenuHtml(a) : ''}</td>
+        </tr>`
+        })
         .join('')
 
-      document.querySelectorAll('[data-app-toggle]').forEach((btn) =>
+      tbody.querySelectorAll('[data-app-access]').forEach((box) =>
+        box.addEventListener('change', () => setApplicationAccess([box.getAttribute('data-app-access')], box.checked)),
+      )
+      tbody.querySelectorAll('[data-app-toggle]').forEach((btn) =>
         btn.addEventListener('click', (event) => {
           event.stopPropagation()
           const id = btn.getAttribute('data-app-toggle')
-          const app = getTenant().applications.find((x) => x.id === id)
-          Store.toggleTenantApplicationStatus(tenantId, id)
+          const app = Store.allApplications().find((x) => x.id === id)
+          Store.toggleApplicationStatus(id)
           renderApplications()
           UI.toast(`"${app.name}" status updated successfully!`)
         }),
       )
-      document.querySelectorAll('[data-app-edit]').forEach((btn) =>
+      tbody.querySelectorAll('[data-app-edit]').forEach((btn) =>
         btn.addEventListener('click', (event) => { event.stopPropagation(); openApplicationEdit(btn.getAttribute('data-app-edit')) }),
       )
-      document.querySelectorAll('[data-app-delete]').forEach((btn) =>
+      tbody.querySelectorAll('[data-app-delete]').forEach((btn) =>
         btn.addEventListener('click', (event) => { event.stopPropagation(); confirmApplicationDelete(btn.getAttribute('data-app-delete')) }),
       )
       wireMenuToggles(tbody)
+    }
+
+    // Allow or stop allowing the tenant to view the given applications.
+    function setApplicationAccess(appIds, allowed) {
+      const catalog = applicationCatalog()
+      const current = new Set(Store.tenantApplicationIds(tenantId))
+      let ids = appIds.filter((id) => current.has(id) !== allowed)
+      let limitNote = ''
+      if (allowed) {
+        // The tenant profile caps how many applications a tenant can have.
+        const max = getLimits().applications
+        const room = Number.isFinite(max) ? Math.max(0, max - resourceCount('applications')) : Infinity
+        if (ids.length > room) {
+          ids = ids.slice(0, room)
+          limitNote = ` This tenant's plan allows up to ${max} applications.`
+          if (ids.length === 0) UI.toast(limitNote.trim())
+        }
+      }
+      if (ids.length > 0) {
+        Store.setTenantApplicationAccess(tenantId, ids, allowed)
+        const names = catalog.filter((a) => ids.includes(a.id)).map((a) => a.name)
+        const subject = names.length === 1 ? `"${names[0]}" is` : `${names.length} applications are`
+        UI.toast(`${subject} ${allowed ? 'now' : 'no longer'} available to ${getTenant().title}.${limitNote}`)
+      }
+      renderApplications()
     }
 
     function openApplicationAdd() {
@@ -1093,8 +1173,8 @@
     }
 
     function openApplicationEdit(id) {
-      const app = getTenant().applications.find((a) => a.id === id)
-      if (!app) return
+      const app = Store.allApplications().find((a) => a.id === id)
+      if (!app || app.isDefault) return
       editingApplicationId = id
       document.getElementById('application-modal-title').textContent = 'Edit application'
       document.getElementById('application-save-btn').textContent = 'Save changes'
@@ -1109,12 +1189,12 @@
     }
 
     function confirmApplicationDelete(id) {
-      const app = getTenant().applications.find((a) => a.id === id)
-      if (!app) return
+      const app = Store.allApplications().find((a) => a.id === id)
+      if (!app || app.isDefault) return
       UI.confirm({
-        message: `Delete <strong>${app.name}</strong>? This can't be undone.`,
+        message: `Delete <strong>${esc(app.name)}</strong>? It is removed for every tenant, and this can't be undone.`,
         onConfirm: () => {
-          Store.removeTenantApplication(tenantId, id)
+          Store.removeApplication(id)
           renderApplications()
           UI.toast(`"${app.name}" deleted successfully!`)
         },
@@ -1123,6 +1203,9 @@
 
     document.getElementById('add-application-btn').addEventListener('click', openApplicationAdd)
     document.getElementById('applications-search').addEventListener('input', renderApplications)
+    document.getElementById('applications-select-all').addEventListener('change', (event) =>
+      setApplicationAccess(visibleApplications().map((a) => a.id), event.target.checked),
+    )
     document.getElementById('application-form').addEventListener('submit', function (event) {
       event.preventDefault()
       const name = document.getElementById('ta-name').value.trim()
@@ -1132,7 +1215,8 @@
       const assetIds = Array.from(document.querySelectorAll('#ta-assets-list input:checked')).map((el) => el.getAttribute('data-asset'))
       const metadata = collectMetadata('application')
       if (editingApplicationId) {
-        Store.updateTenantApplication(tenantId, editingApplicationId, { name, description, deviceIds, assetIds, metadata })
+        const existing = Store.allApplications().find((a) => a.id === editingApplicationId)
+        Store.updateApplication(editingApplicationId, { name, description, deviceIds, assetIds, groupNames: existing ? existing.groupNames : [], metadata })
         UI.toast(`"${name}" updated successfully!`)
       } else {
         if (isAtLimit('applications')) { warnAtLimit('applications'); UI.closeModal('application-modal'); renderApplications(); return }
