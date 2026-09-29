@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
   <title>Applications — Univa</title>
 </head>
 <body>
@@ -112,9 +113,24 @@
     </div>
   </div>
 
+  <!-- Step 1 of "Add application": start from a template or a blank app.
+       Picking a template shows step 2 (bindings) in the same modal. -->
+  <div class="modal-overlay" id="template-modal">
+    <div class="modal-card" style="max-width:760px;">
+      <div class="modal-header">
+        <h2 id="template-modal-title">Add application</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('template-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="template-modal-body"></div>
+      <div class="modal-footer" id="template-modal-footer"></div>
+    </div>
+  </div>
+
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
+  <script src="shared/app-templates.js"></script>
+  <script src="shared/app-runtime.js"></script>
   <script>
     Layout.mount({
       active: 'applications',
@@ -217,6 +233,19 @@
     document.getElementById('app-assets-search').addEventListener('input', (e) => filterChecklist('app-assets-list', e.target.value))
     document.getElementById('app-groups-search').addEventListener('input', (e) => filterChecklist('app-groups-list', e.target.value))
 
+    function templateBadge(a) {
+      const t = a.templateKey && AppTemplates.get(a.templateKey)
+      return t ? ` <span class="rt-template-badge" title="Built from the ${t.name} template">${iconSvg(t.icon)}${t.name}</span>` : ''
+    }
+
+    // A template app binds a whole asset group, so count what that resolves to.
+    function boundCounts(a, data) {
+      if (!a.templateKey) return { devices: (a.deviceIds || []).length, assets: (a.assetIds || []).length }
+      const group = (a.bindings || {}).assetGroup
+      const assets = data.assets.filter((x) => (x.groupNames || []).includes(group))
+      return { assets: assets.length, devices: assets.reduce((n, x) => n + (x.deviceIds || []).length, 0) }
+    }
+
     function render() {
       const data = Store.get()
       const term = document.getElementById('search').value.trim().toLowerCase()
@@ -237,9 +266,9 @@
         .map(
           (a) => `
         <tr class="clickable-row" data-open="${a.name === 'Notion' ? 'notion.html#' + a.id : 'application-detail.html#' + a.id}">
-          <td class="card-title-cell"><div class="group-name-cell"><span>${a.name}${a.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}</span>${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
-          <td data-label="Devices">${(a.deviceIds || []).length}</td>
-          <td data-label="Assets">${(a.assetIds || []).length}</td>
+          <td class="card-title-cell"><div class="group-name-cell"><span>${a.name}${a.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}${templateBadge(a)}</span>${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
+          <td data-label="Devices">${boundCounts(a, data).devices}</td>
+          <td data-label="Assets">${boundCounts(a, data).assets}</td>
           <td data-label="Asset Groups">${(a.groupNames || []).length}</td>
           <td data-label="Status"><span class="status-pill status-${a.status}" title="${a.status}">${a.status}</span></td>
           <td data-label="Created Date">${a.createdDate}</td>
@@ -395,7 +424,150 @@
     document.getElementById('view-toggle-slot').innerHTML = UI.viewToggleHtml('applications')
     UI.wireViewToggle('applications', document.getElementById('table-scroll'))
 
-    document.getElementById('add-btn').addEventListener('click', openAdd)
+    // ------------------------------------------------ template gallery
+    let templateDraft = null
+
+    function escHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+    }
+
+    function openTemplateGallery() {
+      templateDraft = null
+      renderTemplateStep()
+      UI.openModal('template-modal')
+    }
+
+    function renderTemplateStep() {
+      const body = document.getElementById('template-modal-body')
+      const footer = document.getElementById('template-modal-footer')
+      if (!templateDraft) {
+        document.getElementById('template-modal-title').textContent = 'Add application'
+        body.innerHTML = `
+          <p class="rt-help">Start from a template: the template decides the KPIs, reports, and screens, and you bind it to your own assets and device data. Or start blank and build a custom dashboard.</p>
+          <div class="rt-template-gallery">
+            ${AppTemplates.list().map((t) => `
+              <button type="button" class="rt-template-card" data-pick-template="${t.key}" title="Use the ${escHtml(t.name)} template">
+                <span class="rt-template-card-icon">${iconSvg(t.icon)}</span>
+                <span class="rt-template-card-tag">${escHtml(t.category)}</span>
+                <span class="rt-template-card-name">${escHtml(t.name)}</span>
+                <span class="rt-template-card-desc">${escHtml(t.description)}</span>
+              </button>`).join('')}
+            <button type="button" class="rt-template-card" data-pick-template="" title="Start from a blank application">
+              <span class="rt-template-card-icon">${iconSvg('app')}</span>
+              <span class="rt-template-card-tag">Custom</span>
+              <span class="rt-template-card-name">Blank application</span>
+              <span class="rt-template-card-desc">Link devices and assets yourself, optionally with a custom widget dashboard.</span>
+            </button>
+          </div>`
+        footer.innerHTML = `<button type="button" class="modal-button secondary" onclick="UI.closeModal('template-modal')">Cancel</button>`
+        body.querySelectorAll('[data-pick-template]').forEach((btn) =>
+          btn.addEventListener('click', () => {
+            const key = btn.getAttribute('data-pick-template')
+            if (!key) {
+              UI.closeModal('template-modal')
+              openAdd()
+              return
+            }
+            const t = AppTemplates.get(key)
+            const data = Store.get()
+            // Pre-select the first asset group whose assets use the template's profile.
+            const group = data.assetGroups.find((g) => data.assets.some((a) => (a.groupNames || []).includes(g.name) && a.profileName === t.entity.assetProfile))
+            const assetGroup = group ? group.name : ''
+            // Default to the schedule with the widest coverage (most shift-days).
+            const coverage = (sc) => Object.values(sc.assignments || {}).reduce((n, ids) => n + ids.length, 0)
+            const schedule = data.shiftSchedules.slice().sort((a, b) => coverage(b) - coverage(a))[0]
+            templateDraft = { template: t, name: t.name, description: t.description, assetGroup, shiftScheduleId: schedule ? schedule.id : '', keyMap: AppRuntime.autoKeyMap(t, assetGroup) }
+            renderTemplateStep()
+          }),
+        )
+        return
+      }
+
+      const t = templateDraft.template
+      const data = Store.get()
+      const entityCount = data.assets.filter((a) => (a.groupNames || []).includes(templateDraft.assetGroup)).length
+      document.getElementById('template-modal-title').textContent = `New ${t.name} application`
+      body.innerHTML = `
+        <div class="modal-field"><label for="tpl-name">Application name*</label><input id="tpl-name" type="text" value="${escHtml(templateDraft.name)}" /></div>
+        <div class="modal-field"><label for="tpl-description">Description</label><textarea id="tpl-description" rows="2">${escHtml(templateDraft.description)}</textarea></div>
+        <div class="rt-form-grid">
+          <div class="modal-field"><label for="tpl-group">${escHtml(t.entity.plural)} — asset group*</label>
+            <select id="tpl-group">
+              <option value="">— Select —</option>
+              ${data.assetGroups.map((g) => `<option${templateDraft.assetGroup === g.name ? ' selected' : ''}>${escHtml(g.name)}</option>`).join('')}
+            </select>
+            ${templateDraft.assetGroup ? `<span class="section-empty">${entityCount} asset${entityCount === 1 ? '' : 's'} in this group</span>` : ''}
+          </div>
+          <div class="modal-field"><label for="tpl-schedule">Shift schedule</label>
+            <select id="tpl-schedule">
+              <option value="">None (full calendar day)</option>
+              ${data.shiftSchedules.map((sc) => `<option value="${sc.id}"${templateDraft.shiftScheduleId === sc.id ? ' selected' : ''}>${escHtml(sc.name)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="modal-field">
+          <label>Data mapping</label>
+          <p class="rt-help" style="margin-bottom:0.3rem;">Map each role the template needs to a data point your devices send. Suggestions are pre-filled.</p>
+          ${t.roles.map((role) => {
+            const options = templateDraft.assetGroup ? AppRuntime.candidateDataPoints(templateDraft.assetGroup, role.kind) : []
+            return `
+              <div class="rt-map-row">
+                <span>${escHtml(role.label)}${role.required ? ' <span class="rt-required">*</span>' : ''} <span class="rt-kind rt-kind-${role.kind}">${role.kind}</span></span>
+                <select data-tpl-role="${role.role}">
+                  <option value="">— Not mapped —</option>
+                  ${options.map((dp) => `<option value="${escHtml(dp.key)}"${templateDraft.keyMap[role.role] === dp.key ? ' selected' : ''}>${escHtml(dp.key)} · ${escHtml(dp.label)}</option>`).join('')}
+                </select>
+              </div>`
+          }).join('')}
+        </div>`
+      footer.innerHTML = `
+        <button type="button" class="modal-button secondary" id="tpl-back">Back</button>
+        <button type="button" class="modal-button primary" id="tpl-create">Create application</button>`
+
+      const syncText = () => {
+        templateDraft.name = document.getElementById('tpl-name').value
+        templateDraft.description = document.getElementById('tpl-description').value
+      }
+      document.getElementById('tpl-group').addEventListener('change', (e) => {
+        syncText()
+        templateDraft.assetGroup = e.target.value
+        templateDraft.keyMap = AppRuntime.autoKeyMap(t, e.target.value)
+        renderTemplateStep()
+      })
+      document.getElementById('tpl-schedule').addEventListener('change', (e) => { templateDraft.shiftScheduleId = e.target.value })
+      body.querySelectorAll('[data-tpl-role]').forEach((sel) =>
+        sel.addEventListener('change', () => { templateDraft.keyMap[sel.getAttribute('data-tpl-role')] = sel.value }),
+      )
+      document.getElementById('tpl-back').addEventListener('click', () => {
+        templateDraft = null
+        renderTemplateStep()
+      })
+      document.getElementById('tpl-create').addEventListener('click', () => {
+        syncText()
+        const name = templateDraft.name.trim()
+        if (!name) {
+          UI.toast('Application name is required.')
+          return
+        }
+        if (!templateDraft.assetGroup) {
+          UI.toast(`Pick the asset group that holds your ${t.entity.plural.toLowerCase()}.`)
+          return
+        }
+        const record = Store.addApplicationFromTemplate({
+          name,
+          description: templateDraft.description.trim(),
+          icon: t.icon,
+          templateKey: t.key,
+          bindings: { assetGroup: templateDraft.assetGroup, assetIds: [], shiftScheduleId: templateDraft.shiftScheduleId, keyMap: templateDraft.keyMap },
+          settings: AppTemplates.settingsFor(t, null),
+        })
+        UI.closeModal('template-modal')
+        UI.toast(`"${name}" application created successfully!`)
+        window.location.href = 'application-detail.html#' + record.id
+      })
+    }
+
+    document.getElementById('add-btn').addEventListener('click', openTemplateGallery)
     document.getElementById('search').addEventListener('input', render)
 
     document.getElementById('app-form').addEventListener('submit', function (event) {

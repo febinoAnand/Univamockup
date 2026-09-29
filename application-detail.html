@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
   <link rel="stylesheet" href="shared/dashboard.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
   <title>Application — Univa</title>
   <style>
@@ -843,6 +844,9 @@
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
   <script src="shared/dashboard.js"></script>
+  <script src="shared/telemetry.js"></script>
+  <script src="shared/app-templates.js"></script>
+  <script src="shared/app-runtime.js"></script>
   <script>
     // The application id travels in the URL hash — see device-detail.html
     // for why (a hash survives a static-file server in a way a query string
@@ -1203,118 +1207,19 @@
       bootDashboard({ scopeId: 'app-' + app.id, title: app.name, deviceIds: app.deviceIds || [] })
     }
 
-    // ------------------------------------------------------------- PMS
-    // PMS is the built-in production-monitoring application: its detail
-    // page shows the real system's Production / Shift Report views instead
-    // of the generic device/asset/metadata summary every other application
-    // gets. There's no backend here, so the tables always show zero counts
-    // — the date/machine filters and search buttons just re-render the tab.
-    const PMS_WORK_CENTERS = ['HSGMI3', 'HSGMI4', 'HSGMI5', 'HSGMI6', 'HSGMI7', 'HSGMI1', 'HSGMI2', 'HSGMI8']
-    const PMS_SHIFT_SLOTS = {
-      'Shift 1': ['06:30 AM - 07:30 AM', '07:30 AM - 08:30 AM', '08:30 AM - 09:30 AM', '09:30 AM - 10:30 AM', '10:30 AM - 11:30 AM', '11:30 AM - 12:30 PM', '12:30 PM - 01:30 PM', '01:30 PM - 02:30 PM'],
-      'Shift 2': ['02:30 PM - 03:30 PM', '03:30 PM - 04:30 PM', '04:30 PM - 05:30 PM', '05:30 PM - 06:30 PM', '06:30 PM - 07:30 PM', '07:30 PM - 08:30 PM', '08:30 PM - 09:30 PM', '09:30 PM - 10:30 PM'],
-      'Shift 3': ['10:30 PM - 11:30 PM', '11:30 PM - 12:30 AM', '12:30 AM - 01:30 AM', '01:30 AM - 02:30 AM', '02:30 AM - 03:30 AM', '03:30 AM - 04:30 AM', '04:30 AM - 05:30 AM', '05:30 AM - 06:30 AM'],
-    }
-    let pmsActiveTab = 'production'
-
-    function todayIso() {
-      return new Date().toISOString().slice(0, 10)
-    }
-
-    function pmsSearchIcon() {
-      return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>'
-    }
-
-    function renderPmsProductionPanel() {
-      const rows = PMS_WORK_CENTERS.map((wc) => `<tr><td>${wc}</td><td>0</td><td>0</td><td>0</td><td class="highlight-cell">0</td></tr>`).join('')
-      return `
-        <div class="detail-card">
-          <h2><span class="section-icon">${iconSvg('report')}</span>Production</h2>
-          <div class="detail-toolbar-row">
-            <div class="detail-toolbar-filters">
-              <input type="date" id="pms-production-date" value="${todayIso()}" />
-            </div>
-            <div class="detail-toolbar-actions">
-              <button type="button" class="icon-button" id="pms-production-search" aria-label="Search" title="Search">${pmsSearchIcon()}</button>
-            </div>
-          </div>
-        </div>
-        <div class="detail-card">
-          <h2><span class="section-icon">${iconSvg('device')}</span>HSGMI</h2>
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead><tr><th>WORK CENTER</th><th>Shift 1</th><th>Shift 2</th><th>Shift 3</th><th>Total</th></tr></thead>
-              <tbody>
-                ${rows}
-                <tr class="total-row"><td>Total</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>`
-    }
-
-    function renderPmsShiftPanel() {
-      const shiftTables = Object.entries(PMS_SHIFT_SLOTS)
-        .map(
-          ([shiftName, slots]) => `
-        <div class="detail-card">
-          <h2><span class="section-icon">${iconSvg('report')}</span>${shiftName}</h2>
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead><tr><th>Time</th><th>Production Count</th><th>Target Count</th><th>Differences</th></tr></thead>
-              <tbody>
-                ${slots.map((slot) => `<tr><td>${slot}</td><td>0</td><td>0</td><td class="highlight-cell">0</td></tr>`).join('')}
-                <tr class="total-row"><td>Total</td><td>0</td><td>0</td><td>0</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>`,
-        )
-        .join('')
-
-      return `
-        <div class="detail-card">
-          <h2><span class="section-icon">${iconSvg('report')}</span>Shift Report</h2>
-          <div class="detail-toolbar-row">
-            <div class="detail-toolbar-filters">
-              <select id="pms-shift-machine">
-                <option value="">Select Machine</option>
-                ${PMS_WORK_CENTERS.map((wc) => `<option value="${wc}">${wc}</option>`).join('')}
-              </select>
-              <input type="date" id="pms-shift-date" value="${todayIso()}" />
-            </div>
-            <div class="detail-toolbar-actions">
-              <button type="button" class="icon-button" id="pms-shift-search" aria-label="Search" title="Search">${pmsSearchIcon()}</button>
-            </div>
-          </div>
-        </div>
-        ${shiftTables}`
-    }
-
-    function renderPmsBody() {
-      return `
-        <div class="detail-tabs">
-          <button type="button" class="detail-tab-button${pmsActiveTab === 'production' ? ' active' : ''}" data-pms-tab="production">Production</button>
-          <button type="button" class="detail-tab-button${pmsActiveTab === 'shift-report' ? ' active' : ''}" data-pms-tab="shift-report">Shift Report</button>
-        </div>
-        <div id="pms-tab-content">
-          ${pmsActiveTab === 'production' ? renderPmsProductionPanel() : renderPmsShiftPanel()}
-        </div>`
-    }
-
-    function wirePmsBody() {
-      document.querySelectorAll('[data-pms-tab]').forEach((btn) =>
-        btn.addEventListener('click', () => {
-          pmsActiveTab = btn.getAttribute('data-pms-tab')
-          renderPage()
-        }),
-      )
-      document.getElementById('pms-production-search')?.addEventListener('click', () => renderPage())
-      document.getElementById('pms-shift-search')?.addEventListener('click', () => renderPage())
+    // ------------------------------------------------ Template-driven apps
+    // An application with a templateKey (PMS, and anything created from the
+    // template gallery on applications.html) is drawn entirely by the
+    // generic runtime — tabs, KPIs, shift reports, downtime, and
+    // configuration all come from its template in shared/app-templates.js
+    // plus this instance's bindings. See shared/app-runtime.js.
+    function renderTemplateBody() {
+      return '<div id="app-runtime-host"></div>'
     }
 
     // ------------------------------------------------------------- EMS
-    // EMS is the other built-in system application (alongside PMS above):
+    // EMS is a built-in system application with its own bespoke screens
+    // (not yet migrated to the template runtime above):
     // its detail page shows TOD grid readings, a meter list, and monthly
     // energy data instead of the generic device/asset/metadata summary.
     const EMS_PER_PAGE = 10
@@ -2208,15 +2113,16 @@
         return
       }
 
-      const isPms = app.name === 'PMS'
-      const isEms = app.name === 'EMS'
-      const isCms = app.name === 'CMS'
+      const template = app.templateKey && window.AppTemplates ? AppTemplates.get(app.templateKey) : null
+      const isTemplate = Boolean(template)
+      const isEms = !isTemplate && app.name === 'EMS'
+      const isCms = !isTemplate && app.name === 'CMS'
       // Notion moved to its own standalone page (notion.html — see
       // applications.html and shared/layout.js's sidebar, which link there
       // directly) since its block-editor code was ~1500 lines on its own.
       // application-detail.html#app_notion still works as a fallback and
       // just falls through to the generic app-record view below.
-      const isCustomDashboard = !isPms && !isEms && !isCms && Boolean(app.hasCustomDashboard)
+      const isCustomDashboard = !isTemplate && !isEms && !isCms && Boolean(app.hasCustomDashboard)
       const data = Store.get()
       const devices = (app.deviceIds || []).map((id) => data.devices.find((d) => d.id === id)).filter(Boolean)
       const assets = (app.assetIds || []).map((id) => data.assets.find((a) => a.id === id)).filter(Boolean)
@@ -2225,7 +2131,7 @@
         <a class="detail-back-link" href="applications.html">&larr; Back to Applications</a>
         <div class="page-header">
           <div>
-            <h1 class="page-title">${app.name}${app.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}</h1>
+            <h1 class="page-title">${app.name}${app.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}${template ? ` <span class="rt-template-badge" title="Built from the ${template.name} template v${template.version}">${iconSvg(template.icon)}${template.name}</span>` : ''}</h1>
             <p class="page-subtitle">${app.description || 'No description provided.'}</p>
           </div>
           <div class="page-header-actions">
@@ -2236,7 +2142,7 @@
           </div>
         </div>
 
-        ${isPms ? renderPmsBody() : isEms ? renderEmsBody() : isCms ? renderCmsBody() : isCustomDashboard ? renderCustomDashboardBody() : renderGenericBody(app, devices, assets)}`
+        ${isTemplate ? renderTemplateBody() : isEms ? renderEmsBody() : isCms ? renderCmsBody() : isCustomDashboard ? renderCustomDashboardBody() : renderGenericBody(app, devices, assets)}`
 
       document.getElementById('toggle-status-btn').addEventListener('click', () => {
         Store.toggleApplicationStatus(app.id)
@@ -2245,7 +2151,7 @@
       })
       document.getElementById('edit-app-btn').addEventListener('click', openEdit)
       document.getElementById('delete-app-btn')?.addEventListener('click', confirmDelete)
-      if (isPms) wirePmsBody()
+      if (isTemplate) AppRuntime.mount(document.getElementById('app-runtime-host'), app)
       else if (isEms) wireEmsBody()
       else if (isCms) wireCmsBody()
       else if (isCustomDashboard) wireCustomDashboardBody(app)

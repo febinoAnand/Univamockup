@@ -18,6 +18,7 @@ const NAV_SECTIONS = [
     label: 'Devices management',
     children: [
       { key: 'devices', label: 'Devices', icon: 'device', href: 'devices.html' },
+      { key: 'device-data', label: 'Data explorer', icon: 'database', href: 'device-data.html' },
       { key: 'device-profiles', label: 'Device profiles', icon: 'profile', href: 'device-profiles.html' },
       { key: 'credentials', label: 'Credentials', icon: 'credentials', href: 'credentials.html' },
       { key: 'software-ota', label: 'Software OTA', icon: 'cloud-ota', href: 'software-ota.html' },

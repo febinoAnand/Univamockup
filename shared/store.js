@@ -9,15 +9,68 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v22'
+const STORAGE_KEY = 'univa-html-demo-v23'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
+
+// ---------------------------------------------------------------- data points
+// A device profile declares the telemetry keys ("data points") every device
+// of that class reports — this is the schema of the `values` JSON column in
+// the single device-data table (see shared/telemetry.js and
+// docs/data-model.md). `kind` tells aggregations how to read a key:
+//   gauge   — instantaneous reading (avg / min / max / last)
+//   counter — monotonically increasing total (delta over a window)
+//   state   — enumerated status (time-in-state, state-change events)
+// `sim` only drives this mockup's deterministic data generator; a real
+// backend ignores it.
+const DEVICE_PROFILES_SEED = [
+  { id: 'p1', name: 'Vehicles', description: 'Vehicle telemetry profile.', metadata: [], isDefault: true, createdDate: '2025-11-02 09:14:00',
+    dataPoints: [
+      { key: 'speed', label: 'Speed', unit: 'km/h', type: 'number', kind: 'gauge', min: 0, max: 25, decimals: 1 },
+      { key: 'battery', label: 'Battery', unit: '%', type: 'number', kind: 'gauge', min: 20, max: 100, decimals: 0 },
+    ] },
+  { id: 'p2', name: 'HVAC units', description: 'Commercial HVAC monitoring profile.', metadata: [], isDefault: false, createdDate: '2025-12-19 14:02:00',
+    dataPoints: [
+      { key: 'temperature', label: 'Temperature', unit: '°C', type: 'number', kind: 'gauge', min: 16, max: 34, decimals: 1 },
+      { key: 'humidity', label: 'Humidity', unit: '%', type: 'number', kind: 'gauge', min: 30, max: 80, decimals: 0 },
+    ] },
+  { id: 'p3', name: 'Generators', description: 'Backup generator telemetry profile.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00',
+    dataPoints: [
+      { key: 'output_kw', label: 'Output power', unit: 'kW', type: 'number', kind: 'gauge', min: 0, max: 180, decimals: 1 },
+      { key: 'fuel_level', label: 'Fuel level', unit: '%', type: 'number', kind: 'gauge', min: 10, max: 100, decimals: 0 },
+    ] },
+  { id: 'p4', name: 'Machine PLC', description: 'Production machine controller — part/reject counters, run status, and spindle load.', metadata: [], isDefault: false, createdDate: '2026-02-02 10:00:00',
+    dataPoints: [
+      { key: 'part_count', label: 'Part count', unit: 'pcs', type: 'number', kind: 'counter', decimals: 0, sim: { rate: 1.9 } },
+      { key: 'reject_count', label: 'Reject count', unit: 'pcs', type: 'number', kind: 'counter', decimals: 0, sim: { fractionOf: 'part_count', ratio: 0.025 } },
+      { key: 'run_status', label: 'Run status', unit: '', type: 'string', kind: 'state', states: ['running', 'idle', 'down'], sim: { downProb: 0.07, idleProb: 0.06 } },
+      { key: 'spindle_load', label: 'Spindle load', unit: '%', type: 'number', kind: 'gauge', min: 20, max: 90, decimals: 1 },
+    ] },
+  { id: 'p5', name: 'Energy meter', description: 'Three-phase energy meter — cumulative kWh plus instantaneous power, voltage, and power factor.', metadata: [], isDefault: false, createdDate: '2026-02-02 10:05:00',
+    dataPoints: [
+      { key: 'energy_kwh', label: 'Energy', unit: 'kWh', type: 'number', kind: 'counter', decimals: 2, sim: { fromGauge: 'power_kw', divisor: 60 } },
+      { key: 'power_kw', label: 'Active power', unit: 'kW', type: 'number', kind: 'gauge', min: 20, max: 160, decimals: 2 },
+      { key: 'voltage', label: 'Voltage', unit: 'V', type: 'number', kind: 'gauge', min: 225, max: 235, decimals: 1 },
+      { key: 'pf', label: 'Power factor', unit: '', type: 'number', kind: 'gauge', min: 0.85, max: 0.99, decimals: 2 },
+    ] },
+]
+
+// Gauge data points double as a device's chart metrics (the same
+// {key,label,unit,baseline,amplitude,decimals} shape device-detail.js and
+// dashboard.js already simulate), so Device detail charts a profile's real
+// keys instead of the placeholder "Value" series.
+function metricsFromDataPoints(dataPoints) {
+  const gauges = (dataPoints || []).filter((dp) => dp.kind === 'gauge' && typeof dp.min === 'number' && typeof dp.max === 'number')
+  if (!gauges.length) return DEVICE_DEFAULT_METRICS
+  return gauges.map((dp) => ({ key: dp.key, label: dp.label || dp.key, unit: dp.unit || '', baseline: (dp.min + dp.max) / 2, amplitude: ((dp.max - dp.min) / 2) * 0.8, decimals: dp.decimals == null ? 1 : dp.decimals }))
+}
 
 // Mirrors createDeviceRecord()/createAlert()/seedCommands() in
 // src/modules/devices/deviceFactory.js so every device arrives with the same
 // shape the real app seeds (metadata rows, one metric, one alert, two
 // commands, an unavailable token) instead of Device detail hitting undefined.
-function deviceSeed(base) {
+function deviceSeed(base, profile) {
+  const resolvedProfile = profile || DEVICE_PROFILES_SEED.find((p) => p.name === base.profileName)
   const metadata = [
     { id: base.id + '-md1', key: 'appName', value: base.profileName },
     { id: base.id + '-md2', key: 'appVersion.name', value: base.profileName.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) + '-v1' },
@@ -31,7 +84,7 @@ function deviceSeed(base) {
     appVersionName: base.profileName.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) + '-v1',
     appVersionRegisteredDate: base.createdDate,
     metadata: metadata,
-    metrics: DEVICE_DEFAULT_METRICS,
+    metrics: metricsFromDataPoints(resolvedProfile && resolvedProfile.dataPoints),
     commandNames: ['Ping', 'Restart', 'Request status report'],
     tokenStatus: 'unavailable',
     tokenValue: null,
@@ -100,14 +153,21 @@ const DEFAULT_DATA = {
     deviceSeed({ id: 'd3', name: 'Rooftop HVAC unit', endpointId: 'ep-65310', state: 'offline', profileName: 'HVAC units', createdDate: '2026-01-08 11:47:00', metadataUpdatedDate: '2026-01-08 11:47:00', severity: 'critical', alertType: 'Device disconnected', alertReason: 'No heartbeat received for 15 minutes' }),
     deviceSeed({ id: 'd4', name: 'Generator 12', endpointId: 'ep-90142', state: 'online', profileName: 'Generators', createdDate: '2026-03-22 08:30:00', metadataUpdatedDate: '2026-03-22 08:30:00', severity: 'warning', alertType: 'Threshold breach', alertReason: 'Value reached 71.8 (threshold 70.0)' }),
     deviceSeed({ id: 'd5', name: 'Forklift Unit 7', endpointId: 'ep-90188', state: 'offline', profileName: 'Vehicles', createdDate: '2026-03-30 10:05:00', metadataUpdatedDate: '2026-03-30 10:05:00', severity: 'minor', alertType: 'Threshold breach', alertReason: 'Value reached 58.9 (threshold 55.0)' }),
+    // Production line A — one PLC per machine, feeding the PMS sample app.
+    ...[1, 2, 3, 4, 5, 6].map((n) => deviceSeed({ id: 'd' + (5 + n), name: `HSGMI${n} PLC`, endpointId: 'ep-6100' + n, state: 'online', profileName: 'Machine PLC', createdDate: '2026-02-03 09:0' + n + ':00', metadataUpdatedDate: '2026-02-03 09:0' + n + ':00', severity: 'warning', alertType: 'Machine down', alertReason: 'run_status reported "down" for more than 10 minutes' })),
+    deviceSeed({ id: 'd12', name: 'Main incomer meter', endpointId: 'ep-72001', state: 'online', profileName: 'Energy meter', createdDate: '2026-02-04 11:00:00', metadataUpdatedDate: '2026-02-04 11:00:00', severity: 'minor', alertType: 'Threshold breach', alertReason: 'power_kw reached 158.2 (threshold 150.0)' }),
+    deviceSeed({ id: 'd13', name: 'Compressor feeder meter', endpointId: 'ep-72002', state: 'online', profileName: 'Energy meter', createdDate: '2026-02-04 11:05:00', metadataUpdatedDate: '2026-02-04 11:05:00', severity: 'minor', alertType: 'Threshold breach', alertReason: 'pf dropped to 0.84 (threshold 0.85)' }),
   ],
-  deviceProfiles: [
-    { id: 'p1', name: 'Vehicles', description: 'Vehicle telemetry profile.', metadata: [], isDefault: true, createdDate: '2025-11-02 09:14:00' },
-    { id: 'p2', name: 'HVAC units', description: 'Commercial HVAC monitoring profile.', metadata: [], isDefault: false, createdDate: '2025-12-19 14:02:00' },
-    { id: 'p3', name: 'Generators', description: 'Backup generator telemetry profile.', metadata: [], isDefault: false, createdDate: '2026-01-08 11:47:00' },
-  ],
+  deviceProfiles: DEVICE_PROFILES_SEED,
   applications: [
-    { id: 'app0', name: 'PMS', description: 'Built-in system application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'dashboard', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    // PMS is template-driven: templateKey picks its definition from
+    // shared/app-templates.js, and bindings/settings are all this tenant's
+    // instance adds — which asset group, which shift schedule, and which
+    // device data point plays each role the template asks for (keyMap).
+    { id: 'app0', name: 'PMS', description: 'Production monitoring — output, OEE, shift reports, and downtime for Production line A.', status: 'active', deviceIds: [], assetIds: [], groupNames: ['Production line A'], metadata: [], icon: 'factory', isDefault: true, createdDate: '2025-11-01 08:00:00',
+      templateKey: 'production-monitoring',
+      bindings: { assetGroup: 'Production line A', assetIds: [], shiftScheduleId: 'ss3', keyMap: { count: 'part_count', rejects: 'reject_count', state: 'run_status', load: 'spindle_load' } },
+      settings: { oeeTarget: 75, reasonCodes: ['Breakdown', 'Tool change', 'Material shortage', 'Setup / changeover', 'Quality check', 'Other'] } },
     { id: 'app_ems', name: 'EMS', description: 'Built-in energy management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_notion', name: 'Notion', description: 'Built-in page workspace available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_cms', name: 'CMS', description: 'Built-in crane management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'device', isDefault: true, createdDate: '2025-11-01 08:00:00' },
@@ -120,16 +180,44 @@ const DEFAULT_DATA = {
     { id: 'a2', name: 'HVAC Compressor A', groupNames: ['HVAC units'], profileName: 'Rooftop HVAC unit', status: 'maintenance', location: 'Building 2 Roof', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2025-12-20 09:30:00' },
     { id: 'a3', name: 'Generator 12', groupNames: ['Generators'], profileName: 'Diesel generator', status: 'operational', location: 'East Depot', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2026-01-09 13:15:00' },
     { id: 'a4', name: 'Forklift Unit 7', groupNames: ['Vehicles'], profileName: 'Forklift', status: 'offline', location: 'Harbor Dock', deviceIds: [], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2026-03-22 08:45:00' },
+    // Machines on Production line A — each linked to its own PLC device, with
+    // per-asset attribute values for the "CNC machine" profile's schema.
+    ...[
+      { n: 1, target: 120, cycle: 28 }, { n: 2, target: 110, cycle: 30 }, { n: 3, target: 125, cycle: 27 },
+      { n: 4, target: 115, cycle: 29 }, { n: 5, target: 120, cycle: 28 }, { n: 6, target: 105, cycle: 32 },
+    ].map(({ n, target, cycle }) => ({
+      id: 'a' + (4 + n), name: 'HSGMI' + n, groupNames: ['Production line A'], profileName: 'CNC machine', status: 'operational', location: 'Plant 1 · Bay A',
+      deviceIds: ['d' + (5 + n)], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2026-02-03 09:30:00',
+      attributes: { workCenter: 'WC-0' + n, targetPerHour: target, idealCycleSec: cycle },
+    })),
+    { id: 'a11', name: 'Main incomer', groupNames: ['Utility meters'], profileName: 'Energy meter', status: 'operational', location: 'Main LT panel', deviceIds: ['d12'], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2026-02-04 11:10:00', attributes: { feeder: 'Incomer', tariffPerKwh: 8.5, contractDemandKw: 250 } },
+    { id: 'a12', name: 'Compressor feeder', groupNames: ['Utility meters'], profileName: 'Energy meter', status: 'operational', location: 'Compressor room', deviceIds: ['d13'], metadata: [], metrics: DEVICE_DEFAULT_METRICS, createdDate: '2026-02-04 11:12:00', attributes: { feeder: 'Compressor', tariffPerKwh: 8.5, contractDemandKw: 120 } },
   ],
   assetGroups: [
     { id: 'ag1', name: 'Vehicles', description: 'Forklifts, mobile cranes, and site transport.', createdDate: '2025-11-02 09:14:00' },
     { id: 'ag2', name: 'HVAC units', description: 'Rooftop and facility climate-control equipment.', createdDate: '2025-12-19 14:02:00' },
     { id: 'ag3', name: 'Generators', description: 'Backup and site power generation equipment.', createdDate: '2026-01-08 11:47:00' },
+    { id: 'ag4', name: 'Production line A', description: 'CNC machines HSGMI1–6 in Plant 1, Bay A.', createdDate: '2026-02-03 09:25:00' },
+    { id: 'ag5', name: 'Utility meters', description: 'Energy meters on the main incomer and major feeders.', createdDate: '2026-02-04 11:08:00' },
   ],
   assetProfiles: [
     { id: 'ap1', name: 'Forklift', category: 'Vehicle', description: 'Standard warehouse forklift telemetry profile.', metadata: [], createdDate: '2025-11-02 09:16:00' },
     { id: 'ap2', name: 'Rooftop HVAC unit', category: 'Facility equipment', description: 'Commercial HVAC monitoring profile.', metadata: [], createdDate: '2025-12-19 14:05:00' },
     { id: 'ap3', name: 'Diesel generator', category: 'Power equipment', description: 'Backup generator telemetry profile.', metadata: [], createdDate: '2026-01-08 11:50:00' },
+    // `attributes` is the typed schema of per-asset configuration; each
+    // asset stores its own values in asset.attributes.
+    { id: 'ap4', name: 'CNC machine', category: 'Machinery', description: 'Production machine with a target rate and ideal cycle time.', metadata: [], createdDate: '2026-02-03 09:20:00',
+      attributes: [
+        { key: 'workCenter', label: 'Work center', type: 'string', default: '' },
+        { key: 'targetPerHour', label: 'Target per hour', type: 'number', unit: 'pcs/h', default: 100 },
+        { key: 'idealCycleSec', label: 'Ideal cycle time', type: 'number', unit: 's', default: 30 },
+      ] },
+    { id: 'ap5', name: 'Energy meter', category: 'Power equipment', description: 'Metered electrical feeder with a tariff and contract demand.', metadata: [], createdDate: '2026-02-04 11:06:00',
+      attributes: [
+        { key: 'feeder', label: 'Feeder', type: 'string', default: '' },
+        { key: 'tariffPerKwh', label: 'Tariff', type: 'number', unit: '₹/kWh', default: 8 },
+        { key: 'contractDemandKw', label: 'Contract demand', type: 'number', unit: 'kW', default: 200 },
+      ] },
   ],
   ruleEngines: [
     // Scoped to a single device rather than all devices — demonstrates the Scope/Device fields.
@@ -138,6 +226,8 @@ const DEFAULT_DATA = {
     // Multiple conditions joined by OR — demonstrates the AND/OR condition builder.
     { id: 're3', name: 'Environmental combo alert', description: 'Warns facilities when either humidity or temperature drifts out of range.', status: 'active', scope: 'All devices', deviceId: '', conditionMode: 'builder', conditions: [{ metric: 'humidity', operator: '>', value: '70' }, { metric: 'temperature', operator: '>', value: '35' }], conditionLogic: 'OR', conditionFormula: '', triggerType: 'Telemetry received', actionType: 'Send notification', actionDetail: 'Humidity or temperature out of range', createdDate: '2026-03-05 10:20:00' },
     // Free-typed formula instead of the row builder — demonstrates the "Write formula" mode.
+    // Application-scoped rule on a profile data point — fires for any PMS machine.
+    { id: 're5', name: 'Machine down > 10 min', description: 'Alerts the line supervisor when a Production line A machine stays down for over 10 minutes.', status: 'active', scope: 'All devices', deviceId: '', conditionMode: 'builder', conditions: [{ metric: 'run_status', operator: '==', value: 'down' }], conditionLogic: 'AND', conditionFormula: '', triggerType: 'Telemetry received', actionType: 'Send notification', actionDetail: 'Machine down for more than 10 minutes', createdDate: '2026-02-05 09:00:00' },
     { id: 're4', name: 'Pressure drop with hot/humid combo', description: 'Custom expression combining three metrics beyond a simple AND/OR row.', status: 'active', scope: 'All devices', deviceId: '', conditionMode: 'formula', conditions: [], conditionLogic: 'AND', conditionFormula: '(temperature > 30 AND humidity > 70) OR pressure < 950', triggerType: 'Telemetry received', actionType: 'Send notification', actionDetail: 'Formula condition matched', createdDate: '2026-03-10 08:35:00' },
   ],
   ruleEngineExecutions: [
@@ -207,6 +297,7 @@ const DEFAULT_DATA = {
   shiftSchedules: [
     { id: 'ss1', name: 'Standard rotation', description: 'Default weekday/weekend rotation for warehouse staff.', assignments: { Mon: ['sh1'], Tue: ['sh1'], Wed: ['sh1'], Thu: ['sh1'], Fri: ['sh1'], Sat: ['sh1', 'sh2', 'sh3'], Sun: ['sh3'] }, createdDate: '2025-11-02 09:14:00' },
     { id: 'ss2', name: 'Evening coverage', description: 'Evening shift coverage for the facilities team.', assignments: { Mon: ['sh2'], Tue: ['sh2'], Wed: ['sh2'], Thu: ['sh2'], Fri: ['sh2', 'sh3'], Sat: [], Sun: [] }, createdDate: '2025-12-19 14:02:00' },
+    { id: 'ss3', name: 'Three-shift 24×7', description: 'Round-the-clock production coverage used by Production line A.', assignments: { Mon: ['sh1', 'sh2', 'sh3'], Tue: ['sh1', 'sh2', 'sh3'], Wed: ['sh1', 'sh2', 'sh3'], Thu: ['sh1', 'sh2', 'sh3'], Fri: ['sh1', 'sh2', 'sh3'], Sat: ['sh1', 'sh2', 'sh3'], Sun: ['sh1', 'sh2', 'sh3'] }, createdDate: '2026-02-03 09:40:00' },
   ],
   // Generated occurrences of a shift on a specific date — read-only history,
   // like ruleEngineExecutions above; not hand-edited, only removable.
@@ -220,6 +311,11 @@ const DEFAULT_DATA = {
     { id: 'si5', shiftName: 'Evening shift', scheduleName: 'Evening coverage', date: '2026-03-23', day: 'Mon', startTime: '14:00', endTime: '22:00', status: 'upcoming' },
     { id: 'si6', shiftName: 'Morning shift', scheduleName: 'Standard rotation', date: '2026-03-24', day: 'Tue', startTime: '06:00', endTime: '14:00', status: 'upcoming' },
   ],
+
+  // User-entered data owned by an application instance (downtime reason
+  // codes, manual entries, …) — one generic collection keyed by appId + type
+  // so a new application never needs its own table.
+  applicationRecords: [],
 
   // ---------------------------------------------------------- EMS (built-in app)
   emsTodReadings: [
@@ -449,7 +545,7 @@ const Store = {
       severity: 'warning',
       alertType: 'Threshold breach',
       alertReason: 'Value reached 65.0 (threshold 60.0)',
-    })
+    }, profile)
     data.devices.push(record)
     saveData(data)
     return record
@@ -588,7 +684,7 @@ const Store = {
   // ---------------------------------------------------- device profiles
   addDeviceProfile(data) {
     const store = loadData()
-    const record = { id: uid('p'), name: data.name, description: data.description, metadata: data.metadata ?? [], isDefault: false, createdDate: nowStamp() }
+    const record = { id: uid('p'), name: data.name, description: data.description, metadata: data.metadata ?? [], dataPoints: data.dataPoints ?? [], isDefault: false, createdDate: nowStamp() }
     store.deviceProfiles.push(record)
     saveData(store)
     return record
@@ -601,7 +697,12 @@ const Store = {
         if (d.profileName === previous.name) d.profileName = data.name
       })
     }
-    if (previous) Object.assign(previous, { name: data.name, description: data.description, metadata: data.metadata ?? previous.metadata })
+    if (previous) {
+      Object.assign(previous, { name: data.name, description: data.description, metadata: data.metadata ?? previous.metadata, dataPoints: data.dataPoints ?? previous.dataPoints ?? [] })
+      // Keep every device on this profile charting the profile's current gauges.
+      const metrics = metricsFromDataPoints(previous.dataPoints)
+      store.devices.forEach((d) => { if (d.profileName === previous.name) d.metrics = metrics })
+    }
     saveData(store)
   },
   removeDeviceProfile(id) {
@@ -635,18 +736,59 @@ const Store = {
     if (app) app.status = app.status === 'active' ? 'suspended' : 'active'
     saveData(store)
   },
+  // Creates an application instance from a template in shared/app-templates.js.
+  addApplicationFromTemplate(data) {
+    const store = loadData()
+    const bindings = data.bindings || {}
+    const record = {
+      id: uid('apn'), name: data.name, description: data.description || '', status: 'active',
+      deviceIds: [], assetIds: bindings.assetIds || [], groupNames: bindings.assetGroup ? [bindings.assetGroup] : [],
+      metadata: [], icon: data.icon || 'app', hasCustomDashboard: false,
+      templateKey: data.templateKey, bindings: bindings, settings: data.settings || {}, createdDate: nowStamp(),
+    }
+    store.applications.push(record)
+    saveData(store)
+    return record
+  },
+  updateApplicationBindings(id, bindings, settings) {
+    const store = loadData()
+    const app = store.applications.find((a) => a.id === id)
+    if (app) {
+      app.bindings = Object.assign({}, app.bindings || {}, bindings)
+      if (settings) app.settings = Object.assign({}, app.settings || {}, settings)
+      app.groupNames = app.bindings.assetGroup ? [app.bindings.assetGroup] : []
+      app.assetIds = app.bindings.assetIds || []
+    }
+    saveData(store)
+  },
+  // Upsert keyed by (appId, type, key) — e.g. one downtime-reason record per event.
+  upsertApplicationRecord(appId, type, key, data) {
+    const store = loadData()
+    store.applicationRecords = store.applicationRecords || []
+    let record = store.applicationRecords.find((r) => r.appId === appId && r.type === type && r.key === key)
+    if (record) {
+      Object.assign(record.data, data)
+      record.updatedDate = nowStamp()
+    } else {
+      record = { id: uid('rec'), appId, type, key, data: Object.assign({}, data), createdDate: nowStamp(), updatedDate: nowStamp() }
+      store.applicationRecords.push(record)
+    }
+    saveData(store)
+    return record
+  },
   removeApplication(id) {
     const store = loadData()
     const app = store.applications.find((a) => a.id === id)
     if (app?.isDefault) return
     store.applications = store.applications.filter((a) => a.id !== id)
+    store.applicationRecords = (store.applicationRecords || []).filter((r) => r.appId !== id)
     saveData(store)
   },
 
   // ------------------------------------------------------------- assets
   addAsset(data) {
     const store = loadData()
-    const record = { id: uid('a'), name: data.name, groupNames: data.groupNames ?? [], profileName: data.profileName, status: 'operational', location: data.location, deviceIds: data.deviceIds ?? [], metadata: data.metadata ?? [], metrics: DEVICE_DEFAULT_METRICS, createdDate: nowStamp() }
+    const record = { id: uid('a'), name: data.name, groupNames: data.groupNames ?? [], profileName: data.profileName, status: 'operational', location: data.location, deviceIds: data.deviceIds ?? [], metadata: data.metadata ?? [], attributes: data.attributes ?? {}, metrics: DEVICE_DEFAULT_METRICS, createdDate: nowStamp() }
     store.assets.push(record)
     saveData(store)
     return record
@@ -666,6 +808,13 @@ const Store = {
   removeAsset(id) {
     const store = loadData()
     store.assets = store.assets.filter((a) => a.id !== id)
+    saveData(store)
+  },
+  // Per-asset values for the attribute schema its asset profile declares.
+  updateAssetAttributes(assetId, attributes) {
+    const store = loadData()
+    const asset = store.assets.find((a) => a.id === assetId)
+    if (asset) asset.attributes = Object.assign({}, asset.attributes || {}, attributes)
     saveData(store)
   },
   // Asset metadata fields have no persistent id (unlike a device's), so
@@ -716,7 +865,7 @@ const Store = {
 
   addAssetProfile(data) {
     const store = loadData()
-    const record = { id: uid('ap'), name: data.name, category: data.category, description: data.description, metadata: data.metadata ?? [], createdDate: nowStamp() }
+    const record = { id: uid('ap'), name: data.name, category: data.category, description: data.description, metadata: data.metadata ?? [], attributes: data.attributes ?? [], createdDate: nowStamp() }
     store.assetProfiles.push(record)
     saveData(store)
     return record
@@ -729,7 +878,7 @@ const Store = {
         if (asset.profileName === previous.name) asset.profileName = data.name
       })
     }
-    if (previous) Object.assign(previous, { name: data.name, category: data.category, description: data.description, metadata: data.metadata ?? previous.metadata })
+    if (previous) Object.assign(previous, { name: data.name, category: data.category, description: data.description, metadata: data.metadata ?? previous.metadata, attributes: data.attributes ?? previous.attributes ?? [] })
     saveData(store)
   },
   removeAssetProfile(id) {
