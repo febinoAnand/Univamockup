@@ -338,25 +338,25 @@
         id: 'owner', name: 'Owner', tier: 'owner', system: true, userCount: 1,
         description: 'Full access to every area of the tenant. Cannot be edited or removed.',
         createdDate: '2025-11-02',
-        permissions: buildPermissions(['view', 'create', 'edit', 'delete']),
+        permissions: Store.getRolePermissions('Owner') || buildPermissions(['view', 'create', 'edit', 'delete']),
       },
       {
         id: 'admin', name: 'Admin', tier: 'admin', system: false, userCount: 1,
         description: 'Manage devices, assets, and users. Cannot delete other users.',
         createdDate: '2025-12-19',
-        permissions: buildPermissions(['view', 'create', 'edit', 'delete'], { users: ['view', 'create', 'edit'] }),
+        permissions: Store.getRolePermissions('Admin') || buildPermissions(['view', 'create', 'edit', 'delete'], { users: ['view', 'create', 'edit'] }),
       },
       {
         id: 'member', name: 'Member', tier: 'member', system: false, userCount: 1,
         description: 'Day-to-day device and asset operations.',
         createdDate: '2026-01-08',
-        permissions: buildPermissions(['view'], { devices: ['view', 'create', 'edit'], assets: ['view', 'create', 'edit'] }),
+        permissions: Store.getRolePermissions('Member') || buildPermissions(['view'], { devices: ['view', 'create', 'edit'], assets: ['view', 'create', 'edit'] }),
       },
       {
         id: 'viewer', name: 'Viewer', tier: 'viewer', system: false, userCount: 1,
         description: 'Read-only access across the tenant.',
         createdDate: '2026-03-22',
-        permissions: buildPermissions(['view']),
+        permissions: Store.getRolePermissions('Viewer') || buildPermissions(['view']),
       },
     ]
     let expandedModules = new Set()
@@ -639,6 +639,7 @@
       const role = roles.find((r) => r.id === editingRoleId)
       if (!role || role.system) return
       role.permissions = editDraft
+      Store.setRolePermissions(role.name, editDraft)
       UI.toast(`Permissions for "${role.name}" updated successfully!`)
       UI.closeModal('edit-permissions-modal')
       renderRoleRail()
