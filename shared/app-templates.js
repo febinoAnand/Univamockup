@@ -29,6 +29,13 @@
                     aggregates / additive formulas), 'avg', 'max', or
                     'formula' (re-evaluate on the rolled-up values; the
                     default for formulas, so ratios stay correct)
+     manualFields   default fields users type in by hand for this app
+                    (scrap, remarks, a hand-read meter…). Stored per
+                    application in applicationRecords — never in the
+                    device-data table. An instance can override the list
+                    (app.manualFields). kind: quantity (summed) | reading
+                    (averaged / last) | text (last).
+                    KPIs read them with { agg: 'manual', manual: key }.
      views          tabs; each `type` is a renderer in app-runtime.js
    ========================================================================== */
 (function () {
@@ -69,13 +76,22 @@
         { key: 'quality', label: 'Quality', formula: 'good / output', format: 'percent' },
         { key: 'oee', label: 'OEE', formula: 'availability * performance * quality', format: 'percent', targetSetting: 'oeeTarget' },
         { key: 'attainment', label: 'Attainment', formula: 'output / target', format: 'percent' },
+        { key: 'scrap', label: 'Scrap', unit: 'kg', agg: 'manual', manual: 'scrap_kg', format: 'number' },
+        { key: 'manualRejects', label: 'Manual rejects', unit: 'pcs', agg: 'manual', manual: 'manual_rejects', format: 'int' },
+      ],
+      manualFields: [
+        { key: 'scrap_kg', label: 'Scrap', unit: 'kg', type: 'number', kind: 'quantity' },
+        { key: 'manual_rejects', label: 'Manual rejects', unit: 'pcs', type: 'number', kind: 'quantity' },
+        { key: 'operator', label: 'Operator', unit: '', type: 'text', kind: 'text' },
+        { key: 'remarks', label: 'Remarks', unit: '', type: 'text', kind: 'text' },
       ],
       views: [
         { key: 'overview', label: 'Overview', type: 'kpi-overview', kpis: ['output', 'target', 'oee', 'availability', 'performance', 'quality'], cardKpis: ['output', 'target', 'oee'], progress: { value: 'output', of: 'target' }, chart: { kpi: 'output', compare: 'target', bucket: 'hour' } },
-        { key: 'production', label: 'Production', type: 'shift-matrix', kpis: ['output', 'target', 'rejects', 'oee', 'downMin'] },
+        { key: 'production', label: 'Production', type: 'shift-matrix', kpis: ['output', 'target', 'rejects', 'oee', 'downMin', 'scrap', 'manualRejects'] },
         { key: 'shift-report', label: 'Shift report', type: 'hourly-shift-report', kpi: 'output', compare: 'target' },
         { key: 'downtime', label: 'Downtime', type: 'event-log', role: 'state', state: 'down', reasonSetting: 'reasonCodes' },
         { key: 'machines', label: 'Machines', type: 'entity-table', columns: ['count', 'state', 'load'] },
+        { key: 'entries', label: 'Manual entries', type: 'entry-log' },
         { key: 'configuration', label: 'Configuration', type: 'bindings' },
       ],
     },
@@ -107,10 +123,15 @@
         { key: 'cost', label: 'Cost', formula: 'energy * tariffPerKwh', combine: 'sum', format: 'currency' },
         { key: 'demandUse', label: 'Peak vs contract', formula: 'peakPower / contractDemandKw', combine: 'max', format: 'percent' },
       ],
+      manualFields: [
+        { key: 'meter_reading_kwh', label: 'Hand-read meter reading', unit: 'kWh', type: 'number', kind: 'reading' },
+        { key: 'remarks', label: 'Remarks', unit: '', type: 'text', kind: 'text' },
+      ],
       views: [
         { key: 'overview', label: 'Overview', type: 'kpi-overview', kpis: ['energy', 'cost', 'avgPower', 'peakPower', 'avgPf'], cardKpis: ['energy', 'cost', 'peakPower'], progress: { value: 'demandUse' }, chart: { kpi: 'energy', bucket: 'hour' } },
         { key: 'consumption', label: 'Consumption by shift', type: 'shift-matrix', kpis: ['energy', 'cost', 'peakPower'] },
         { key: 'meters', label: 'Meters', type: 'entity-table', columns: ['energy', 'power', 'pf'] },
+        { key: 'entries', label: 'Manual entries', type: 'entry-log' },
         { key: 'configuration', label: 'Configuration', type: 'bindings' },
       ],
     },
@@ -143,11 +164,17 @@
         { key: 'utilisation', label: 'Utilisation', formula: 'runMin / plannedMin', format: 'percent' },
         { key: 'loadFactor', label: 'Peak vs SWL', formula: 'peakLoad / safeWorkingLoad', combine: 'max', format: 'percent' },
       ],
+      manualFields: [
+        { key: 'inspection', label: 'Daily inspection', unit: '', type: 'select', kind: 'text', options: ['OK', 'Needs attention', 'Out of service'] },
+        { key: 'lifts_logged', label: 'Lifts logged', unit: '', type: 'number', kind: 'quantity' },
+        { key: 'remarks', label: 'Remarks', unit: '', type: 'text', kind: 'text' },
+      ],
       views: [
         { key: 'overview', label: 'Overview', type: 'kpi-overview', kpis: ['utilisation', 'runMin', 'downMin', 'avgLoad', 'peakLoad'], cardKpis: ['utilisation', 'peakLoad', 'downMin'], progress: { value: 'utilisation' }, chart: { kpi: 'runMin', bucket: 'hour' } },
         { key: 'utilisation', label: 'Utilisation by shift', type: 'shift-matrix', kpis: ['utilisation', 'runMin', 'downMin', 'peakLoad'] },
         { key: 'faults', label: 'Faults', type: 'event-log', role: 'state', state: 'down', reasonSetting: 'reasonCodes' },
         { key: 'cranes', label: 'Cranes', type: 'entity-table', columns: ['state', 'load', 'energy'] },
+        { key: 'entries', label: 'Manual entries', type: 'entry-log' },
         { key: 'configuration', label: 'Configuration', type: 'bindings' },
       ],
     },

@@ -131,7 +131,10 @@
     const baseline = (min + max) / 2
     const amplitude = ((max - min) / 2) * 0.8
     const rng = mulberry32(hashString(`${ctx.id}:${dp.key}:${minute}`))
-    const trend = Math.sin(minute / 180) * amplitude
+    // Per-device phase so machines on the same line don't trace identical
+    // curves (dashboard.js's single-device widgets don't need this).
+    const phase = hashString(`${ctx.id}:${dp.key}:phase`) % 1131
+    const trend = Math.sin((minute + phase) / 180) * amplitude
     const noise = (rng() - 0.5) * amplitude * 0.15
     return Math.max(0, baseline + trend + noise)
   }
@@ -387,6 +390,22 @@
       if (agg === 'min') return min
       if (agg === 'max') return max
       return round(sum / count, dp.decimals)
+    },
+
+    // GET /device-data/series — one point per bucket: avg for gauges,
+    // delta for counters. `bucketMs` omitted → at most ~240 points.
+    series({ deviceId, key, from, to, bucketMs }) {
+      const ctx = contextFor(deviceId)
+      if (!isReporting(ctx) || !ctx.dpByKey[key] || ctx.dpByKey[key].kind === 'state') return []
+      const dp = ctx.dpByKey[key]
+      const end = Math.min(to, Date.now())
+      const step = bucketMs || Math.max(MINUTE_MS, Math.ceil((end - from) / 240 / MINUTE_MS) * MINUTE_MS)
+      const agg = dp.kind === 'counter' ? 'delta' : 'avg'
+      const points = []
+      for (let t = from; t < end; t += step) {
+        points.push({ ts: t, value: DataTable.aggregate({ deviceId, key, agg, from: t, to: Math.min(t + step, end) }) })
+      }
+      return points
     },
 
     // GET /device-data/events — periods a state key spent at `state`.

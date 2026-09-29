@@ -7,8 +7,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
+  <link rel="stylesheet" href="shared/notion-data-blocks.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
-  <title>Notion — Univa</title>
+  <title>Custom App — Univa</title>
   <style>
     /* Same "detail card" chrome application-detail.html uses for every
        application's page (header, status pill, count tiles, etc.) —
@@ -259,60 +261,18 @@
 
 
     /* ------------------------------------------------------------- Notion
-       A lightweight page-workspace: a sidebar of pages plus a block editor
-       (heading/text/to-do/bullet/divider) for the selected page. Sits inside
-       the same .detail-card used elsewhere on this page. */
-    .notion-workspace {
-      display: flex;
-      align-items: flex-start;
-      gap: 1.5rem;
+       A lightweight page-workspace: one tab per page (same .detail-tabs
+       strip the other applications use for their views) plus a block
+       editor for the selected page inside a .detail-card. */
+    .notion-page-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: thin;
     }
-    .notion-sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      width: 220px;
+    .notion-page-tabs .detail-tab-button {
       flex-shrink: 0;
-      padding-right: 1.25rem;
-      border-right: 1px solid var(--border);
-    }
-    .notion-sidebar .solid-action-button {
-      width: 100%;
-      justify-content: center;
-    }
-    .notion-page-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-      max-height: 420px;
-      overflow-y: auto;
-    }
-    .notion-page-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      width: 100%;
-      padding: 0.5rem 0.6rem;
-      border: none;
-      border-left: 2px solid transparent;
-      border-radius: 8px;
-      background: none;
-      color: var(--text-subtle);
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-align: left;
-      cursor: pointer;
-      transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
-    }
-    .notion-page-item:hover {
-      background: var(--surface-alt);
-      transform: translateX(1px);
-    }
-    .notion-page-item.active {
-      background: var(--accent-soft);
-      border-left-color: var(--accent);
-      color: var(--text);
-      font-weight: 700;
+      max-width: 220px;
+      white-space: nowrap;
     }
     .notion-page-icon {
       flex-shrink: 0;
@@ -320,11 +280,15 @@
       line-height: 1;
     }
     .notion-page-title {
-      flex: 1 1 auto;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+    }
+    .notion-new-page-tab {
+      color: var(--accent) !important;
+    }
+    .notion-new-page-tab:hover {
+      color: var(--accent-hover) !important;
     }
     .notion-editor {
       flex: 1 1 auto;
@@ -1379,16 +1343,6 @@
       color: var(--success-dark);
     }
     @media (max-width: 720px) {
-      .notion-workspace {
-        flex-direction: column;
-      }
-      .notion-sidebar {
-        width: 100%;
-        padding-right: 0;
-        padding-bottom: 1rem;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-      }
       .notion-db-content {
         margin-left: 0;
       }
@@ -1442,6 +1396,11 @@
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
+  <script src="shared/telemetry.js"></script>
+  <script src="shared/app-templates.js"></script>
+  <script src="shared/app-entries.js"></script>
+  <script src="shared/app-runtime.js"></script>
+  <script src="shared/notion-data-blocks.js"></script>
   <script>
     // The application id travels in the URL hash — see device-detail.html
     // for why (a hash survives a static-file server in a way a query string
@@ -1452,10 +1411,6 @@
       return Store.get().applications.find((a) => a.id === applicationId)
     }
 
-    function notionSearchIcon() {
-      return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>'
-    }
-
     // ---------------------------------------------------------- Notion
     // Notion is the third built-in application: a lightweight page
     // workspace (sidebar of searchable pages + a block editor) instead of
@@ -1463,8 +1418,6 @@
     // never triggers a full renderPage() (it would drop input focus) —
     // only structural changes (add/delete/move/convert/switch page) do.
     let notionActivePageId = null
-    let notionPageSearch = ''
-    let notionRefocusSearch = false
     let notionFocusBlockId = null
     let notionDraggedBlockId = null
     let notionGlobalClickListenerAttached = false
@@ -1490,6 +1443,9 @@
       { type: 'countdown', label: 'Countdown' },
       { type: 'habit', label: 'Habit tracker' },
       { type: 'database', label: 'Database' },
+      // Live data blocks (telemetry + application-wise manual entry) —
+      // implemented in shared/notion-data-blocks.js.
+      ...NotionDataBlocks.types,
     ]
     const NOTION_TIMER_PRESETS = [
       { label: 'Focus 25', minutes: 25 },
@@ -1541,6 +1497,7 @@
       return block.properties && block.properties.length ? block.properties : NOTION_DB_DEFAULT_PROPERTIES
     }
     function notionBlockData(type) {
+      if (NotionDataBlocks.isDataBlock(type)) return NotionDataBlocks.defaults(type)
       if (type === 'divider' || type === 'toc' || type === 'clock') return { type }
       if (type === 'database') return { type, view: 'table', properties: NOTION_DB_DEFAULT_PROPERTIES.map((p) => Object.assign({}, p, p.options ? { options: p.options.slice() } : {})), items: [] }
       if (type === 'todo') return { type, text: '', checked: false }
@@ -1682,6 +1639,9 @@
       }
       if (block.type === 'database') {
         return renderNotionDatabaseBlock(block, dragHandle, actions)
+      }
+      if (NotionDataBlocks.isDataBlock(block.type)) {
+        return NotionDataBlocks.render(block, dragHandle, actions)
       }
       if (block.type === 'image' || block.type === 'video' || block.type === 'embed') {
         return renderNotionMediaBlock(block, dragHandle, actions)
@@ -1829,7 +1789,7 @@
     function notionEmbedGalleryHtml() {
       return `
         <div class="notion-embed-gallery">
-          <p class="notion-embed-gallery-title">Paste a link from any of these — this one block works with all of them, the same way Notion's own /embed does:</p>
+          <p class="notion-embed-gallery-title">Paste a link from any of these — this one block works with all of them:</p>
           <div class="notion-embed-gallery-grid">
             ${NOTION_EMBED_GALLERY.map(
               (c) => `
@@ -2030,6 +1990,7 @@
     // renderPage(), an add/delete block, or switching pages, with no
     // per-block cleanup needed.
     function notionTickLiveWidgets() {
+      NotionDataBlocks.tick()
       document.querySelectorAll('[data-notion-clock]').forEach((el) => {
         const now = new Date()
         const formatted = notionFormatClock(now)
@@ -2351,36 +2312,27 @@
     }
 
     function renderNotionBody() {
-      const allPages = Store.get().notionPages || []
-      if (!notionActivePageId || !allPages.some((p) => p.id === notionActivePageId)) {
-        notionActivePageId = allPages.length > 0 ? allPages[0].id : null
+      const pages = Store.get().notionPages || []
+      if (!notionActivePageId || !pages.some((p) => p.id === notionActivePageId)) {
+        notionActivePageId = pages.length > 0 ? pages[0].id : null
       }
-      const term = notionPageSearch.trim().toLowerCase()
-      const pages = term ? allPages.filter((p) => (p.title || 'Untitled').toLowerCase().includes(term)) : allPages
-      const activePage = allPages.find((p) => p.id === notionActivePageId) || null
+      const activePage = pages.find((p) => p.id === notionActivePageId) || null
       return `
+        <div class="detail-tabs notion-page-tabs" role="tablist">
+          ${pages
+            .map(
+              (p) => `
+            <button type="button" role="tab" class="detail-tab-button${p.id === notionActivePageId ? ' active' : ''}" data-notion-page="${p.id}" aria-selected="${p.id === notionActivePageId}" title="${p.title || 'Untitled'}">
+              <span class="notion-page-icon">${p.icon || '📄'}</span>
+              <span class="notion-page-title">${p.title || 'Untitled'}</span>
+            </button>`,
+            )
+            .join('')}
+          <button type="button" class="detail-tab-button notion-new-page-tab" id="notion-new-page-btn" title="Create a new page">${notionAddIcon()}New page</button>
+        </div>
         <div class="detail-card">
-          <div class="notion-workspace">
-            <aside class="notion-sidebar">
-              <button type="button" class="solid-action-button" id="notion-new-page-btn">${notionAddIcon()}New page</button>
-              <div class="table-search-wrap" style="margin-bottom:0;">${notionSearchIcon()}<input type="text" id="notion-page-search" placeholder="Search pages" value="${notionPageSearch}" /></div>
-              <div class="notion-page-list">
-                ${pages.length === 0
-                  ? '<span class="section-empty">No pages found</span>'
-                  : pages
-                      .map(
-                        (p) => `
-                  <button type="button" class="notion-page-item${p.id === notionActivePageId ? ' active' : ''}" data-notion-page="${p.id}">
-                    <span class="notion-page-icon">${p.icon || '📄'}</span>
-                    <span class="notion-page-title">${p.title || 'Untitled'}</span>
-                  </button>`,
-                      )
-                      .join('')}
-              </div>
-            </aside>
-            <div class="notion-editor">
-              ${activePage ? renderNotionEditor(activePage) : '<span class="section-empty">No page selected. Create a page to get started.</span>'}
-            </div>
+          <div class="notion-editor">
+            ${activePage ? renderNotionEditor(activePage) : '<span class="section-empty">No pages yet. Use "New page" to create one.</span>'}
           </div>
         </div>`
     }
@@ -2396,27 +2348,17 @@
         const page = Store.addNotionPage({ title: 'Untitled' })
         notionActivePageId = page.id
         renderPage()
+        const title = document.getElementById('notion-title-input')
+        if (title) title.select()
+        document.querySelector(`[data-notion-page="${page.id}"]`)?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
       })
-      document.getElementById('notion-page-search')?.addEventListener('input', (event) => {
-        notionPageSearch = event.target.value
-        notionRefocusSearch = true
-        renderPage()
-      })
-      if (notionRefocusSearch) {
-        notionRefocusSearch = false
-        const searchInput = document.getElementById('notion-page-search')
-        if (searchInput) {
-          searchInput.focus()
-          searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length)
-        }
-      }
 
       const titleInput = document.getElementById('notion-title-input')
       if (titleInput) {
         titleInput.addEventListener('input', () => {
           Store.updateNotionPage(notionActivePageId, { title: titleInput.value })
-          const sidebarTitle = document.querySelector(`[data-notion-page="${notionActivePageId}"] .notion-page-title`)
-          if (sidebarTitle) sidebarTitle.textContent = titleInput.value.trim() || 'Untitled'
+          const tabTitle = document.querySelector(`[data-notion-page="${notionActivePageId}"] .notion-page-title`)
+          if (tabTitle) tabTitle.textContent = titleInput.value.trim() || 'Untitled'
         })
       }
       document.getElementById('notion-delete-page-btn')?.addEventListener('click', () => {
@@ -2928,6 +2870,8 @@
         })
       })
 
+      NotionDataBlocks.wire(notionActivePageId, renderPage)
+
       if (notionFocusBlockId) {
         const focusEl = document.querySelector(`[data-notion-block-text="${notionFocusBlockId}"]`)
         if (focusEl) {
@@ -3018,7 +2962,7 @@
       breadcrumbs: [
         { label: 'Home', href: 'dashboard.html' },
         { label: 'Applications', href: 'applications.html' },
-        { label: 'Notion' },
+        { label: (getApp() || {}).name || 'Custom App' },
       ],
     })
     renderPage()

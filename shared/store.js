@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v23'
+const STORAGE_KEY = 'univa-html-demo-v25'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -145,6 +145,35 @@ function emsMeterSeed(base) {
   return Object.assign({}, base, { metrics: emsMeterMetrics(base) })
 }
 
+// A few PMS manual entries from earlier today, relative to first load, so
+// the "Line A shift log" page and PMS's Manual entries tab aren't empty.
+function seedManualEntries() {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const at = (h, m) => today.getTime() + (h * 60 + m) * 60000
+  const now = Date.now()
+  const rows = [
+    ['a5', 7, 20, { scrap_kg: 1.8, remarks: 'Burr on first-off parts' }],
+    ['a6', 8, 5, { scrap_kg: 0.9 }],
+    ['a7', 9, 40, { scrap_kg: 2.4, manual_rejects: 6, remarks: 'Tool wear — insert changed' }],
+    ['a5', 10, 15, { manual_rejects: 3 }],
+    ['a8', 11, 30, { scrap_kg: 1.1 }],
+    ['a9', 12, 50, { scrap_kg: 3.2, manual_rejects: 4, remarks: 'Material hardness out of spec' }],
+    ['a10', 13, 10, { scrap_kg: 0.6 }],
+    ['a5', 14, 45, { scrap_kg: 1.4, operator: 'R. Kumar' }],
+    ['a6', 15, 20, { manual_rejects: 2 }],
+    ['a7', 16, 35, { scrap_kg: 2.0 }],
+    ['a5', 17, 55, { scrap_kg: 0.8, remarks: 'Coolant topped up' }],
+    ['a8', 19, 5, { scrap_kg: 1.5, manual_rejects: 5 }],
+  ]
+  return rows
+    .filter(([, h, m]) => at(h, m) <= now)
+    .map(([entityId, h, m, data], i) => ({
+      id: 'rec-seed' + i, appId: 'app0', type: 'manual-entry', key: null, entityId, ts: at(h, m), data, enteredBy: 'admin',
+      createdDate: '', updatedDate: '',
+    }))
+}
+
 const DEFAULT_DATA = {
   auth: { loggedIn: false, username: '', pendingApproval: false },
   devices: [
@@ -169,7 +198,7 @@ const DEFAULT_DATA = {
       bindings: { assetGroup: 'Production line A', assetIds: [], shiftScheduleId: 'ss3', keyMap: { count: 'part_count', rejects: 'reject_count', state: 'run_status', load: 'spindle_load' } },
       settings: { oeeTarget: 75, reasonCodes: ['Breakdown', 'Tool change', 'Material shortage', 'Setup / changeover', 'Quality check', 'Other'] } },
     { id: 'app_ems', name: 'EMS', description: 'Built-in energy management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
-    { id: 'app_notion', name: 'Notion', description: 'Built-in page workspace available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    { id: 'app_notion', name: 'Custom App', description: 'Built-in page workspace for notes, logs, and live data — available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_cms', name: 'CMS', description: 'Built-in crane management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'device', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], groupNames: ['Vehicles'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
     { id: 'app2', name: 'Field Technician', description: 'Companion app for on-site maintenance crews.', status: 'active', deviceIds: ['d2'], assetIds: ['a2'], groupNames: ['HVAC units'], metadata: [], icon: 'users', createdDate: '2025-12-19 14:02:00' },
@@ -314,8 +343,10 @@ const DEFAULT_DATA = {
 
   // User-entered data owned by an application instance (downtime reason
   // codes, manual entries, …) — one generic collection keyed by appId + type
-  // so a new application never needs its own table.
-  applicationRecords: [],
+  // so a new application never needs its own table. Manual data is
+  // deliberately application-wise: it lives here, never in the device-data
+  // table (shared/telemetry.js), which stays device telemetry only.
+  applicationRecords: seedManualEntries(),
 
   // ---------------------------------------------------------- EMS (built-in app)
   emsTodReadings: [
@@ -362,7 +393,7 @@ const DEFAULT_DATA = {
     {
       id: 'np1', title: 'Getting started', icon: '📄', createdDate: '2025-11-01 08:00:00', updatedDate: '2025-11-01 08:00:00',
       blocks: [
-        { id: 'nb1', type: 'heading', text: 'Welcome to Notion' },
+        { id: 'nb1', type: 'heading', text: 'Welcome to Custom App' },
         { id: 'nb20', type: 'toc' },
         { id: 'nb2', type: 'text', text: 'This is a lightweight page workspace built into Univa.' },
         { id: 'nb3', type: 'callout', text: 'Type "/" at the start of a block to quickly change its type.' },
@@ -372,7 +403,7 @@ const DEFAULT_DATA = {
         { id: 'nb7', type: 'bullet', text: 'Bulleted list item' },
         { id: 'nb8', type: 'numbered', text: 'Numbered list item' },
         { id: 'nb9', type: 'quote', text: 'Blocks can be dragged to reorder, or press Enter / Backspace like a real editor.' },
-        { id: 'nb10', type: 'code', text: "console.log('Hello, Notion!')" },
+        { id: 'nb10', type: 'code', text: "console.log('Hello, world!')" },
         { id: 'nb21', type: 'math', text: 'E = mc^2' },
         { id: 'nb11', type: 'divider' },
         { id: 'nb12', type: 'text', text: 'Headings, text, to-dos, bullets, numbered lists, quotes, callouts, code, and dividers are all supported blocks.' },
@@ -393,11 +424,49 @@ const DEFAULT_DATA = {
             { id: 'di1', title: 'Design review', status: 'In progress', tag: 'Design', date: '2026-03-18', endDate: '2026-03-20' },
             { id: 'di2', title: 'Ship EMS meter dashboard', status: 'Done', tag: 'Engineering', date: '2026-03-10', endDate: '2026-03-15' },
             { id: 'di3', title: 'Write onboarding docs', status: 'Not started', tag: 'Docs', date: '2026-03-25', endDate: '' },
-            { id: 'di4', title: 'QA pass on Notion app', status: 'In progress', tag: 'QA', date: '2026-03-20', endDate: '2026-03-24' },
+            { id: 'di4', title: 'QA pass on Custom App', status: 'In progress', tag: 'QA', date: '2026-03-20', endDate: '2026-03-24' },
             { id: 'di5', title: 'Plan Q2 roadmap', status: 'Not started', tag: 'Planning', date: '2026-04-02', endDate: '' },
             { id: 'di6', title: 'Customer demo prep', status: 'Done', tag: 'Sales', date: '2026-03-12', endDate: '2026-03-13' },
           ],
         },
+      ],
+    },
+    // Live data page bound to PMS: telemetry blocks read the device-data
+    // table; manual columns / the form write PMS's own applicationRecords.
+    {
+      id: 'np3', title: 'Line A shift log', icon: '📊', createdDate: '2026-02-06 08:00:00', updatedDate: '2026-02-06 08:00:00',
+      blocks: [
+        { id: 'nb30', type: 'heading', text: 'Production line A — shift log' },
+        { id: 'nb31', type: 'callout', text: 'Output and downtime fill in automatically from machine telemetry. Scrap, rejects, operator, and remarks are typed in and saved to the PMS application.' },
+        { id: 'nb32', type: 'data-cards', appId: 'app0', title: 'Today at a glance', cards: [
+          { id: 'c1', label: 'Output today', source: 'telemetry', scope: 'all', key: 'part_count', agg: 'today-delta' },
+          { id: 'c2', label: 'Machines running', source: 'telemetry', scope: 'all', key: 'run_status', agg: 'last' },
+          { id: 'c3', label: 'Avg spindle load', source: 'telemetry', scope: 'all', key: 'spindle_load', agg: 'last' },
+          { id: 'c4', label: 'Scrap today', source: 'manual', scope: 'all', key: 'scrap_kg', agg: 'today-total' },
+        ] },
+        { id: 'nb33', type: 'heading2', text: 'HSGMI1 hourly log' },
+        { id: 'nb34', type: 'data-sheet', appId: 'app0', title: 'HSGMI1 · hourly', rowsMode: 'time', timeUnit: 'hour', assetId: 'a5', shiftId: 'all', columns: [
+          { id: 'out', label: 'Output', source: 'telemetry', key: 'part_count', agg: 'delta' },
+          { id: 'down', label: 'Down (min)', source: 'telemetry', key: 'run_status', agg: 'timeInState:down' },
+          { id: 'rej', label: 'Rejects', source: 'manual', key: 'manual_rejects' },
+          { id: 'good', label: 'Good', source: 'formula', formula: 'out - rej' },
+          { id: 'scrap', label: 'Scrap (kg)', source: 'manual', key: 'scrap_kg' },
+          { id: 'op', label: 'Operator', source: 'manual', key: 'operator' },
+          { id: 'rem', label: 'Remarks', source: 'manual', key: 'remarks' },
+        ] },
+        { id: 'nb35', type: 'heading2', text: 'Line summary by machine' },
+        { id: 'nb36', type: 'data-sheet', appId: 'app0', title: 'All machines · today', rowsMode: 'assets', timeUnit: 'hour', assetId: '', shiftId: 'all', columns: [
+          { id: 'out', label: 'Output', source: 'telemetry', key: 'part_count', agg: 'delta' },
+          { id: 'run', label: 'Run (min)', source: 'telemetry', key: 'run_status', agg: 'timeInState:running' },
+          { id: 'scrap', label: 'Scrap (kg)', source: 'manual', key: 'scrap_kg' },
+          { id: 'kgper', label: 'Scrap / 1000 pcs', source: 'formula', formula: 'scrap / out * 1000' },
+        ] },
+        { id: 'nb37', type: 'data-chart', appId: 'app0', title: 'Spindle load today', range: 'today', bucket: 'hour', chartType: 'line', series: [
+          { id: 's1', assetId: 'a5', source: 'telemetry', key: 'spindle_load' },
+          { id: 's2', assetId: 'a6', source: 'telemetry', key: 'spindle_load' },
+          { id: 's3', assetId: 'a5', source: 'manual', key: 'scrap_kg' },
+        ] },
+        { id: 'nb38', type: 'data-form', appId: 'app0', title: 'Log scrap & rejects', fields: ['scrap_kg', 'manual_rejects', 'remarks'], allowTimestamp: true },
       ],
     },
     {
@@ -761,20 +830,44 @@ const Store = {
     }
     saveData(store)
   },
-  // Upsert keyed by (appId, type, key) — e.g. one downtime-reason record per event.
-  upsertApplicationRecord(appId, type, key, data) {
+  // Upsert keyed by (appId, type, key) — e.g. one downtime-reason record
+  // per event, or one Data-sheet row per (block, asset, time slot).
+  // `extra` sets top-level fields such as entityId / ts.
+  upsertApplicationRecord(appId, type, key, data, extra) {
     const store = loadData()
     store.applicationRecords = store.applicationRecords || []
     let record = store.applicationRecords.find((r) => r.appId === appId && r.type === type && r.key === key)
     if (record) {
       Object.assign(record.data, data)
+      Object.assign(record, extra || {})
       record.updatedDate = nowStamp()
     } else {
-      record = { id: uid('rec'), appId, type, key, data: Object.assign({}, data), createdDate: nowStamp(), updatedDate: nowStamp() }
+      record = Object.assign({ id: uid('rec'), appId, type, key, data: Object.assign({}, data), enteredBy: store.auth.username || 'admin', createdDate: nowStamp(), updatedDate: nowStamp() }, extra || {})
       store.applicationRecords.push(record)
     }
     saveData(store)
     return record
+  },
+  // Append-only record, e.g. a manual-entry form submission.
+  addApplicationRecord(appId, type, fields) {
+    const store = loadData()
+    store.applicationRecords = store.applicationRecords || []
+    const record = Object.assign({ id: uid('rec'), appId, type, key: null, data: {}, enteredBy: store.auth.username || 'admin', createdDate: nowStamp(), updatedDate: nowStamp() }, fields)
+    store.applicationRecords.push(record)
+    saveData(store)
+    return record
+  },
+  removeApplicationRecord(id) {
+    const store = loadData()
+    store.applicationRecords = (store.applicationRecords || []).filter((r) => r.id !== id)
+    saveData(store)
+  },
+  // Instance-level manual field list (overrides the template's defaults).
+  setApplicationManualFields(appId, fields) {
+    const store = loadData()
+    const app = store.applications.find((a) => a.id === appId)
+    if (app) app.manualFields = fields
+    saveData(store)
   },
   removeApplication(id) {
     const store = loadData()

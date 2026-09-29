@@ -265,7 +265,7 @@
       tbody.innerHTML = apps
         .map(
           (a) => `
-        <tr class="clickable-row" data-open="${a.name === 'Notion' ? 'notion.html#' + a.id : 'application-detail.html#' + a.id}">
+        <tr class="clickable-row" data-open="${a.id === 'app_notion' ? 'notion.html#' + a.id : 'application-detail.html#' + a.id}">
           <td class="card-title-cell"><div class="group-name-cell"><span>${a.name}${a.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}${templateBadge(a)}</span>${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
           <td data-label="Devices">${boundCounts(a, data).devices}</td>
           <td data-label="Assets">${boundCounts(a, data).assets}</td>

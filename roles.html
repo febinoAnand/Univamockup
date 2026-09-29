@@ -162,7 +162,7 @@
         { key: 'powerRange', label: 'Power range (kW/kVA)' },
         { key: 'frequencyRange', label: 'Frequency range' },
       ] },
-      { key: 'notionPages', label: 'Notion pages', iconFamily: 'app', fields: [
+      { key: 'notionPages', label: 'Custom App pages', iconFamily: 'app', fields: [
         { key: 'title', label: 'Page title' },
         { key: 'icon', label: 'Page icon' },
         { key: 'blocks', label: 'Page content (blocks)' },
@@ -246,7 +246,8 @@
         key: 'app:' + app.id,
         label: `${app.name} (${template.name})`,
         iconFamily: 'app',
-        fields: template.views.map((view) => ({ key: 'view:' + view.key, label: view.label + ' tab' })),
+        fields: template.views.map((view) => ({ key: 'view:' + view.key, label: view.label + ' tab' }))
+          .concat([{ key: 'manualEntries', label: 'Manual data entry (forms & data sheets)' }]),
       })
     })
 

@@ -458,3 +458,14 @@
 }
 .rt-tabs::-webkit-scrollbar { display: none; }
 .rt-tabs .detail-tab-button { flex-shrink: 0; white-space: nowrap; }
+
+/* Manual entries view — quick-add row. */
+.rt-entry-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.rt-entry-form .rt-field input,
+.rt-entry-form .rt-field select { min-width: 140px; }
+.dx-ts { font-variant-numeric: tabular-nums; white-space: nowrap; }

@@ -112,20 +112,46 @@ These are rows in `applications`. The fields added for templates:
 
 Time windows come from the bound **shift schedule**. The shifts assigned to the chosen date's weekday become the report columns. A shift whose end is before its start runs past midnight.
 
-## 7. `application_records`
+## 7. `application_records`: application-wise manual data
 
-This table holds user-entered data an application owns. The UI currently uses it for downtime reason codes; it can later hold manual production entries, EMS TOD readings, and similar data.
+This table holds user-entered data an application owns. **Manual data is always application-wise.** Scrap weighed by an operator, rejects counted by hand, remarks and hand-read meters are stored here against the application they were entered for. They are **never written to `device_data`**, which stays device telemetry only.
 
 | field | notes |
 |---|---|
+| `id` | |
 | `app_id` | Owning application instance |
-| `type` | e.g. `event-reason` |
-| `key` | Upsert key within (app, type), e.g. the event id `deviceId:startMinute` |
-| `data` | JSONB payload, e.g. `{ reason, entityId, start, minutes }` |
+| `type` | `manual-entry` (manual data), `event-reason` (downtime reasons), … |
+| `key` | Optional upsert key within (app, type). Data sheets use `sheet:<blockId>\|<assetId>\|<slotStart>` so re-editing a cell updates it. Form submissions append with `key = null` |
+| `entity_id` | Asset the entry is about |
+| `ts` | Time the entry applies to (the slot start for a data sheet row, or the chosen time for a form) |
+| `data` | JSONB, e.g. `{ "scrap_kg": 4.5, "remarks": "Tool wear" }` |
+| `entered_by`, `created_at`, `updated_at` | Audit |
+
+**Manual fields.** Which keys an application collects is defined by its template's `manualFields` (`{ key, label, unit, type: number|text|select, kind: quantity|reading|text, options? }`). An instance can override them in `applications.manual_fields`, which is edited in the app's Configuration tab. Aggregation by kind:
+- `quantity` is summed over a window.
+- `reading` is averaged.
+- `text` takes the latest value.
+
+Templates use manual data in KPIs with `{ agg: 'manual', manual: '<key>' }`. For example, PMS's Scrap KPI is `{ agg: 'manual', manual: 'scrap_kg' }`.
+
+`shared/app-entries.js` (`AppEntries.list / aggregate / series / add / upsert / remove`) is the read/write API. It is shaped like `DataTable`, so a screen reads telemetry and manual data in the same way.
+
+## 7a. Custom App data blocks
+
+Custom App pages (the built-in page workspace; `notion_pages.blocks`, JSONB) can embed four live-data blocks from `shared/notion-data-blocks.js`. Each block stores an `appId` and reads that application's bound assets.
+
+| block | reads | writes |
+|---|---|---|
+| `data-cards` | `device_data` aggregates, app manual entries | — |
+| `data-chart` | `device_data` series, manual entries (markers) | — |
+| `data-sheet` | `device_data` per row window (telemetry columns) | manual columns → `application_records` (upsert) |
+| `data-form` | recent app entries | `application_records` (append) |
+
+A block's config (cards, series, sheet columns with `telemetry | manual | formula` sources) is stored inside the block. Formula columns reference other column ids.
 
 ## 8. Permissions
 
-Roles & permissions lists one module per template application, with one field per template view (`view:overview`, `view:downtime`, …). This allows tab-level access control.
+Roles & permissions lists one module per template application. It has one field per template view (`view:overview`, `view:downtime`, …), plus `manualEntries` for manual data entry. This allows tab-level access control and a separate permission to enter data.
 
 ## Migration notes
 

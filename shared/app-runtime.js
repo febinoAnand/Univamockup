@@ -207,6 +207,9 @@
       let v = null
       if (k.agg === 'minutes') {
         v = DataTable.aggregate({ agg: 'minutes', from, to })
+      } else if (k.agg === 'manual') {
+        // Application-wise manual data (AppEntries), not device telemetry.
+        v = window.AppEntries ? AppEntries.aggregate({ appId: rt.app.id, entityId: entity.id, key: k.manual, from, to }) : null
       } else if (k.agg) {
         const key = keyMap[k.role]
         const role = rt.template.roles.find((r) => r.role === k.role)
@@ -662,14 +665,90 @@
     wire() {},
   }
 
+  // ------------------------------------------------------------ entry-log
+  // This application's manual entries (AppEntries → applicationRecords):
+  // quick-add row on top, filtered table below. Notion's data-form and
+  // data-sheet blocks write to the same records.
+  function manualInputHtml(field, attrs) {
+    if (field.type === 'select') return `<select ${attrs}><option value="">—</option>${(field.options || []).map((o) => `<option>${esc(o)}</option>`).join('')}</select>`
+    return `<input type="${field.type === 'number' ? 'number' : 'text'}" step="any" ${attrs} placeholder="${esc(field.unit || '')}" />`
+  }
+
+  VIEWS['entry-log'] = {
+    render(rt) {
+      if (!window.AppEntries) return '<p class="section-empty">Manual entries are unavailable on this page.</p>'
+      const fields = AppEntries.fields(rt.app.id)
+      const from = atTime(rt.ui.date, '00:00')
+      const to = atTime(rt.ui.date, '00:00', 1)
+      const ids = rt.ui.entityId === 'all' ? null : [rt.ui.entityId]
+      const rows = AppEntries.list({ appId: rt.app.id, entityIds: ids, from, to })
+      const byId = {}
+      rt.entities.forEach((e) => { byId[e.id] = e })
+      const summary = fields.filter((f) => f.kind !== 'text').map((f) => {
+        const v = AppEntries.aggregate({ appId: rt.app.id, entityIds: ids, key: f.key, from, to })
+        return `<div class="rt-kpi-tile"><span class="rt-kpi-label">${esc(f.label)}${f.kind === 'reading' ? ' (avg)' : ''}</span><span class="rt-kpi-value">${v == null ? '—' : (Math.round(v * 100) / 100).toLocaleString()}${f.unit ? ` <small class="rt-muted">${esc(f.unit)}</small>` : ''}</span><span class="rt-kpi-sub">${esc(rt.ui.date)}</span></div>`
+      }).join('')
+      const tableRows = rows.map((r) => `
+        <tr>
+          <td data-label="Time" class="dx-ts">${localIso(new Date(r.ts)) === rt.ui.date ? clock(r.ts) : stamp(r.ts)}</td>
+          <td data-label="${esc(rt.template.entity.label)}">${byId[r.entityId] ? `<a href="asset-detail.html#${r.entityId}">${esc(byId[r.entityId].name)}</a>` : esc(r.entityId || '—')}</td>
+          ${fields.map((f) => `<td data-label="${esc(f.label)}">${r.data[f.key] == null || r.data[f.key] === '' ? '<span class="rt-muted">—</span>' : esc(r.data[f.key])}</td>`).join('')}
+          <td data-label="Source"><span class="rt-muted">${(r.key || '').startsWith('sheet:') ? 'Data sheet' : 'Form'} · ${esc(r.enteredBy || '')}</span></td>
+          <td class="data-table-menu-col"><button type="button" class="notion-row-del rt-link-btn" data-entry-delete="${r.id}" title="Delete entry" aria-label="Delete entry">&times;</button></td>
+        </tr>`).join('')
+      return `
+        ${toolbar(rt, { entity: true })}
+        ${summary ? `<div class="rt-kpi-grid">${summary}</div>` : ''}
+        <div class="detail-card">
+          <h2><span class="section-icon">${iconSvg('clipboard')}</span>Add entry<span class="rt-card-note">saved to ${esc(rt.app.name)} only, not the device data table</span></h2>
+          ${fields.length && rt.entities.length ? `
+          <div class="rt-entry-form">
+            <label class="rt-field"><span>${esc(rt.template.entity.label)}</span><select data-entry-entity>${rt.entities.map((e) => `<option value="${e.id}"${rt.ui.entityId === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>
+            ${fields.map((f) => `<label class="rt-field"><span>${esc(f.label)}${f.unit ? ` (${esc(f.unit)})` : ''}</span>${manualInputHtml(f, `data-entry-field="${esc(f.key)}"`)}</label>`).join('')}
+            <button type="button" class="modal-button primary" data-entry-add>Add entry</button>
+          </div>` : `<p class="section-empty">${fields.length ? 'Bind an asset group first.' : 'No manual fields yet. Add some in the Configuration tab.'}</p>`}
+        </div>
+        <div class="detail-card">
+          <h2><span class="section-icon">${iconSvg('list')}</span>Entries<span class="rt-card-note">${rows.length} on ${esc(rt.ui.date)}</span></h2>
+          ${rows.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Time</th><th>${esc(rt.template.entity.label)}</th>${fields.map((f) => `<th>${esc(f.label)}${f.unit ? `<span class="rt-th-sub">${esc(f.unit)}</span>` : ''}</th>`).join('')}<th>Source</th><th class="data-table-menu-col"></th></tr></thead><tbody>${tableRows}</tbody></table></div>` : '<p class="section-empty">No entries on this date.</p>'}
+        </div>`
+    },
+    wire(rt) {
+      document.querySelector('[data-entry-add]')?.addEventListener('click', () => {
+        const data = {}
+        document.querySelectorAll('[data-entry-field]').forEach((el) => {
+          if (el.value === '') return
+          const field = AppEntries.field(rt.app.id, el.getAttribute('data-entry-field'))
+          data[field.key] = field.type === 'number' ? Number(el.value) : el.value
+        })
+        if (!Object.keys(data).length) {
+          UI.toast('Enter at least one value.')
+          return
+        }
+        const isToday = rt.ui.date === localIso(new Date())
+        AppEntries.add({ appId: rt.app.id, entityId: document.querySelector('[data-entry-entity]').value, ts: isToday ? Date.now() : atTime(rt.ui.date, '12:00'), data })
+        UI.toast('Entry added')
+        rerender()
+      })
+      document.querySelectorAll('[data-entry-delete]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          AppEntries.remove(btn.getAttribute('data-entry-delete'))
+          UI.toast('Entry deleted')
+          rerender()
+        }),
+      )
+    },
+  }
+
   // -------------------------------------------------------------- bindings
   let bindingsDraft = null
+  const MANUAL_KINDS = { number: ['quantity', 'reading'], text: ['text'], select: ['text'] }
 
   VIEWS.bindings = {
     render(rt) {
       const data = Store.get()
       if (!bindingsDraft || bindingsDraft.appId !== rt.app.id) {
-        bindingsDraft = { appId: rt.app.id, bindings: JSON.parse(JSON.stringify(rt.app.bindings || {})), settings: Object.assign({}, rt.settings) }
+        bindingsDraft = { appId: rt.app.id, bindings: JSON.parse(JSON.stringify(rt.app.bindings || {})), settings: Object.assign({}, rt.settings), manualFields: window.AppEntries ? JSON.parse(JSON.stringify(AppEntries.fields(rt.app.id))) : null }
         bindingsDraft.bindings.keyMap = bindingsDraft.bindings.keyMap || {}
       }
       const b = bindingsDraft.bindings
@@ -728,6 +807,21 @@
               <table class="data-table"><thead><tr><th>Role</th><th>Kind</th><th>Data point</th></tr></thead><tbody>${roleRows}</tbody></table>
             </div>
             ${settingFields ? `<h3 class="rt-subheading">Settings</h3><div class="rt-form-grid">${settingFields}</div>` : ''}
+            ${bindingsDraft.manualFields ? `
+            <h3 class="rt-subheading">Manual fields</h3>
+            <p class="rt-help">Data people type in for this application, such as scrap, remarks, or a hand-read meter. It is stored with this application only, not in the device data table. Custom App data blocks and the Manual entries tab use these fields. <em>Quantity</em> values are summed, <em>reading</em> values are averaged, and <em>text</em> keeps the latest value.</p>
+            <div>${bindingsDraft.manualFields.map((f, i) => `
+              <div class="dp-row" style="grid-template-columns: 1fr 1.2fr 0.6fr 0.8fr 0.8fr 1.2fr auto;">
+                <div class="modal-field"><label>Key*</label><input type="text" data-mf="${i}" data-mf-field="key" value="${esc(f.key)}" /></div>
+                <div class="modal-field"><label>Label</label><input type="text" data-mf="${i}" data-mf-field="label" value="${esc(f.label)}" /></div>
+                <div class="modal-field"><label>Unit</label><input type="text" data-mf="${i}" data-mf-field="unit" value="${esc(f.unit || '')}" /></div>
+                <div class="modal-field"><label>Type</label><select data-mf="${i}" data-mf-field="type">${['number', 'text', 'select'].map((t) => `<option${f.type === t ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
+                <div class="modal-field"><label>Kind</label><select data-mf="${i}" data-mf-field="kind">${(MANUAL_KINDS[f.type] || ['text']).map((k) => `<option${f.kind === k ? ' selected' : ''}>${k}</option>`).join('')}</select></div>
+                <div class="modal-field"><label>Options</label><input type="text" data-mf="${i}" data-mf-field="options" value="${esc((f.options || []).join(', '))}" ${f.type === 'select' ? '' : 'disabled'} placeholder="${f.type === 'select' ? 'A, B, C' : 'select only'}" /></div>
+                <button type="button" class="dp-remove" data-mf-remove="${i}" aria-label="Remove field" title="Remove field">&times;</button>
+              </div>`).join('')}
+              <button type="button" class="metadata-add" data-mf-add>+ Add manual field</button>
+            </div>` : ''}
             <div class="rt-actions">
               <button type="button" class="modal-button secondary" data-bindings-reset>Discard changes</button>
               <button type="button" class="modal-button primary" data-bindings-save>Save configuration</button>
@@ -783,12 +877,43 @@
           bindingsDraft.settings[key] = type === 'list' ? el.value.split('\n').map((s) => s.trim()).filter(Boolean) : type === 'number' ? Number(el.value) : el.value
         }),
       )
+      document.querySelectorAll('[data-mf]').forEach((el) =>
+        el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+          const field = bindingsDraft.manualFields[Number(el.getAttribute('data-mf'))]
+          const prop = el.getAttribute('data-mf-field')
+          field[prop] = prop === 'options' ? el.value.split(',').map((x) => x.trim()).filter(Boolean) : el.value
+          if (prop === 'type') {
+            field.kind = MANUAL_KINDS[field.type][0]
+            rerender()
+          }
+        }),
+      )
+      document.querySelectorAll('[data-mf-remove]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          bindingsDraft.manualFields.splice(Number(btn.getAttribute('data-mf-remove')), 1)
+          rerender()
+        }),
+      )
+      document.querySelector('[data-mf-add]')?.addEventListener('click', () => {
+        bindingsDraft.manualFields.push({ key: '', label: '', unit: '', type: 'number', kind: 'quantity' })
+        rerender()
+      })
       document.querySelector('[data-bindings-reset]')?.addEventListener('click', () => {
         bindingsDraft = null
         rerender()
       })
       document.querySelector('[data-bindings-save]')?.addEventListener('click', () => {
         const missing = rt.template.roles.filter((r) => r.required && !bindingsDraft.bindings.keyMap[r.role])
+        if (bindingsDraft.manualFields) {
+          const fields = bindingsDraft.manualFields
+            .filter((f) => String(f.key).trim())
+            .map((f) => Object.assign({}, f, { key: String(f.key).trim(), label: String(f.label || '').trim() || String(f.key).trim() }))
+          if (new Set(fields.map((f) => f.key)).size !== fields.length) {
+            UI.toast('Manual field keys must be unique.')
+            return
+          }
+          Store.setApplicationManualFields(rt.app.id, fields)
+        }
         Store.updateApplicationBindings(rt.app.id, bindingsDraft.bindings, bindingsDraft.settings)
         bindingsDraft = null
         UI.toast(missing.length ? 'Configuration saved — some required roles are still unmapped.' : 'Configuration saved successfully!')
@@ -883,6 +1008,12 @@
     candidateDataPoints,
     autoKeyMap,
     evalFormula,
+    // Shared with Notion data blocks (shared/notion-data-blocks.js).
+    entitiesFor,
+    shiftWindows,
+    localIso,
+    atTime,
+    clock,
   }
 
   window.AppRuntime = AppRuntime
