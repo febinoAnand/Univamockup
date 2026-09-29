@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
+  <style>
+    .detail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .detail-card h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin: 0 0 1rem;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .dx-schema {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 0.6rem;
+    }
+    .dx-schema-col {
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-alt);
+    }
+    .dx-schema-col code { font-weight: 700; color: var(--accent-strong-text); }
+    .dx-schema-col span { display: block; margin-top: 0.2rem; font-size: 0.76rem; color: var(--text-muted); line-height: 1.4; }
+    .dx-values {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+    .dx-chip {
+      display: inline-flex;
+      gap: 0.25rem;
+      padding: 0.12rem 0.45rem;
+      border-radius: 6px;
+      background: var(--surface-alt);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.74rem;
+      white-space: nowrap;
+    }
+    .dx-chip b { color: var(--text-subtle); font-weight: 600; }
+    .dx-row { cursor: pointer; }
+    .dx-row.dx-new td { animation: dx-flash 1.6s ease-out; }
+    @keyframes dx-flash { from { background: var(--accent-soft-strong); } to { background: transparent; } }
+    .dx-json-row td { background: var(--surface-alt); }
+    .dx-json-row pre {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.76rem;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .dx-pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding-top: 0.9rem;
+      font-size: 0.82rem;
+      color: var(--text-subtle);
+    }
+    .dx-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      height: 38px;
+      padding: 0 0.85rem;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      background: var(--surface);
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .dx-live.on { border-color: var(--accent); color: var(--accent-strong-text); background: var(--accent-soft); }
+    .dx-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); }
+    .dx-live.on .dx-live-dot { background: var(--accent); animation: rt-pulse 1.4s ease-in-out infinite; }
+    .dx-ts { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  </style>
+  <title>Data explorer — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content dx-page" id="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Data explorer</h1>
+            <p class="page-subtitle">Every message from every device, stored in one table. Any device and any application, with no per-application tables.</p>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <details id="schema-details">
+            <summary style="cursor:pointer; font-weight:700; font-size:0.92rem;">Table schema: <code>device_data</code> (one row per message)</summary>
+            <p class="rt-help" style="margin-top:0.75rem;">Devices report on the data points their <a href="device-profiles.html">device profile</a> declares. Those keys go into the <code>values</code> JSON column, so adding a new device type or application never changes this table. Applications read from it through aggregations (delta, average, time in state) over time windows.</p>
+            <div class="dx-schema">
+              <div class="dx-schema-col"><code>id</code><span>Message id (device + timestamp)</span></div>
+              <div class="dx-schema-col"><code>ts</code><span>Time the device took the reading (timestamptz; partition/hypertable key)</span></div>
+              <div class="dx-schema-col"><code>tenant_id</code><span>Owning tenant; every query is scoped by it</span></div>
+              <div class="dx-schema-col"><code>device_id</code><span>Sending device</span></div>
+              <div class="dx-schema-col"><code>asset_id</code><span>Asset the device was linked to at ingest time (nullable)</span></div>
+              <div class="dx-schema-col"><code>profile_id</code><span>Device profile, which gives the meaning of each key in values</span></div>
+              <div class="dx-schema-col"><code>values</code><span>JSONB, e.g. {"part_count": 15320, "run_status": "running"}</span></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="rt-kpi-grid" id="dx-stats"></div>
+
+        <div class="rt-toolbar">
+          <label class="rt-field"><span>Device</span><select id="f-device"></select></label>
+          <label class="rt-field"><span>Asset</span><select id="f-asset"></select></label>
+          <label class="rt-field"><span>Application</span><select id="f-app"></select></label>
+          <label class="rt-field"><span>Time range</span>
+            <select id="f-range">
+              <option value="300000">Last 5 minutes</option>
+              <option value="3600000" selected>Last 1 hour</option>
+              <option value="86400000">Last 24 hours</option>
+              <option value="604800000">Last 7 days</option>
+            </select>
+          </label>
+          <label class="rt-field"><span>Has key</span><input type="text" id="f-key" placeholder="e.g. part_count" /></label>
+          <span class="rt-toolbar-spacer"></span>
+          <button type="button" class="dx-live" id="live-btn" title="Poll for new messages every 5 seconds"><span class="dx-live-dot"></span>Live</button>
+        </div>
+
+        <div class="detail-card" style="padding-top:0.75rem;">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Timestamp</th><th>Device</th><th>Asset</th><th>Profile</th><th>values</th></tr></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="dx-pager" id="pager"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script src="shared/telemetry.js"></script>
+  <script src="shared/app-templates.js"></script>
+  <script>
+    Layout.mount({
+      active: 'device-data',
+      breadcrumbs: [
+        { label: 'Home', href: 'dashboard.html' },
+        { label: 'Device management', href: 'devices.html' },
+        { label: 'Data explorer' },
+      ],
+    })
+
+    const PAGE_SIZE = 25
+    let page = 1
+    let expanded = new Set()
+    let seenIds = new Set()
+    let live = false
+    let liveTimer = null
+
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+    }
+
+    function stamp(ms) {
+      const d = new Date(ms)
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    }
+
+    // A template app's devices are the devices of the assets it binds.
+    function appDeviceIds(app, data) {
+      if (!app) return null
+      const groups = app.bindings && app.bindings.assetGroup ? [app.bindings.assetGroup] : app.groupNames || []
+      const assets = data.assets.filter((a) => (app.assetIds || []).includes(a.id) || (a.groupNames || []).some((g) => groups.includes(g)))
+      return Array.from(new Set((app.deviceIds || []).concat(...assets.map((a) => a.deviceIds || []))))
+    }
+
+    function populateFilters() {
+      const data = Store.get()
+      const hashDevice = window.location.hash.slice(1)
+      document.getElementById('f-device').innerHTML = '<option value="">All devices</option>' + data.devices.map((d) => `<option value="${d.id}"${d.id === hashDevice ? ' selected' : ''}>${esc(d.name)}${d.state === 'offline' ? ' (offline)' : ''}</option>`).join('')
+      document.getElementById('f-asset').innerHTML = '<option value="">All assets</option>' + data.assets.filter((a) => (a.deviceIds || []).length).map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('')
+      document.getElementById('f-app').innerHTML = '<option value="">All applications</option>' + data.applications.filter((a) => appDeviceIds(a, data).length).map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('')
+    }
+
+    function currentQuery() {
+      const data = Store.get()
+      const deviceId = document.getElementById('f-device').value
+      const assetId = document.getElementById('f-asset').value
+      const app = data.applications.find((a) => a.id === document.getElementById('f-app').value)
+      let deviceIds = deviceId ? [deviceId] : null
+      const appIds = appDeviceIds(app, data)
+      if (appIds) deviceIds = deviceIds ? deviceIds.filter((id) => appIds.includes(id)) : appIds
+      const range = Number(document.getElementById('f-range').value)
+      const now = Date.now()
+      return {
+        deviceIds: deviceIds && deviceIds.length === 0 ? ['__none__'] : deviceIds,
+        assetIds: assetId ? [assetId] : null,
+        from: now - range,
+        to: now,
+        keyContains: document.getElementById('f-key').value,
+      }
+    }
+
+    function renderStats(total, q) {
+      const data = Store.get()
+      const scoped = data.devices.filter((d) => !q.deviceIds || q.deviceIds.includes(d.id))
+      const reporting = scoped.filter((d) => d.state !== 'offline')
+      const keys = new Set()
+      reporting.forEach((d) => DataTable.dataPointsFor(d.id).forEach((dp) => keys.add(dp.key)))
+      document.getElementById('dx-stats').innerHTML = `
+        <div class="rt-kpi-tile"><span class="rt-kpi-label">Rows in range</span><span class="rt-kpi-value">${total.toLocaleString()}</span><span class="rt-kpi-sub">1 message / device / minute</span></div>
+        <div class="rt-kpi-tile"><span class="rt-kpi-label">Reporting devices</span><span class="rt-kpi-value">${reporting.length} / ${scoped.length}</span><span class="rt-kpi-sub">Offline devices send nothing</span></div>
+        <div class="rt-kpi-tile"><span class="rt-kpi-label">Distinct keys</span><span class="rt-kpi-value">${keys.size}</span><span class="rt-kpi-sub">Across all profiles in scope</span></div>
+        <div class="rt-kpi-tile"><span class="rt-kpi-label">Tables used</span><span class="rt-kpi-value">1</span><span class="rt-kpi-sub">device_data, for every app</span></div>`
+    }
+
+    function render() {
+      const data = Store.get()
+      const q = currentQuery()
+      const first = DataTable.query(Object.assign({}, q, { offset: 0, limit: 0 }))
+      const total = first.total
+      const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+      if (page > pages) page = pages
+      const { rows } = DataTable.query(Object.assign({}, q, { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE }))
+      renderStats(total, q)
+
+      const tbody = document.getElementById('tbody')
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-table-note">No messages match these filters. Offline devices don\'t report.</td></tr>'
+      } else {
+        tbody.innerHTML = rows.map((row) => {
+          const device = data.devices.find((d) => d.id === row.deviceId)
+          const asset = row.assetId && data.assets.find((a) => a.id === row.assetId)
+          const profile = data.deviceProfiles.find((p) => p.id === row.profileId)
+          const isNew = seenIds.size && !seenIds.has(row.id)
+          const chips = Object.entries(row.values).map(([k, v]) => `<span class="dx-chip"><b>${esc(k)}</b>${esc(v)}</span>`).join('')
+          return `
+            <tr class="dx-row${isNew ? ' dx-new' : ''}" data-row="${row.id}" title="Click to show the raw row">
+              <td data-label="Timestamp" class="dx-ts">${stamp(row.ts)}</td>
+              <td data-label="Device"><a href="device-detail.html#${row.deviceId}" onclick="event.stopPropagation()">${esc(device ? device.name : row.deviceId)}</a></td>
+              <td data-label="Asset">${asset ? `<a href="asset-detail.html#${asset.id}" onclick="event.stopPropagation()">${esc(asset.name)}</a>` : '<span class="rt-muted">—</span>'}</td>
+              <td data-label="Profile">${esc(profile ? profile.name : '—')}</td>
+              <td data-label="values"><div class="dx-values">${chips || '<span class="rt-muted">{}</span>'}</div></td>
+            </tr>
+            ${expanded.has(row.id) ? `<tr class="dx-json-row"><td colspan="5"><pre>${esc(JSON.stringify(row, null, 2))}</pre></td></tr>` : ''}`
+        }).join('')
+      }
+      seenIds = new Set(rows.map((r) => r.id))
+
+      document.querySelectorAll('[data-row]').forEach((tr) =>
+        tr.addEventListener('click', () => {
+          const id = tr.getAttribute('data-row')
+          if (expanded.has(id)) expanded.delete(id)
+          else expanded.add(id)
+          render()
+        }),
+      )
+
+      const startN = total ? (page - 1) * PAGE_SIZE + 1 : 0
+      document.getElementById('pager').innerHTML = `
+        <span>${startN.toLocaleString()}–${Math.min(total, page * PAGE_SIZE).toLocaleString()} of ${total.toLocaleString()} rows · newest first</span>
+        <span class="pagination" style="padding:0;">
+          <button type="button" class="page-btn" data-page="1" ${page <= 1 ? 'disabled' : ''}>First</button>
+          <button type="button" class="page-btn" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>Previous</button>
+          <button type="button" class="page-btn active" disabled>${page.toLocaleString()} / ${pages.toLocaleString()}</button>
+          <button type="button" class="page-btn" data-page="${page + 1}" ${page >= pages ? 'disabled' : ''}>Next</button>
+        </span>`
+      document.querySelectorAll('[data-page]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          page = Number(btn.getAttribute('data-page'))
+          seenIds = new Set()
+          render()
+        }),
+      )
+    }
+
+    function resetAndRender() {
+      page = 1
+      expanded = new Set()
+      seenIds = new Set()
+      render()
+    }
+
+    populateFilters()
+    ;['f-device', 'f-asset', 'f-app', 'f-range'].forEach((id) => document.getElementById(id).addEventListener('change', resetAndRender))
+    document.getElementById('f-key').addEventListener('input', resetAndRender)
+    document.getElementById('live-btn').addEventListener('click', () => {
+      live = !live
+      document.getElementById('live-btn').classList.toggle('on', live)
+      clearInterval(liveTimer)
+      if (live) {
+        page = 1
+        render()
+        liveTimer = setInterval(() => { if (page === 1) render() }, 5000)
+        UI.toast('Live mode on: polling every 5 seconds')
+      }
+    })
+    render()
+  </script>
+</body>
+</html>

@@ -272,6 +272,30 @@
       ]
     }
 
+    // Typed attribute schema from the asset's profile (e.g. targetPerHour on
+    // a "CNC machine") — values live on asset.attributes and are what
+    // template applications read in their KPI formulas.
+    function profileAttributes(asset) {
+      const profile = Store.get().assetProfiles.find((p) => p.name === asset.profileName)
+      return (profile && profile.attributes) || []
+    }
+
+    function renderAttributeBlock(asset) {
+      const schema = profileAttributes(asset)
+      if (!schema.length) return ''
+      const values = asset.attributes || {}
+      return `
+        <div class="asset-attr-block" style="margin:0.25rem 0 0.75rem; padding:0.75rem; border:1px solid var(--border); border-radius:12px; background:var(--surface-alt);">
+          <p style="margin:0 0 0.5rem; font-size:0.72rem; font-weight:700; color:var(--text-subtle); text-transform:uppercase; letter-spacing:0.04em;">${escapeHtml(asset.profileName)} attributes</p>
+          ${schema.map((a) => `
+          <label class="metadata-list-row" style="align-items:center;">
+            <span class="metadata-key">${escapeHtml(a.label || a.key)}${a.unit ? ` <span style="color:var(--text-faint);">(${escapeHtml(a.unit)})</span>` : ''}</span>
+            <input type="${a.type === 'number' ? 'number' : 'text'}" step="any" data-asset-attr="${escapeHtml(a.key)}" data-asset-attr-type="${a.type}" value="${escapeHtml(values[a.key] ?? a.default ?? '')}" style="width:120px; height:32px; padding:0 0.5rem; border:1px solid var(--border-strong); border-radius:8px; font:inherit; font-size:0.82rem;" />
+          </label>`).join('')}
+          <div style="text-align:right; margin-top:0.4rem;"><button type="button" class="text-link" id="asset-attr-save">Save attributes</button></div>
+        </div>`
+    }
+
     function renderMetadataPanel() {
       const asset = getAsset()
       const query = md.search.trim().toLowerCase()
@@ -288,6 +312,7 @@
         </div>
         ${md.searchOpen ? `<input type="text" class="metadata-search-input" id="metadata-search-input" placeholder="Search metadata" value="${escapeHtml(md.search)}" />` : ''}
         <div class="metadata-scroll" id="metadata-scroll">
+          ${renderAttributeBlock(asset)}
           ${visibleDetails.map((field) => `
           <div class="metadata-list-row">
             <span class="metadata-key">${escapeHtml(field.key)}</span>
@@ -327,6 +352,15 @@
     }
 
     function wireMetadataPanelEvents() {
+      document.getElementById('asset-attr-save')?.addEventListener('click', () => {
+        const attrs = {}
+        document.querySelectorAll('[data-asset-attr]').forEach((input) => {
+          attrs[input.getAttribute('data-asset-attr')] = input.getAttribute('data-asset-attr-type') === 'number' ? Number(input.value) : input.value
+        })
+        Store.updateAssetAttributes(assetId, attrs)
+        UI.toast('Attributes saved')
+        rerenderMetadataPanel()
+      })
       const panel = document.getElementById('metadata-panel')
       document.getElementById('metadata-search-toggle').addEventListener('click', () => { md.searchOpen = !md.searchOpen; rerenderMetadataPanel() })
       const searchInput = document.getElementById('metadata-search-input')

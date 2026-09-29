@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
   <style>
     .default-profile-badge {
       display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.55rem;
@@ -23,7 +24,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Device profiles</h1>
-            <p class="page-subtitle">Templates that define shared metadata for a class of devices</p>
+            <p class="page-subtitle">Templates that define the data points and shared metadata for a class of devices</p>
           </div>
           <div class="page-header-actions">
             <button type="button" class="solid-action-button" id="add-btn">
@@ -44,7 +45,7 @@
         <div class="table-scroll" id="table-scroll">
           <table class="data-table">
             <thead>
-              <tr><th>Name</th><th>Default</th><th>Created time</th><th class="data-table-menu-col"></th></tr>
+              <tr><th>Name</th><th>Data points</th><th>Default</th><th>Created time</th><th class="data-table-menu-col"></th></tr>
             </thead>
             <tbody id="tbody"></tbody>
           </table>
@@ -54,7 +55,7 @@
   </div>
 
   <div class="modal-overlay" id="profile-modal">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:820px;">
       <div class="modal-header">
         <h2 id="modal-title">Add device profile</h2>
         <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close" title="Close">&times;</button>
@@ -68,6 +69,11 @@
           <div class="modal-field">
             <label for="profile-description">Description</label>
             <textarea id="profile-description" rows="2"></textarea>
+          </div>
+          <div class="modal-field">
+            <label>Data points</label>
+            <p class="rt-help" style="margin-bottom:0.2rem;">The telemetry keys every device on this profile sends. They become the keys of each row's <code>values</code> in the device data table, and applications map their roles to them.</p>
+            <div id="dp-fields"></div>
           </div>
           <div class="modal-field">
             <label>Metadata attributes</label>
@@ -98,6 +104,80 @@
     let editingId = null
     let metadataRows = []
     let metadataNextId = 1
+    let dpRows = []
+    let dpNextId = 1
+
+    const DP_KINDS = [
+      { key: 'gauge', label: 'Gauge' },
+      { key: 'counter', label: 'Counter' },
+      { key: 'state', label: 'State' },
+    ]
+
+    function escAttr(value) {
+      return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+    }
+
+    // gauge → min/max range; counter → always increasing (read as a delta);
+    // state → a fixed list of values (first = normal, last = fault).
+    function renderDataPoints() {
+      const wrap = document.getElementById('dp-fields')
+      wrap.innerHTML = dpRows.map((row) => `
+        <div class="dp-row">
+          <div class="modal-field"><label>Key*</label><input type="text" data-dp="${row.id}" data-dp-field="key" value="${escAttr(row.key)}" placeholder="e.g. temperature" /></div>
+          <div class="modal-field"><label>Label</label><input type="text" data-dp="${row.id}" data-dp-field="label" value="${escAttr(row.label)}" /></div>
+          <div class="modal-field"><label>Unit</label><input type="text" data-dp="${row.id}" data-dp-field="unit" value="${escAttr(row.unit)}" /></div>
+          <div class="modal-field"><label>Kind</label><select data-dp="${row.id}" data-dp-field="kind">${DP_KINDS.map((k) => `<option value="${k.key}"${row.kind === k.key ? ' selected' : ''}>${k.label}</option>`).join('')}</select></div>
+          ${row.kind === 'gauge'
+            ? `<div class="modal-field"><label>Min</label><input type="number" step="any" data-dp="${row.id}" data-dp-field="min" value="${escAttr(row.min)}" /></div>
+               <div class="modal-field"><label>Max</label><input type="number" step="any" data-dp="${row.id}" data-dp-field="max" value="${escAttr(row.max)}" /></div>`
+            : row.kind === 'state'
+              ? `<div class="modal-field" style="grid-column: span 2;"><label>States (comma separated)</label><input type="text" data-dp="${row.id}" data-dp-field="states" value="${escAttr(row.states)}" placeholder="running, idle, down" /></div>`
+              : `<div class="modal-field" style="grid-column: span 2;"><label>&nbsp;</label><span class="rt-muted">Reported as a running total</span></div>`}
+          <button type="button" class="dp-remove" data-dp-remove="${row.id}" aria-label="Remove data point" title="Remove data point">&times;</button>
+        </div>`).join('') + `<button type="button" class="metadata-add" id="dp-add-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+          Add data point
+        </button>`
+      document.getElementById('dp-add-btn').addEventListener('click', () => {
+        dpRows.push({ id: dpNextId++, key: '', label: '', unit: '', kind: 'gauge', min: 0, max: 100, states: '' })
+        renderDataPoints()
+      })
+      wrap.querySelectorAll('[data-dp-remove]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          dpRows = dpRows.filter((r) => r.id !== Number(btn.getAttribute('data-dp-remove')))
+          renderDataPoints()
+        }),
+      )
+      wrap.querySelectorAll('[data-dp]').forEach((el) => {
+        const row = dpRows.find((r) => r.id === Number(el.getAttribute('data-dp')))
+        const field = el.getAttribute('data-dp-field')
+        el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+          row[field] = el.value
+          if (field === 'kind') {
+            if (el.value === 'state' && !row.states) row.states = 'running, idle, down'
+            renderDataPoints()
+          }
+        })
+      })
+    }
+
+    function dataPointsFromRows(previous) {
+      return dpRows.filter((r) => String(r.key).trim()).map((r) => {
+        const key = String(r.key).trim()
+        const prior = (previous || []).find((dp) => dp.key === key) || {}
+        const dp = { key, label: String(r.label).trim() || key, unit: String(r.unit).trim(), type: r.kind === 'state' ? 'string' : 'number', kind: r.kind }
+        if (r.kind === 'gauge') {
+          dp.min = Number(r.min) || 0
+          dp.max = Number(r.max) > dp.min ? Number(r.max) : dp.min + 100
+          dp.decimals = prior.decimals ?? 1
+        }
+        if (r.kind === 'state') dp.states = String(r.states).split(',').map((x) => x.trim()).filter(Boolean)
+        if (r.kind === 'counter') dp.decimals = prior.decimals ?? 0
+        // Keep the mock generator's settings for data points that already had them.
+        if (prior.sim && prior.kind === r.kind) dp.sim = prior.sim
+        return dp
+      })
+    }
 
     function renderMetadata() {
       document.getElementById('metadata-fields').innerHTML = metadataRows
@@ -144,14 +224,15 @@
       const profiles = term ? data.deviceProfiles.filter((p) => p.name.toLowerCase().includes(term)) : data.deviceProfiles
       const tbody = document.getElementById('tbody')
       if (profiles.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-table-note">No device profiles match your search.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-table-note">No device profiles match your search.</td></tr>'
         return
       }
       tbody.innerHTML = profiles
         .map(
           (p) => `
         <tr>
-          <td class="card-title-cell">${p.name}</td>
+          <td class="card-title-cell">${p.name}${p.description ? `<p class="group-description">${p.description}</p>` : ''}</td>
+          <td data-label="Data points">${(p.dataPoints || []).length ? (p.dataPoints || []).map((dp) => `<span class="rt-kind rt-kind-${dp.kind}" title="${dp.label}${dp.unit ? ' (' + dp.unit + ')' : ''} · ${dp.kind}" style="margin:0 0.25rem 0.25rem 0;">${dp.key}</span>`).join('') : '<span class="rt-muted">None</span>'}</td>
           <td data-label="Default">${p.isDefault ? '<span class="default-profile-badge" title="Default device profile">Default</span>' : '—'}</td>
           <td data-label="Created time">${p.createdDate}</td>
           <td class="data-table-menu-col">
@@ -209,7 +290,10 @@
       document.getElementById('save-btn').textContent = 'Create'
       document.getElementById('profile-name').value = ''
       document.getElementById('profile-description').value = ''
+      dpRows = []
+      dpNextId = 1
       renderMetadata()
+      renderDataPoints()
       UI.openModal('profile-modal')
     }
 
@@ -223,7 +307,10 @@
       document.getElementById('save-btn').textContent = 'Save changes'
       document.getElementById('profile-name').value = p.name
       document.getElementById('profile-description').value = p.description || ''
+      dpRows = (p.dataPoints || []).map((dp, i) => ({ id: i + 1, key: dp.key, label: dp.label || '', unit: dp.unit || '', kind: dp.kind || 'gauge', min: dp.min ?? 0, max: dp.max ?? 100, states: (dp.states || []).join(', ') }))
+      dpNextId = dpRows.length + 1
       renderMetadata()
+      renderDataPoints()
       UI.openModal('profile-modal')
     }
 
@@ -252,11 +339,18 @@
       if (!name) return
       const description = document.getElementById('profile-description').value.trim()
       const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
+      const previous = editingId ? (Store.get().deviceProfiles.find((x) => x.id === editingId) || {}).dataPoints : []
+      const dataPoints = dataPointsFromRows(previous)
+      const keys = dataPoints.map((dp) => dp.key)
+      if (new Set(keys).size !== keys.length) {
+        UI.toast('Data point keys must be unique.')
+        return
+      }
       if (editingId) {
-        Store.updateDeviceProfile(editingId, { name, description, metadata })
+        Store.updateDeviceProfile(editingId, { name, description, metadata, dataPoints })
         UI.toast(`"${name}" device profile updated successfully!`)
       } else {
-        Store.addDeviceProfile({ name, description, metadata })
+        Store.addDeviceProfile({ name, description, metadata, dataPoints })
         UI.toast(`"${name}" device profile created successfully!`)
       }
       UI.closeModal('profile-modal')

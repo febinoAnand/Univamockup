@@ -18,6 +18,7 @@ const NAV_SECTIONS = [
     label: 'Devices management',
     children: [
       { key: 'devices', label: 'Devices', icon: 'device', href: 'devices.html' },
+      { key: 'device-data', label: 'Data explorer', icon: 'database', href: 'device-data.html' },
       { key: 'device-profiles', label: 'Device profiles', icon: 'profile', href: 'device-profiles.html' },
       { key: 'credentials', label: 'Credentials', icon: 'credentials', href: 'credentials.html' },
       { key: 'software-ota', label: 'Software OTA', icon: 'cloud-ota', href: 'software-ota.html' },
@@ -217,7 +218,7 @@ function renderSidebar(active) {
     if (section.dynamicChildren === 'applications') {
       const apps = (window.Store ? Store.get().applications : []) || []
       sectionChildren = sectionChildren.concat(
-        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: a.name === 'Notion' ? `notion.html#${a.id}` : `application-detail.html#${a.id}` })),
+        apps.map((a) => ({ key: `application-${a.id}`, label: a.name, icon: a.icon || 'app', href: a.id === 'app_notion' ? `notion.html#${a.id}` : `application-detail.html#${a.id}` })),
       )
     }
     const children = sectionChildren

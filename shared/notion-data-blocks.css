@@ -1,0 +1,210 @@
+/* ==========================================================================
+   Univa — static HTML build. Styles for Notion data blocks
+   (shared/notion-data-blocks.js). Builds on app.css tokens, notion.html's
+   block chrome, and app-runtime.css (.rt-field, .dp-remove, .rt-live-row…).
+   ========================================================================== */
+
+.nd-block { margin: 0.5rem 0; }
+.nd-head { gap: 0.6rem; }
+.nd-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.nd-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--accent-soft-strong);
+  color: var(--accent-strong-text);
+}
+.nd-app-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-strong-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-border);
+  text-decoration: none;
+}
+.nd-app-pill svg { width: 12px; height: 12px; }
+.nd-head .notion-db-properties-btn.active { border-color: var(--accent); color: var(--accent-strong-text); background: var(--accent-soft); }
+.nd-head .notion-db-properties-btn svg { width: 13px; height: 13px; }
+.nd-content { min-width: 0; }
+
+/* -------------------------------------------------------------- cards */
+.nd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.75rem;
+}
+.nd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.nd-card-manual { border-left-color: #f59e0b; }
+.nd-card-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.nd-card-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.nd-card-sub { font-size: 0.74rem; color: var(--text-subtle); line-height: 1.35; }
+
+/* -------------------------------------------------------------- chart */
+.nd-chart { min-height: 300px; }
+
+/* -------------------------------------------------------------- sheet */
+.nd-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.nd-toolbar .rt-field input,
+.nd-toolbar .rt-field select { min-width: 150px; height: 34px; }
+.nd-toolbar-note { font-size: 0.78rem; color: var(--text-subtle); padding-bottom: 0.5rem; }
+.nd-sheet th { white-space: nowrap; }
+.nd-sheet .nd-th-manual { background: var(--warning-bg); }
+.nd-sheet .nd-th-formula { background: var(--accent-soft); }
+.nd-sheet td { vertical-align: top; }
+.nd-row-label { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nd-td-telemetry,
+.nd-td-formula { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nd-td-formula { color: var(--accent-strong-text); font-weight: 600; }
+.nd-td-manual { background: #fffbeb; min-width: 110px; }
+.nd-cell-input {
+  width: 100%;
+  min-width: 90px;
+  height: 30px;
+  padding: 0 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.3s;
+}
+.nd-cell-input:hover { border-color: var(--border-strong); background: var(--surface); }
+.nd-cell-input:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px var(--accent-soft); }
+.nd-cell-input.nd-num { text-align: right; }
+.nd-cell-input.nd-saved { background: var(--success-bg); }
+.nd-hint { display: block; margin-top: 0.15rem; font-size: 0.68rem; color: var(--warning); }
+
+/* --------------------------------------------------------------- form */
+.nd-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fffbeb;
+}
+.nd-form .rt-field input,
+.nd-form .rt-field select { min-width: 150px; }
+.nd-subhead {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.nd-recent {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nd-recent li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.82rem;
+}
+.nd-recent-time { font-variant-numeric: tabular-nums; color: var(--text-subtle); min-width: 3rem; }
+.nd-recent-values { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; flex: 1 1 200px; }
+.nd-recent .notion-block-action-btn { margin-left: auto; font-size: 1rem; }
+.dx-chip {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  background: var(--surface-alt);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+.dx-chip b { color: var(--text-subtle); font-weight: 600; }
+
+/* ------------------------------------------------------------- config */
+.nd-config {
+  margin: 0.5rem 0 0.75rem 1.9rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--accent-soft-border);
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+.nd-cfg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.55rem;
+  padding: 0.35rem 0;
+}
+.nd-cfg-row .rt-field input,
+.nd-cfg-row .rt-field select { min-width: 140px; height: 34px; }
+.nd-cfg-row .nd-narrow input { min-width: 70px; width: 80px; }
+.nd-cfg-row .nd-wide { flex: 1 1 220px; }
+.nd-cfg-row .nd-wide input { width: 100%; }
+.nd-cfg-row .dp-remove { height: 34px; }
+.nd-check-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.2rem;
+  margin-bottom: 0.6rem;
+}
+
+@media (max-width: 700px) {
+  .nd-config { margin-left: 0; }
+  .nd-cfg-row .rt-field,
+  .nd-form .rt-field,
+  .nd-toolbar .rt-field { flex: 1 1 140px; }
+  .nd-cfg-row .rt-field input,
+  .nd-cfg-row .rt-field select,
+  .nd-form .rt-field input,
+  .nd-form .rt-field select,
+  .nd-toolbar .rt-field input,
+  .nd-toolbar .rt-field select { min-width: 0; width: 100%; }
+  .nd-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nd-card-value { font-size: 1.15rem; }
+}

@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
   <title>Asset profiles — Univa</title>
 </head>
 <body>
@@ -51,7 +52,7 @@
   </div>
 
   <div class="modal-overlay" id="profile-modal">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:760px;">
       <div class="modal-header">
         <h2 id="modal-title">Add asset profile</h2>
         <button type="button" class="modal-close" onclick="UI.closeModal('profile-modal')" aria-label="Close" title="Close">&times;</button>
@@ -70,6 +71,11 @@
             </select>
           </div>
           <div class="modal-field"><label for="profile-description">Description</label><textarea id="profile-description" rows="3"></textarea></div>
+          <div class="modal-field">
+            <label>Attribute schema</label>
+            <p class="rt-help" style="margin-bottom:0.2rem;">Typed configuration every asset of this profile carries (e.g. a target rate or tariff). Each asset stores its own values; applications read them in KPI formulas.</p>
+            <div id="attr-fields"></div>
+          </div>
           <div class="modal-field"><label>Metadata attributes</label><div class="metadata-fields" id="metadata-fields"></div></div>
         </form>
       </div>
@@ -96,6 +102,56 @@
     let editingId = null
     let metadataRows = []
     let metadataNextId = 1
+    let attrRows = []
+    let attrNextId = 1
+
+    function escAttr(value) {
+      return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+    }
+
+    function renderAttributes() {
+      const wrap = document.getElementById('attr-fields')
+      wrap.innerHTML = attrRows.map((row) => `
+        <div class="dp-row" style="grid-template-columns: 1fr 1.2fr 0.8fr 0.7fr 0.8fr auto;">
+          <div class="modal-field"><label>Key*</label><input type="text" data-attr="${row.id}" data-attr-field="key" value="${escAttr(row.key)}" placeholder="e.g. targetPerHour" /></div>
+          <div class="modal-field"><label>Label</label><input type="text" data-attr="${row.id}" data-attr-field="label" value="${escAttr(row.label)}" /></div>
+          <div class="modal-field"><label>Type</label><select data-attr="${row.id}" data-attr-field="type"><option value="number"${row.type === 'number' ? ' selected' : ''}>Number</option><option value="string"${row.type === 'string' ? ' selected' : ''}>Text</option></select></div>
+          <div class="modal-field"><label>Unit</label><input type="text" data-attr="${row.id}" data-attr-field="unit" value="${escAttr(row.unit)}" /></div>
+          <div class="modal-field"><label>Default</label><input type="${row.type === 'number' ? 'number' : 'text'}" step="any" data-attr="${row.id}" data-attr-field="default" value="${escAttr(row.default)}" /></div>
+          <button type="button" class="dp-remove" data-attr-remove="${row.id}" aria-label="Remove attribute" title="Remove attribute">&times;</button>
+        </div>`).join('') + `<button type="button" class="metadata-add" id="attr-add-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+          Add attribute
+        </button>`
+      document.getElementById('attr-add-btn').addEventListener('click', () => {
+        attrRows.push({ id: attrNextId++, key: '', label: '', type: 'number', unit: '', default: '' })
+        renderAttributes()
+      })
+      wrap.querySelectorAll('[data-attr-remove]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          attrRows = attrRows.filter((r) => r.id !== Number(btn.getAttribute('data-attr-remove')))
+          renderAttributes()
+        }),
+      )
+      wrap.querySelectorAll('[data-attr]').forEach((el) => {
+        const row = attrRows.find((r) => r.id === Number(el.getAttribute('data-attr')))
+        const field = el.getAttribute('data-attr-field')
+        el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+          row[field] = el.value
+          if (field === 'type') renderAttributes()
+        })
+      })
+    }
+
+    function attributesFromRows() {
+      return attrRows.filter((r) => String(r.key).trim()).map((r) => ({
+        key: String(r.key).trim(),
+        label: String(r.label).trim() || String(r.key).trim(),
+        type: r.type,
+        unit: String(r.unit).trim(),
+        default: r.type === 'number' ? (r.default === '' ? 0 : Number(r.default)) : String(r.default),
+      }))
+    }
     let sort = { key: null, direction: 'asc' }
 
     function compareValues(a, b, direction) {
@@ -172,7 +228,7 @@
         .map(
           (p) => `
         <tr>
-          <td class="card-title-cell"><div class="group-name-cell">${p.name}${p.description ? `<p class="group-description">${p.description}</p>` : ''}</div></td>
+          <td class="card-title-cell"><div class="group-name-cell">${p.name}${p.description ? `<p class="group-description">${p.description}</p>` : ''}${(p.attributes || []).length ? `<p class="group-description">Attributes: ${(p.attributes || []).map((a) => a.key).join(', ')}</p>` : ''}</div></td>
           <td data-label="Category">${p.category}</td>
           <td data-label="In use">${counts[p.name] ?? 0}</td>
           <td data-label="Created Date">${p.createdDate}</td>
@@ -219,6 +275,9 @@
       document.getElementById('profile-name').value = ''
       document.getElementById('profile-category').value = 'Vehicle'
       document.getElementById('profile-description').value = ''
+      attrRows = []
+      attrNextId = 1
+      renderAttributes()
       renderMetadata()
       UI.openModal('profile-modal')
     }
@@ -234,6 +293,9 @@
       document.getElementById('profile-name').value = p.name
       document.getElementById('profile-category').value = p.category
       document.getElementById('profile-description').value = p.description || ''
+      attrRows = (p.attributes || []).map((a, i) => ({ id: i + 1, key: a.key, label: a.label || '', type: a.type || 'string', unit: a.unit || '', default: a.default ?? '' }))
+      attrNextId = attrRows.length + 1
+      renderAttributes()
       renderMetadata()
       UI.openModal('profile-modal')
     }
@@ -269,11 +331,12 @@
       const category = document.getElementById('profile-category').value
       const description = document.getElementById('profile-description').value.trim()
       const metadata = metadataRows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
+      const attributes = attributesFromRows()
       if (editingId) {
-        Store.updateAssetProfile(editingId, { name, category, description, metadata })
+        Store.updateAssetProfile(editingId, { name, category, description, metadata, attributes })
         UI.toast(`"${name}" profile updated successfully!`)
       } else {
-        Store.addAssetProfile({ name, category, description, metadata })
+        Store.addAssetProfile({ name, category, description, metadata, attributes })
         UI.toast(`"${name}" profile created successfully!`)
       }
       UI.closeModal('profile-modal')

@@ -207,13 +207,30 @@
       btn.addEventListener('click', () => setConditionMode(btn.getAttribute('data-condition-mode')))
     })
 
+    // Suggest every data point key declared on a device profile — the same
+    // keys that arrive in the device-data table's `values` column.
+    function ensureDataPointDatalist() {
+      let list = document.getElementById('data-point-keys')
+      if (!list) {
+        list = document.createElement('datalist')
+        list.id = 'data-point-keys'
+        document.body.appendChild(list)
+      }
+      const seen = new Map()
+      Store.get().deviceProfiles.forEach((p) => (p.dataPoints || []).forEach((dp) => {
+        if (!seen.has(dp.key)) seen.set(dp.key, `${dp.label || dp.key} · ${p.name}`)
+      }))
+      list.innerHTML = Array.from(seen.entries()).map(([key, label]) => `<option value="${key}">${label}</option>`).join('')
+    }
+
     function renderConditionRows() {
+      ensureDataPointDatalist()
       const wrap = document.getElementById('condition-rows')
       wrap.innerHTML = conditionsDraft
         .map(
           (c, i) => `
         <div class="condition-field-row" data-condition-row="${i}">
-          <div class="modal-field"><label>Metric</label><input type="text" placeholder="e.g. temperature" data-condition-field="metric" data-condition-index="${i}" value="${c.metric}" /></div>
+          <div class="modal-field"><label>Metric</label><input type="text" placeholder="e.g. temperature" list="data-point-keys" data-condition-field="metric" data-condition-index="${i}" value="${c.metric}" /></div>
           <div class="modal-field">
             <label>Operator</label>
             <select data-condition-field="operator" data-condition-index="${i}">

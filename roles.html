@@ -79,6 +79,7 @@
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
+  <script src="shared/app-templates.js"></script>
   <script>
     Layout.mount({
       active: 'roles',
@@ -161,8 +162,7 @@
         { key: 'powerRange', label: 'Power range (kW/kVA)' },
         { key: 'frequencyRange', label: 'Frequency range' },
       ] },
-      { key: 'pmsProduction', label: 'PMS production', iconFamily: 'app', fields: [] },
-      { key: 'notionPages', label: 'Notion pages', iconFamily: 'app', fields: [
+      { key: 'notionPages', label: 'Custom App pages', iconFamily: 'app', fields: [
         { key: 'title', label: 'Page title' },
         { key: 'icon', label: 'Page icon' },
         { key: 'blocks', label: 'Page content (blocks)' },
@@ -234,6 +234,22 @@
         { key: 'assignments', label: 'Day assignments' },
       ] },
     ]
+
+    // Every template-driven application (PMS, and anything created from the
+    // template gallery) gets its own module, with one field per template
+    // view — so e.g. a role can see a production app's Overview but not its
+    // Downtime or Configuration tabs.
+    Store.get().applications.forEach((app) => {
+      const template = app.templateKey && AppTemplates.get(app.templateKey)
+      if (!template) return
+      PERMISSION_MODULES.push({
+        key: 'app:' + app.id,
+        label: `${app.name} (${template.name})`,
+        iconFamily: 'app',
+        fields: template.views.map((view) => ({ key: 'view:' + view.key, label: view.label + ' tab' }))
+          .concat([{ key: 'manualEntries', label: 'Manual data entry (forms & data sheets)' }]),
+      })
+    })
 
     function emptyModulePermissions() {
       const base = { fields: {} }
