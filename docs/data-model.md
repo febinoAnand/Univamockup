@@ -171,6 +171,24 @@ In the mockup this is `tenants[].applicationIds`. A tenant with no saved list ca
 
 A session is tied to a tenant by the **Organization ID** on the login page (`tenants[].organizationId`, shown on the tenant's detail page). `Store.get()` in `shared/store.js` then returns only that tenant's applications. The sidebar, the applications list, and direct links to any other application (which show "Application not found") all follow the same rule. A blank or unknown Organization ID gives the plain demo session, which is not tied to a tenant and sees every application.
 
+## 10. Application backups
+
+Every application page has a **Backup** button (`shared/app-backup.js`). It opens a dialog where a backup of that application can be taken, listed, downloaded as a JSON file, or deleted. Taking or deleting one needs the Edit permission on the application.
+
+```sql
+CREATE TABLE application_backups (
+  id           uuid PRIMARY KEY,
+  app_id       uuid        NOT NULL,
+  created_at   timestamptz NOT NULL,
+  created_by   text        NOT NULL,
+  size_bytes   bigint      NOT NULL,
+  summary      jsonb       NOT NULL,   -- [{ "label": "records", "count": 12 }, ...]
+  data         jsonb       NOT NULL    -- the snapshot (below)
+);
+```
+
+A snapshot holds the application's settings (the `applications` row, including bindings, settings, and manual fields) and the data stored for it: its `application_records`, its Custom App pages, and any widget-dashboard layouts saved for it. EMS and CMS keep their own collections, so a backup of EMS also holds its meters, TOD readings, and energy data, and a backup of CMS holds its machines. Device telemetry is not included, because `device_data` belongs to the devices. Deleting an application deletes its backups too.
+
 ## Migration notes
 
 - **PMS** runs on this model today (template `production-monitoring`).

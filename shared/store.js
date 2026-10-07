@@ -345,6 +345,8 @@ const DEFAULT_DATA = {
   // deliberately application-wise: it lives here, never in the device-data
   // table (shared/telemetry.js), which stays device telemetry only.
   applicationRecords: seedManualEntries(),
+  // Snapshots taken from an application's Backup dialog (shared/app-backup.js).
+  applicationBackups: [],
 
   // ---------------------------------------------------------- EMS (built-in app)
   emsTodReadings: [
@@ -977,6 +979,21 @@ const Store = {
     store.applicationRecords = (store.applicationRecords || []).filter((r) => r.id !== id)
     saveData(store)
   },
+  // A snapshot of one application's data — see shared/app-backup.js for what
+  // goes into `data`. Throws if the browser is out of storage space.
+  addApplicationBackup(backup) {
+    const store = loadData()
+    store.applicationBackups = store.applicationBackups || []
+    const record = Object.assign({ id: uid('bk'), createdDate: nowStamp() }, backup)
+    store.applicationBackups.push(record)
+    saveData(store)
+    return record
+  },
+  removeApplicationBackup(id) {
+    const store = loadData()
+    store.applicationBackups = (store.applicationBackups || []).filter((b) => b.id !== id)
+    saveData(store)
+  },
   // Instance-level manual field list (overrides the template's defaults).
   setApplicationManualFields(appId, fields) {
     const store = loadData()
@@ -991,6 +1008,7 @@ const Store = {
     store.applications = store.applications.filter((a) => a.id !== id)
     store.applicationRecords = (store.applicationRecords || []).filter((r) => r.appId !== id)
     store.notionPages = (store.notionPages || []).filter((p) => p.appId !== id)
+    store.applicationBackups = (store.applicationBackups || []).filter((b) => b.appId !== id)
     store.tenants.forEach((t) => {
       if (Array.isArray(t.applicationIds)) t.applicationIds = t.applicationIds.filter((appId) => appId !== id)
     })
