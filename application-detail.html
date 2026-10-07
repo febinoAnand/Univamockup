@@ -843,6 +843,7 @@
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
+  <script src="shared/app-backup.js"></script>
   <script src="shared/dashboard.js"></script>
   <script src="shared/telemetry.js"></script>
   <script src="shared/app-templates.js"></script>
@@ -2140,6 +2141,7 @@
           <div class="page-header-actions">
             <span class="status-pill status-${app.status}" title="${app.status}">${app.status}</span>
             <button type="button" class="modal-button secondary" id="toggle-status-btn">${app.status === 'active' ? 'Suspend' : 'Activate'}</button>
+            ${AppBackup.buttonHtml(app)}
             <button type="button" class="modal-button secondary" id="edit-app-btn">Edit</button>
             ${app.isDefault ? '' : '<button type="button" class="modal-button danger" id="delete-app-btn">Delete</button>'}
           </div>
@@ -2154,6 +2156,7 @@
       })
       document.getElementById('edit-app-btn').addEventListener('click', openEdit)
       document.getElementById('delete-app-btn')?.addEventListener('click', confirmDelete)
+      AppBackup.wire(app)
       if (isTemplate) AppRuntime.mount(document.getElementById('app-runtime-host'), app)
       else if (isEms) wireEmsBody()
       else if (isCms) wireCmsBody()
