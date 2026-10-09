@@ -1399,7 +1399,6 @@
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
-  <script src="shared/app-backup.js"></script>
   <script src="shared/telemetry.js"></script>
   <script src="shared/app-templates.js"></script>
   <script src="shared/app-entries.js"></script>
@@ -2952,7 +2951,6 @@
           <div class="page-header-actions">
             <span class="status-pill status-${app.status}" title="${app.status}">${app.status}</span>
             <button type="button" class="modal-button secondary" id="toggle-status-btn">${app.status === 'active' ? 'Suspend' : 'Activate'}</button>
-            ${AppBackup.buttonHtml(app)}
             <a class="modal-button secondary" href="application-detail.html#${app.id}">Manage</a>
           </div>
         </div>
@@ -2964,7 +2962,6 @@
         UI.toast(`"${app.name}" status updated successfully!`)
         renderPage()
       })
-      AppBackup.wire(app)
       wireNotionBody()
     }
 

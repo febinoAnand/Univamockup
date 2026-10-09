@@ -59,6 +59,11 @@ const NAV_SECTIONS = [
       { key: 'roles', label: 'Roles & permissions', icon: 'shield', href: 'roles.html' },
     ],
   },
+  {
+    key: 'settings-management',
+    label: 'Settings',
+    children: [{ key: 'settings', label: 'Backup', icon: 'database', href: 'settings.html' }],
+  },
 ]
 
 // Icon choices offered when creating/editing an application (applications.html,
@@ -357,6 +362,20 @@ function loadChatbot() {
   document.body.appendChild(script)
 }
 
+// There is no server to run a schedule, so every page load checks whether an
+// automatic database backup is due (Settings > Backup, see shared/backup.js).
+// The script is loaded on demand, like the chatbot.
+function runAutomaticBackups() {
+  if (window.Backup) {
+    window.Backup.runDue()
+    return
+  }
+  const script = document.createElement('script')
+  script.src = 'shared/backup.js'
+  script.onload = () => window.Backup.runDue()
+  document.body.appendChild(script)
+}
+
 const Layout = {
   // Pages with dynamic sidebar children (e.g. application-detail.html, one
   // per application) sit at the same URL path across items — clicking a
@@ -410,6 +429,7 @@ const Layout = {
     ensureSidebarBackdrop(shell)
     wireSidebarToggle(shell)
     loadChatbot()
+    runAutomaticBackups()
   },
 
   // Mirrors src/core/layouts/AdminSidebar.jsx + AdminLayout.jsx — a

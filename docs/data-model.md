@@ -153,7 +153,7 @@ A block's config (cards, series, sheet columns with `telemetry | manual | formul
 
 ## 8. Permissions
 
-Roles & permissions lists one module per template application. It has one field per template view (`view:overview`, `view:downtime`, …), plus `manualEntries` for manual data entry. This allows tab-level access control and a separate permission to enter data.
+Roles & permissions lists one module per template application. It has one field per template view (`view:overview`, `view:downtime`, …), plus `manualEntries` for manual data entry. This allows tab-level access control and a separate permission to enter data. Settings > Backup (§10) is not one of these modules: it is for owners and admins only, and no role can be given it.
 
 ## 9. Tenant application access
 
@@ -171,23 +171,40 @@ In the mockup this is `tenants[].applicationIds`. A tenant with no saved list ca
 
 A session is tied to a tenant by the **Organization ID** on the login page (`tenants[].organizationId`, shown on the tenant's detail page). `Store.get()` in `shared/store.js` then returns only that tenant's applications. The sidebar, the applications list, and direct links to any other application (which show "Application not found") all follow the same rule. A blank or unknown Organization ID gives the plain demo session, which is not tied to a tenant and sees every application.
 
-## 10. Application backups
+## 10. Database backup
 
-Every application page has a **Backup** button (`shared/app-backup.js`). It opens a dialog where a backup of that application can be taken, listed, downloaded as a JSON file, or deleted. Taking or deleting one needs the Edit permission on the application.
+**Settings > Backup** in the sidebar (`settings.html`, `shared/backup.js`) takes a backup of the whole workspace. The pages that go into it are chosen with checkboxes, grouped like the sidebar: Dashboard, All applications, each application, Devices, Device profiles, Assets, Asset groups, Asset profiles, Shift, Schedule, Instance, Rule engine, Reports, Users, User groups, and Roles & permissions. Credentials, Software OTA, and the Data explorer have no saved data of their own, so they are not offered. Device telemetry is not included either, because `device_data` belongs to the devices.
+
+A backup can be downloaded as an SQL file or deleted. The download is a PostgreSQL script in one transaction: a `CREATE TABLE` and an `INSERT` for each collection (`devices`, `applications`, `application_records`, `ems_meters`, `notion_pages`, `dashboard_layouts`, `role_permissions`, and so on). Column types come from the values: numbers are `NUMERIC`, booleans `BOOLEAN`, text `TEXT`, and nested objects, arrays, and columns that mix types are `JSONB`. A column named `id`, `scope`, or `role` becomes the primary key when it is filled in and unique. Settings is **only for owners and admins**. Other roles don't see it in the sidebar, and opening `settings.html` directly shows "You do not have permission to view this page." It is not on the Roles & permissions page, so it can't be granted to another role.
 
 ```sql
-CREATE TABLE application_backups (
-  id           uuid PRIMARY KEY,
-  app_id       uuid        NOT NULL,
-  created_at   timestamptz NOT NULL,
-  created_by   text        NOT NULL,
-  size_bytes   bigint      NOT NULL,
-  summary      jsonb       NOT NULL,   -- [{ "label": "records", "count": 12 }, ...]
-  data         jsonb       NOT NULL    -- the snapshot (below)
+CREATE TABLE backups (
+  id          uuid PRIMARY KEY,
+  tenant_id   uuid        NOT NULL,
+  created_at  timestamptz NOT NULL,
+  created_by  text        NOT NULL,
+  trigger     text        NOT NULL,   -- 'manual' | 'auto'
+  size_bytes  bigint      NOT NULL,
+  pages       jsonb       NOT NULL,   -- [{ "key": "devices", "label": "Devices", "count": 13 }, ...]
+  data        jsonb       NOT NULL    -- { "<page key>": <that page's data>, ... }
+);
+
+CREATE TABLE backup_settings (
+  tenant_id   uuid PRIMARY KEY,
+  auto        boolean NOT NULL DEFAULT false,
+  frequency   text    NOT NULL DEFAULT 'daily',   -- 'daily' | 'weekly' | 'monthly'
+  keep        integer NOT NULL DEFAULT 10,        -- 0 = keep every backup
+  excluded    text[]  NOT NULL DEFAULT '{}'       -- page keys left out of a backup
 );
 ```
 
-A snapshot holds the application's settings (the `applications` row, including bindings, settings, and manual fields) and the data stored for it: its `application_records`, its Custom App pages, and any widget-dashboard layouts saved for it. EMS and CMS keep their own collections, so a backup of EMS also holds its meters, TOD readings, and energy data, and a backup of CMS holds its machines. Device telemetry is not included, because `device_data` belongs to the devices. Deleting an application deletes its backups too.
+`data` is keyed by page key. An application's page is `app:<application id>` and holds its `application_records`, its Custom App pages, and its saved dashboard layouts. EMS and CMS keep their own collections, so their pages also hold the meters, TOD readings, and energy data, or the machines. `applications` holds the application list itself. The pages not ticked are simply absent from `pages` and `data`.
+
+The settings are workspace-wide. `excluded` is the pages left unticked, so a page added later (a new application, say) is included until someone unticks it. Automatic backups use the same selection as manual ones. After a backup is taken, the oldest ones beyond `keep` are deleted. Lowering `keep` deletes nothing until the next backup.
+
+The mockup has no scheduler, so `Layout.mount()` calls `Backup.runDue()` on every page. When automatic backups are on and the last backup (manual or automatic) is older than the interval, one is taken. A real backend would run this as a scheduled job.
+
+In the mockup the backups are kept in the browser under their own storage key (`univa-html-backups-v1`), apart from the data blob, so a backup is not re-written on every change.
 
 ## Migration notes
 

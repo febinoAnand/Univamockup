@@ -10,6 +10,10 @@
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
 const STORAGE_KEY = 'univa-html-demo-v26'
+// Workspace backups (Settings > Backup). Separate from STORAGE_KEY so a backup
+// isn't re-written with the data on every change, and so bumping STORAGE_KEY
+// for a seed change doesn't throw the backups away.
+const BACKUPS_KEY = 'univa-html-backups-v1'
 
 const DEVICE_DEFAULT_METRICS = [{ key: 'value', label: 'Value', unit: '', baseline: 50, amplitude: 20, decimals: 1 }]
 
@@ -345,8 +349,10 @@ const DEFAULT_DATA = {
   // deliberately application-wise: it lives here, never in the device-data
   // table (shared/telemetry.js), which stays device telemetry only.
   applicationRecords: seedManualEntries(),
-  // Snapshots taken from an application's Backup dialog (shared/app-backup.js).
-  applicationBackups: [],
+  // Settings > Backup (shared/backup.js): { auto, frequency, keep, excluded }.
+  // Missing fields take the defaults there. The backups themselves are kept
+  // under their own storage key (BACKUPS_KEY) so this blob stays small.
+  backupSettings: {},
 
   // ---------------------------------------------------------- EMS (built-in app)
   emsTodReadings: [
@@ -529,6 +535,10 @@ function loadData() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return structuredCloneSafe(DEFAULT_DATA)
     const parsed = JSON.parse(raw)
+    // Per-application backups were stored here before backups became
+    // workspace-wide with their own key; they can't be shown any more.
+    delete parsed.applicationBackups
+    delete parsed.applicationBackupSettings
     // shallow-merge so new seed keys introduced later still show up
     return Object.assign(structuredCloneSafe(DEFAULT_DATA), parsed)
   } catch (err) {
@@ -620,6 +630,33 @@ const Store = {
 
   reset() {
     saveData(structuredCloneSafe(DEFAULT_DATA))
+    try { localStorage.removeItem(BACKUPS_KEY) } catch (err) { /* storage unavailable */ }
+  },
+
+  // ------------------------------------------------------------- backups
+  // Workspace backups (Settings > Backup) — see shared/backup.js for what is
+  // in one. Kept under their own key, oldest first.
+  listBackups() {
+    try {
+      const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]')
+      return Array.isArray(list) ? list : []
+    } catch (err) {
+      return []
+    }
+  },
+  // Throws if the browser is out of storage space.
+  addBackup(backup) {
+    const record = Object.assign({ id: uid('bk'), createdDate: nowStamp() }, backup)
+    localStorage.setItem(BACKUPS_KEY, JSON.stringify(Store.listBackups().concat(record)))
+    return record
+  },
+  removeBackup(id) {
+    localStorage.setItem(BACKUPS_KEY, JSON.stringify(Store.listBackups().filter((b) => b.id !== id)))
+  },
+  setBackupSettings(settings) {
+    const store = loadData()
+    store.backupSettings = Object.assign({}, settings)
+    saveData(store)
   },
 
   // ---------------------------------------------------------------- auth
@@ -696,6 +733,9 @@ const Store = {
   hasPermission(moduleKey, action) {
     const auth = loadData().auth || {}
     const role = String(auth.role || 'Owner').toLowerCase()
+    // Settings (database backup) is for owners and admins only. It isn't one of
+    // the modules on the Roles & permissions page, so no role can be given it.
+    if (moduleKey === 'settings') return role === 'owner' || role === 'admin'
     const configured = Store.getRolePermissions(role)
     if (configured && configured[moduleKey]) return configured[moduleKey][action] === true
 
@@ -979,21 +1019,6 @@ const Store = {
     store.applicationRecords = (store.applicationRecords || []).filter((r) => r.id !== id)
     saveData(store)
   },
-  // A snapshot of one application's data — see shared/app-backup.js for what
-  // goes into `data`. Throws if the browser is out of storage space.
-  addApplicationBackup(backup) {
-    const store = loadData()
-    store.applicationBackups = store.applicationBackups || []
-    const record = Object.assign({ id: uid('bk'), createdDate: nowStamp() }, backup)
-    store.applicationBackups.push(record)
-    saveData(store)
-    return record
-  },
-  removeApplicationBackup(id) {
-    const store = loadData()
-    store.applicationBackups = (store.applicationBackups || []).filter((b) => b.id !== id)
-    saveData(store)
-  },
   // Instance-level manual field list (overrides the template's defaults).
   setApplicationManualFields(appId, fields) {
     const store = loadData()
@@ -1008,7 +1033,6 @@ const Store = {
     store.applications = store.applications.filter((a) => a.id !== id)
     store.applicationRecords = (store.applicationRecords || []).filter((r) => r.appId !== id)
     store.notionPages = (store.notionPages || []).filter((p) => p.appId !== id)
-    store.applicationBackups = (store.applicationBackups || []).filter((b) => b.appId !== id)
     store.tenants.forEach((t) => {
       if (Array.isArray(t.applicationIds)) t.applicationIds = t.applicationIds.filter((appId) => appId !== id)
     })
