@@ -1,0 +1,10 @@
+# Keep line endings identical on every machine. Without this, a contributor on
+# Windows (or a script that rewrites a file) can turn a whole file into CRLF and
+# show it as changed.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff2 binary

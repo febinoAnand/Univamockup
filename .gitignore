@@ -1,0 +1,14 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Logs and scratch
+*.log
+*.tmp
+
+# A backup downloaded while trying the Settings > Backup page
+backup-sample.sql
+univa-backup-*.sql

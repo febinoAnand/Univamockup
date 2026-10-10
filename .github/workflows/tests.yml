@@ -1,0 +1,31 @@
+name: Tests
+
+# Runs the in-browser test page (tests/index.html) in Chrome on every pull
+# request and on every push to main. Nothing here is needed to work on the
+# project: the tests are a plain HTML page you open in your own browser.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Chrome is already on the runner; Playwright only drives it.
+      - name: Install the test runner
+        run: pip install playwright pglast
+
+      - name: Run the test page in Chrome
+        run: python .github/scripts/run_tests.py --save-sql "$RUNNER_TEMP/backup-sample.sql"
+
+      # The browser can't run PostgreSQL's grammar, so parse the backup it produced here.
+      - name: Parse the backup SQL with PostgreSQL's grammar
+        run: python tests/validate_sql.py "$RUNNER_TEMP/backup-sample.sql"
