@@ -9,8 +9,9 @@
    authenticated page without a <script> tag per file.
 
    SECURITY: calling the API directly from client-side JS means the API key
-   you enter is stored in this browser's localStorage and is visible to
-   anyone with access to this browser/device or its devtools/network tab —
+   you enter is kept in this browser tab's sessionStorage (it is forgotten
+   when the tab closes) and is visible to anyone with access to this
+   browser/device or its devtools/network tab —
    there is no server here to hide it behind. Only use a key you're
    comfortable having exposed this way (a low-limit/test key is safest),
    and never commit one into this project's source.
@@ -29,23 +30,61 @@ const CHATBOT_MAX_LOOP_STEPS = 6
 // what to show a human instead of a raw id; `remove`/`toggleStatus` are the
 // exact Store method names this widget is allowed to call — kept to a
 // verified subset of Store's real methods, not a generic "call anything".
+//
+// `module` is the permission module (the same keys the sidebar and the Roles &
+// permissions page use): the assistant may only do what the signed-in role may.
+// `platformOnly` entities belong to the system administrator area, so a tenant's
+// own users can't read or change them through the assistant either.
 const CHATBOT_ENTITIES = {
-  devices: { nameField: 'name', remove: 'deleteDevice' },
-  deviceProfiles: { nameField: 'name', remove: 'removeDeviceProfile' },
-  applications: { nameField: 'name', remove: 'removeApplication', toggleStatus: 'toggleApplicationStatus' },
-  assets: { nameField: 'name', remove: 'removeAsset', toggleStatus: 'toggleAssetStatus' },
-  assetGroups: { nameField: 'name', remove: 'removeAssetGroup' },
-  assetProfiles: { nameField: 'name', remove: 'removeAssetProfile' },
-  ruleEngines: { nameField: 'name', remove: 'removeRuleEngine', toggleStatus: 'toggleRuleEngineStatus' },
-  ruleEngineExecutions: { nameField: 'ruleEngineName' },
-  tenants: { nameField: 'title', remove: 'removeTenant', toggleStatus: 'toggleTenantStatus' },
-  tenantProfiles: { nameField: 'name', remove: 'removeTenantProfile' },
-  users: { nameField: 'name', remove: 'deleteUser', toggleStatus: 'toggleUserStatus' },
-  userGroups: { nameField: 'name', remove: 'removeUserGroup' },
-  shifts: { nameField: 'name', remove: 'removeShift', toggleStatus: 'toggleShiftStatus' },
-  shiftSchedules: { nameField: 'name', remove: 'removeShiftSchedule' },
-  shiftInstances: { nameField: 'shiftName', remove: 'removeShiftInstance' },
+  devices: { nameField: 'name', module: 'devices', remove: 'deleteDevice' },
+  deviceProfiles: { nameField: 'name', module: 'deviceProfiles', remove: 'removeDeviceProfile' },
+  applications: { nameField: 'name', module: 'applications', remove: 'removeApplication', toggleStatus: 'toggleApplicationStatus' },
+  assets: { nameField: 'name', module: 'assets', remove: 'removeAsset', toggleStatus: 'toggleAssetStatus' },
+  assetGroups: { nameField: 'name', module: 'assetGroups', remove: 'removeAssetGroup' },
+  assetProfiles: { nameField: 'name', module: 'assetProfiles', remove: 'removeAssetProfile' },
+  ruleEngines: { nameField: 'name', module: 'ruleEngines', remove: 'removeRuleEngine', toggleStatus: 'toggleRuleEngineStatus' },
+  ruleEngineExecutions: { nameField: 'ruleEngineName', module: 'ruleEngineReports' },
+  tenants: { nameField: 'title', module: 'tenants', platformOnly: true, remove: 'removeTenant', toggleStatus: 'toggleTenantStatus' },
+  tenantProfiles: { nameField: 'name', module: 'tenantProfiles', platformOnly: true, remove: 'removeTenantProfile' },
+  users: { nameField: 'name', module: 'users', remove: 'deleteUser', toggleStatus: 'toggleUserStatus' },
+  userGroups: { nameField: 'name', module: 'userGroups', remove: 'removeUserGroup' },
+  shifts: { nameField: 'name', module: 'shifts', remove: 'removeShift', toggleStatus: 'toggleShiftStatus' },
+  shiftSchedules: { nameField: 'name', module: 'shiftSchedules', remove: 'removeShiftSchedule' },
+  shiftInstances: { nameField: 'shiftName', module: 'shiftInstances', remove: 'removeShiftInstance' },
 }
+
+// Fields that must never be handed to the model, whatever the entity.
+const CHATBOT_HIDDEN_FIELD = /token|secret|password|api[-_]?key/i
+
+// Whether the signed-in role may do `action` ('view' | 'create' | 'edit' | 'delete')
+// on this entity through the assistant.
+function chatbotCan(entity, action) {
+  const entry = CHATBOT_ENTITIES[entity]
+  if (!entry) return false
+  if (entry.platformOnly && (Store.get().auth || {}).tenantId) return false
+  return Store.hasPermission(entry.module, action)
+}
+
+function chatbotDenied(action, what) {
+  return { error: `Your role isn't allowed to ${action} ${what}, so nothing was changed.` }
+}
+
+function chatbotRedact(value) {
+  if (Array.isArray(value)) return value.map(chatbotRedact)
+  if (value && typeof value === 'object') {
+    const out = {}
+    Object.keys(value).forEach((key) => {
+      if (!CHATBOT_HIDDEN_FIELD.test(key)) out[key] = chatbotRedact(value[key])
+    })
+    return out
+  }
+  return value
+}
+
+// What a status counts as. Applications, rule engines and users say
+// active / suspended; assets say operational / offline.
+const CHATBOT_ON_STATUSES = ['active', 'operational', 'online']
+const CHATBOT_OFF_STATUSES = ['suspended', 'offline']
 
 const CHATBOT_SYSTEM_PROMPT = `You are the Univa Assistant, embedded as a floating widget in the Univa IoT/asset-management admin console. Everything you see is a local, static demo dataset (no real devices or customers) served by the browser's own mock data layer — be direct and don't caveat that it's a demo unless the user asks.
 
@@ -70,9 +109,17 @@ let chatbotBusy = false
 
 // --------------------------------------------------------------- storage
 
+// The key is kept for this tab only. An earlier version stored it in
+// localStorage, which outlives the tab and is readable by every page of the
+// site; if one is still there, move it over once and remove the old copy.
 function chatbotGetApiKey() {
   try {
-    return localStorage.getItem(CHATBOT_KEY_STORAGE) || ''
+    const old = localStorage.getItem(CHATBOT_KEY_STORAGE)
+    if (old) {
+      if (!sessionStorage.getItem(CHATBOT_KEY_STORAGE)) sessionStorage.setItem(CHATBOT_KEY_STORAGE, old)
+      localStorage.removeItem(CHATBOT_KEY_STORAGE)
+    }
+    return sessionStorage.getItem(CHATBOT_KEY_STORAGE) || ''
   } catch (e) {
     return ''
   }
@@ -80,8 +127,9 @@ function chatbotGetApiKey() {
 
 function chatbotSetApiKey(key) {
   try {
-    if (key) localStorage.setItem(CHATBOT_KEY_STORAGE, key)
-    else localStorage.removeItem(CHATBOT_KEY_STORAGE)
+    localStorage.removeItem(CHATBOT_KEY_STORAGE)
+    if (key) sessionStorage.setItem(CHATBOT_KEY_STORAGE, key)
+    else sessionStorage.removeItem(CHATBOT_KEY_STORAGE)
   } catch (e) {}
 }
 
@@ -234,32 +282,44 @@ function chatbotBuildTools() {
 }
 
 function chatbotToolQueryData(input) {
-  const data = Store.get()
-  const rows = data[input.entity]
+  // Only the entities listed in CHATBOT_ENTITIES can be read, not any key of the store.
+  if (!CHATBOT_ENTITIES[input.entity]) return { error: 'Unknown entity: ' + input.entity }
+  if (!chatbotCan(input.entity, 'view')) return chatbotDenied('view', input.entity)
+  const rows = Store.get()[input.entity]
   if (!Array.isArray(rows)) return { error: 'Unknown entity: ' + input.entity }
   let filtered = rows
   if (input.filter && typeof input.filter === 'object') {
-    const keys = Object.keys(input.filter)
+    // Filtering on a hidden field would let the model test guesses at a secret.
+    const keys = Object.keys(input.filter).filter((key) => !CHATBOT_HIDDEN_FIELD.test(key))
     filtered = filtered.filter((row) =>
       keys.every((key) => String(row[key]).toLowerCase() === String(input.filter[key]).toLowerCase()),
     )
   }
   const limit = Math.min(input.limit || 30, 50)
-  return JSON.stringify({ total: filtered.length, returned: Math.min(filtered.length, limit), records: filtered.slice(0, limit) })
+  return JSON.stringify({ total: filtered.length, returned: Math.min(filtered.length, limit), records: chatbotRedact(filtered.slice(0, limit)) })
 }
 
 function chatbotToolSetStatus(input) {
   const registryEntry = CHATBOT_ENTITIES[input.entity]
   if (!registryEntry || !registryEntry.toggleStatus) return { error: 'That entity does not support status changes.' }
+  if (!chatbotCan(input.entity, 'edit')) return chatbotDenied('change', input.entity)
   const record = (Store.get()[input.entity] || []).find((r) => r.id === input.id)
   if (!record) return { error: 'No record with that id. Call query_data first to find it.' }
   const label = record[registryEntry.nameField] || record.id
-  if (record.status === input.status) return `"${label}" is already ${input.status}.`
+  const wantOn = input.status === 'active'
+  const isOn = CHATBOT_ON_STATUSES.includes(record.status)
+  const isOff = CHATBOT_OFF_STATUSES.includes(record.status)
+  if ((wantOn && isOn) || (!wantOn && isOff)) return `"${label}" is already ${record.status}.`
+  // The Store only offers a toggle, so look at the result and report what it really is.
   Store[registryEntry.toggleStatus](input.id)
-  return `"${label}" set to ${input.status}.`
+  const after = (Store.get()[input.entity] || []).find((r) => r.id === input.id)
+  const now = after ? after.status : 'unknown'
+  const reached = wantOn ? CHATBOT_ON_STATUSES.includes(now) : CHATBOT_OFF_STATUSES.includes(now)
+  return reached ? `"${label}" is now ${now}.` : `"${label}" is now ${now}, which is not the ${input.status} state that was asked for.`
 }
 
 function chatbotToolCreateShift(input) {
+  if (!chatbotCan('shifts', 'create')) return chatbotDenied('create', 'shifts')
   const record = Store.addShift({
     name: input.name,
     startTime: input.startTime,
@@ -270,6 +330,7 @@ function chatbotToolCreateShift(input) {
 }
 
 function chatbotToolCreateGroup(input) {
+  if (!chatbotCan(input.kind === 'userGroup' ? 'userGroups' : 'assetGroups', 'create')) return chatbotDenied('create', input.kind === 'userGroup' ? 'user groups' : 'asset groups')
   if (input.kind === 'userGroup') {
     const record = Store.addUserGroup({ name: input.name, description: input.description || '' })
     return `Created user group "${record.name}".`
@@ -283,6 +344,10 @@ function chatbotToolDeleteRecord(input) {
     const registryEntry = CHATBOT_ENTITIES[input.entity]
     if (!registryEntry || !registryEntry.remove) {
       resolve({ error: 'That entity cannot be deleted.' })
+      return
+    }
+    if (!chatbotCan(input.entity, 'delete')) {
+      resolve(chatbotDenied('delete', input.entity))
       return
     }
     const record = (Store.get()[input.entity] || []).find((r) => r.id === input.id)
@@ -301,7 +366,7 @@ function chatbotToolDeleteRecord(input) {
     }
 
     UI.confirm({
-      message: `Delete <strong>${label}</strong>? This can't be undone.`,
+      message: `Delete <strong>${UI.esc(label)}</strong>? This can't be undone.`,
       onConfirm: () => {
         Store[registryEntry.remove](input.id)
         resolve(`Deleted "${label}".`)
@@ -609,7 +674,7 @@ function chatbotBuildDom() {
     </div>
     <div class="chatbot-settings" id="chatbot-settings" style="display:none;">
       <p class="chatbot-settings-note">
-        This app has no backend, so the API key you enter is stored in this browser's localStorage and calls the Anthropic API directly from this page. Anyone with access to this browser/device or its devtools can read that key. Use a key you're comfortable exposing this way — a low-limit or test key is safest — and never share this browser session with anyone you wouldn't hand the key to.
+        This app has no backend, so the API key you enter is kept in this browser tab (it is forgotten when you close the tab) and calls the Anthropic API directly from this page. Anyone with access to this browser/device or its devtools can read that key while it is there. Use a key you're comfortable exposing this way — a low-limit or test key is safest — and never share this browser session with anyone you wouldn't hand the key to.
       </p>
       <label for="chatbot-key-input">Anthropic API key</label>
       <input type="password" id="chatbot-key-input" placeholder="sk-ant-..." autocomplete="off" />

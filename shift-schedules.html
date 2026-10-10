@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -130,12 +132,12 @@
         .map(
           (s) => `
         <tr>
-          <td class="card-title-cell"><div class="group-name-cell">${s.name}${s.description ? `<p class="group-description">${s.description}</p>` : ''}</div></td>
+          <td class="card-title-cell"><div class="group-name-cell">${UI.esc(s.name)}${s.description ? `<p class="group-description">${UI.esc(s.description)}</p>` : ''}</div></td>
           <td data-label="Days"><div class="day-chip-row">${DAY_OPTIONS.map((d) => {
             const names = shiftNamesForDay(s.assignments[d])
             if (names.length === 0) return `<span class="day-chip off" title="No shift assigned">${d}</span>`
             const suffix = names.length > 1 ? ` ×${names.length}` : ''
-            return `<span class="day-chip" title="${names.join(', ')}">${d}${suffix}</span>`
+            return `<span class="day-chip" title="${UI.esc(names.join(', '))}">${d}${suffix}</span>`
           }).join('')}</div></td>
           <td data-label="Created Date">${s.createdDate}</td>
           <td class="data-table-menu-col">
@@ -190,7 +192,7 @@
           <div class="day-toggle-row">
             ${shifts.length === 0
               ? '<span class="section-empty">No shifts defined yet</span>'
-              : shifts.map((sh) => `<label class="day-toggle"><input type="checkbox" data-schedule-shift="${d}" value="${sh.id}" ${(assignments[d] || []).includes(sh.id) ? 'checked' : ''}/> ${sh.name}</label>`).join('')}
+              : shifts.map((sh) => `<label class="day-toggle"><input type="checkbox" data-schedule-shift="${d}" value="${sh.id}" ${(assignments[d] || []).includes(sh.id) ? 'checked' : ''}/> ${UI.esc(sh.name)}</label>`).join('')}
           </div>
         </div>`,
         )
@@ -231,7 +233,7 @@
       const s = Store.get().shiftSchedules.find((x) => x.id === id)
       if (!s) return
       UI.confirm({
-        message: `Delete <strong>${s.name}</strong>? This can't be undone.`,
+        message: `Delete <strong>${UI.esc(s.name)}</strong>? This can't be undone.`,
         onConfirm: () => {
           Store.removeShiftSchedule(id)
           render()

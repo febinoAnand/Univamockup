@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -924,8 +926,8 @@
           <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute" title="Remove attribute">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
           </button>
-          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>
-          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${row.value}" /></div>
+          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${UI.esc(row.key)}" /></div>
+          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${UI.esc(row.value)}" /></div>
         </div>`,
         )
         .join('') + `<button type="button" class="metadata-add" id="metadata-add-btn">
@@ -983,7 +985,7 @@
       document.getElementById('app-devices-list').innerHTML =
         data.devices.length === 0
           ? '<span class="section-empty">No devices available</span>'
-          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${UI.esc(d.name)}</label>`).join('')
     }
 
     function renderAssetsChecklist(selectedIds) {
@@ -991,7 +993,7 @@
       document.getElementById('app-assets-list').innerHTML =
         data.assets.length === 0
           ? '<span class="section-empty">No assets available</span>'
-          : data.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
+          : data.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${UI.esc(a.name)}</label>`).join('')
     }
 
     function renderGroupsChecklist(selectedNames) {
@@ -999,7 +1001,7 @@
       document.getElementById('app-groups-list').innerHTML =
         data.assetGroups.length === 0
           ? '<span class="section-empty">No asset groups available</span>'
-          : data.assetGroups.map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${g.name}" ${selectedNames.includes(g.name) ? 'checked' : ''}/> ${g.name}</label>`).join('')
+          : data.assetGroups.map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${UI.esc(g.name)}" ${selectedNames.includes(g.name) ? 'checked' : ''}/> ${UI.esc(g.name)}</label>`).join('')
     }
 
     function openEdit() {
@@ -1043,7 +1045,7 @@
       const app = getApp()
       if (!app) return
       UI.confirm({
-        message: `Delete <strong>${app.name}</strong>? This can't be undone.`,
+        message: `Delete <strong>${UI.esc(app.name)}</strong>? This can't be undone.`,
         onConfirm: () => {
           Store.removeApplication(app.id)
           UI.toast(`"${app.name}" deleted successfully!`)
@@ -1076,7 +1078,7 @@
               <div class="detail-meta-item"><p class="label">Application ID</p><p class="value no-transform">${app.id}</p></div>
               <div class="detail-meta-item"><p class="label">Sidebar icon</p><p class="value with-icon">${iconSvg(app.icon || 'app')}${app.icon || 'app'}</p></div>
               <div class="detail-meta-item"><p class="label">Default application</p><p class="value">${app.isDefault ? 'Yes' : 'No'}</p></div>
-              <div class="detail-meta-item"><p class="label">Description</p><p class="value no-transform">${app.description || '—'}</p></div>
+              <div class="detail-meta-item"><p class="label">Description</p><p class="value no-transform">${UI.esc(app.description || '—')}</p></div>
             </div>
           </div>
           <div class="detail-card detail-overview-stats">
@@ -1085,11 +1087,11 @@
               ${countTiles
                 .map(
                   (t) => `
-              <div class="count-tile" style="--tile-bg: ${t.bg}; --tile-icon-bg: ${t.iconBg}; --tile-icon-color: ${t.iconColor};" title="${t.label}: ${t.value}${t.breakdown ? ' (' + t.breakdown + ')' : ''}">
+              <div class="count-tile" style="--tile-bg: ${t.bg}; --tile-icon-bg: ${t.iconBg}; --tile-icon-color: ${t.iconColor};" title="${UI.esc(t.label)}: ${UI.esc(t.value)}${t.breakdown ? ' (' + t.breakdown + ')' : ''}">
                 <span class="count-tile-icon">${iconSvg(t.icon)}</span>
                 <span>
-                  <p class="count-tile-value">${t.value}</p>
-                  <p class="count-tile-label">${t.label}</p>
+                  <p class="count-tile-value">${UI.esc(t.value)}</p>
+                  <p class="count-tile-label">${UI.esc(t.label)}</p>
                   ${t.breakdown ? `<p class="count-tile-breakdown">${t.breakdown}</p>` : ''}
                 </span>
               </div>`,
@@ -1101,7 +1103,7 @@
 
         <div class="detail-tabs">
           ${GENERIC_TABS.map(
-            (t) => `<button type="button" class="detail-tab-button${genericActiveTab === t.key ? ' active' : ''}" data-generic-tab="${t.key}">${iconSvg(t.icon)}${t.label}</button>`,
+            (t) => `<button type="button" class="detail-tab-button${genericActiveTab === t.key ? ' active' : ''}" data-generic-tab="${UI.esc(t.key)}">${iconSvg(t.icon)}${UI.esc(t.label)}</button>`,
           ).join('')}
         </div>
         <div class="detail-card">
@@ -1126,7 +1128,7 @@
                 (d) => `
               <a class="detail-tile" href="device-detail.html#${d.id}">
                 <span class="detail-tile-icon">${iconSvg('device')}</span>
-                <p class="detail-tile-name">${d.name}</p>
+                <p class="detail-tile-name">${UI.esc(d.name)}</p>
                 <span class="status-pill status-${d.state === 'online' ? 'active' : 'offline'}" title="${d.state}">${d.state}</span>
               </a>`,
               )
@@ -1140,7 +1142,7 @@
                 (a) => `
               <a class="detail-tile" href="asset-detail.html#${a.id}">
                 <span class="detail-tile-icon">${iconSvg('asset')}</span>
-                <p class="detail-tile-name">${a.name}</p>
+                <p class="detail-tile-name">${UI.esc(a.name)}</p>
                 <span class="status-pill status-${a.status}" title="${a.status}">${a.status}</span>
               </a>`,
               )
@@ -1161,7 +1163,7 @@
                   (a) => `
               <a class="detail-tile" href="asset-detail.html#${a.id}">
                 <span class="detail-tile-icon">${iconSvg('asset')}</span>
-                <p class="detail-tile-name">${a.name}</p>
+                <p class="detail-tile-name">${UI.esc(a.name)}</p>
                 <span class="status-pill status-${a.status}" title="${a.status}">${a.status}</span>
               </a>`,
                 )
@@ -1175,8 +1177,8 @@
             .map(
               (m) => `
               <div class="detail-tile">
-                <p class="detail-tile-name">${m.key}</p>
-                <p class="detail-tile-sub">${m.value}</p>
+                <p class="detail-tile-name">${UI.esc(m.key)}</p>
+                <p class="detail-tile-sub">${UI.esc(m.value)}</p>
               </div>`,
             )
             .join('')}</div>`
@@ -1391,9 +1393,9 @@
         <tr>
           <td><input type="checkbox" data-ems-meter-check="${m.id}" title="Select row" ${emsMeterSelected.has(m.id) ? 'checked' : ''} /></td>
           <td>${(page - 1) * EMS_PER_PAGE + i + 1}</td>
-          <td>${m.name}</td>
-          <td>${m.meterId}</td>
-          <td>${m.model || '—'}</td>
+          <td>${UI.esc(m.name)}</td>
+          <td>${UI.esc(m.meterId)}</td>
+          <td>${UI.esc(m.model || '—')}</td>
           <td>${m.unit || '—'}</td>
           <td>
             <button type="button" class="ems-row-action-btn" data-ems-meter-edit="${m.id}" aria-label="Edit meter" title="Edit meter">${emsEditIcon()}</button>
@@ -1607,7 +1609,7 @@
       const panel = emsActiveTab === 'todgrid' ? renderEmsTodGridPanel() : emsActiveTab === 'meters' ? renderEmsMeterListPanel() : renderEmsEnergyDataPanel()
       return `
         <div class="detail-tabs">
-          ${EMS_TABS.map((t) => `<button type="button" class="detail-tab-button${emsActiveTab === t.key ? ' active' : ''}" data-ems-tab="${t.key}">${t.label}</button>`).join('')}
+          ${EMS_TABS.map((t) => `<button type="button" class="detail-tab-button${emsActiveTab === t.key ? ' active' : ''}" data-ems-tab="${UI.esc(t.key)}">${UI.esc(t.label)}</button>`).join('')}
         </div>
         <div class="detail-card">${panel}</div>`
     }
@@ -1780,12 +1782,12 @@
                 (m, i) => `
         <tr>
           <td>${(page - 1) * CMS_PER_PAGE + i + 1}</td>
-          <td>${m.machineId}</td>
+          <td>${UI.esc(m.machineId)}</td>
           <td>${m.deviceId || '—'}</td>
-          <td>${m.name}</td>
-          <td>${m.manufacturer || '—'}</td>
-          <td>${m.model || '—'}</td>
-          <td>${m.line || '—'}</td>
+          <td>${UI.esc(m.name)}</td>
+          <td>${UI.esc(m.manufacturer || '—')}</td>
+          <td>${UI.esc(m.model || '—')}</td>
+          <td>${UI.esc(m.line || '—')}</td>
           <td>${cmsMachineStatusPill(m)}</td>
           <td>
             <button type="button" class="ems-row-action-btn" data-cms-machine-edit="${m.id}" aria-label="Edit machine" title="Edit machine">${emsEditIcon()}</button>
@@ -1846,7 +1848,7 @@
           const id = btn.getAttribute('data-cms-machine-delete')
           const machine = Store.get().cmsMachines.find((m) => m.id === id)
           UI.confirm({
-            message: `Delete "${machine ? machine.name : 'this machine'}"? This can't be undone.`,
+            message: `Delete "${UI.esc(machine ? machine.name : 'this machine')}"? This can't be undone.`,
             onConfirm: () => {
               Store.removeCmsMachine(id)
               UI.toast('Machine deleted successfully!')
@@ -1960,7 +1962,7 @@
         </div>
 
         <div class="cms-state-filter-row">
-          ${CMS_STATE_FILTERS.map((f) => `<button type="button" class="cms-filter-chip${cmsDashboardStateFilter === f.key ? ' active' : ''}" data-cms-state-filter="${f.key}">${f.label}</button>`).join('')}
+          ${CMS_STATE_FILTERS.map((f) => `<button type="button" class="cms-filter-chip${cmsDashboardStateFilter === f.key ? ' active' : ''}" data-cms-state-filter="${UI.esc(f.key)}">${UI.esc(f.label)}</button>`).join('')}
         </div>
 
         <div class="cms-crane-grid">
@@ -1970,13 +1972,13 @@
               : filtered
                   .map(
                     ({ machine: m, state }) => `
-          <div class="detail-card cms-crane-card" data-cms-crane-id="${m.id}" role="button" tabindex="0" title="Open ${m.name} dashboard" style="--cms-card-accent:${CMS_STATE_COLORS[state]};">
+          <div class="detail-card cms-crane-card" data-cms-crane-id="${m.id}" role="button" tabindex="0" title="Open ${UI.esc(m.name)} dashboard" style="--cms-card-accent:${CMS_STATE_COLORS[state]};">
             <div class="cms-crane-card-header">
               <span class="cms-status-dot cms-status-dot-${state}" title="${state.charAt(0).toUpperCase() + state.slice(1)}"></span>
-              <h3>${m.name}</h3>
+              <h3>${UI.esc(m.name)}</h3>
               ${cmsStatePill(state)}
             </div>
-            <span class="cms-crane-id-badge">ID: ${m.machineId}</span>
+            <span class="cms-crane-id-badge">ID: ${UI.esc(m.machineId)}</span>
             <div class="cms-load-strip">
               <div class="cms-load-strip-track"><div class="cms-load-strip-fill" style="width:${cmsLoadPct(m)}%;background:${CMS_STATE_COLORS[state]};"></div></div>
               <div class="cms-load-strip-label"><span>${m.currentLoad} kg load</span><span>${m.maxCapacity} kg cap.</span></div>
@@ -2066,7 +2068,7 @@
       const panel = cmsActiveTab === 'machine' ? renderCmsMachinePanel() : renderCmsDashboardPanel()
       return `
         <div class="detail-tabs">
-          ${CMS_TABS.map((t) => `<button type="button" class="detail-tab-button${cmsActiveTab === t.key ? ' active' : ''}" data-cms-tab="${t.key}">${t.label}</button>`).join('')}
+          ${CMS_TABS.map((t) => `<button type="button" class="detail-tab-button${cmsActiveTab === t.key ? ' active' : ''}" data-cms-tab="${UI.esc(t.key)}">${UI.esc(t.label)}</button>`).join('')}
         </div>
         ${cmsActiveTab === 'machine' ? `<div class="detail-card">${panel}</div>` : panel}`
     }
@@ -2134,8 +2136,8 @@
         <a class="detail-back-link" href="applications.html">&larr; Back to Applications</a>
         <div class="page-header">
           <div>
-            <h1 class="page-title">${app.name}${app.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}${template ? ` <span class="rt-template-badge" title="Built from the ${template.name} template v${template.version}">${iconSvg(template.icon)}${template.name}</span>` : ''}</h1>
-            <p class="page-subtitle">${app.description || 'No description provided.'}</p>
+            <h1 class="page-title">${UI.esc(app.name)}${app.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}${template ? ` <span class="rt-template-badge" title="Built from the ${UI.esc(template.name)} template v${UI.esc(template.version)}">${iconSvg(template.icon)}${UI.esc(template.name)}</span>` : ''}</h1>
+            <p class="page-subtitle">${UI.esc(app.description || 'No description provided.')}</p>
           </div>
           <div class="page-header-actions">
             <span class="status-pill status-${app.status}" title="${app.status}">${app.status}</span>

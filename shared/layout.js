@@ -229,6 +229,12 @@ function iconSvg(name) {
   return icons[name] || ''
 }
 
+// Names the user typed (an application's name, say) end up in the sidebar and
+// breadcrumbs of every page, so they are shown as text, never as markup.
+function escapeLayoutText(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+}
+
 function permissionModuleForKey(key) {
   const applicationMatch = /^application-(.+)$/.exec(key)
   if (applicationMatch) return 'app:' + applicationMatch[1]
@@ -260,7 +266,7 @@ function renderSidebar(active) {
     if (!section.children) {
       if (window.Store && !Store.hasPermission(permissionModuleForKey(section.key), 'view')) return ''
       const isActive = section.key === active
-      return `<a class="sidebar-link${isActive ? ' active' : ''}" href="${section.href}" title="${section.label}">${iconSvg(section.icon)}<span>${section.label}</span></a>`
+      return `<a class="sidebar-link${isActive ? ' active' : ''}" href="${section.href}" title="${escapeLayoutText(section.label)}">${iconSvg(section.icon)}<span>${escapeLayoutText(section.label)}</span></a>`
     }
     // Static section — always shows its children, no expand/collapse.
     let sectionChildren = section.children
@@ -275,12 +281,12 @@ function renderSidebar(active) {
     }
     if (!sectionChildren.length) return ''
     const children = sectionChildren
-      .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${child.href}" title="${child.label}">${iconSvg(child.icon)}<span>${child.label}</span></a>`)
+      .map((child) => `<a class="sidebar-child-link${child.key === active ? ' active' : ''}" href="${escapeLayoutText(child.href)}" title="${escapeLayoutText(child.label)}">${iconSvg(child.icon)}<span>${escapeLayoutText(child.label)}</span></a>`)
       .join('')
     return `
       <div class="sidebar-section" data-group="${section.key}">
         <div class="sidebar-section-header">
-          <span class="sidebar-section-label">${section.label}</span>
+          <span class="sidebar-section-label">${escapeLayoutText(section.label)}</span>
         </div>
         <div class="sidebar-section-children">${children}</div>
       </div>`
@@ -300,8 +306,8 @@ function renderTopBar(breadcrumbs) {
     .map((crumb, index) => {
       const isLast = index === breadcrumbs.length - 1
       const label = isLast
-        ? `<span class="breadcrumb-current">${crumb.label}</span>`
-        : `<a class="breadcrumb-link" href="${crumb.href}" title="${crumb.label}">${crumb.label}</a>`
+        ? `<span class="breadcrumb-current">${escapeLayoutText(crumb.label)}</span>`
+        : `<a class="breadcrumb-link" href="${escapeLayoutText(crumb.href)}" title="${escapeLayoutText(crumb.label)}">${escapeLayoutText(crumb.label)}</a>`
       return index === 0 ? label : `<span class="breadcrumb-separator">/</span>${label}`
     })
     .join('')

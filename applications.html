@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -174,8 +176,8 @@
           <button type="button" class="metadata-remove" data-remove="${row.id}" aria-label="Remove attribute" title="Remove attribute">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
           </button>
-          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${row.key}" /></div>
-          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${row.value}" /></div>
+          <div class="modal-field"><label>Key*</label><input type="text" data-key="${row.id}" value="${UI.esc(row.key)}" /></div>
+          <div class="modal-field"><label>Value</label><input type="text" data-value="${row.id}" value="${UI.esc(row.value)}" /></div>
         </div>`,
         )
         .join('') + `<button type="button" class="metadata-add" id="metadata-add-btn">
@@ -230,7 +232,7 @@
 
     function templateBadge(a) {
       const t = a.templateKey && AppTemplates.get(a.templateKey)
-      return t ? ` <span class="rt-template-badge" title="Built from the ${t.name} template">${iconSvg(t.icon)}${t.name}</span>` : ''
+      return t ? ` <span class="rt-template-badge" title="Built from the ${UI.esc(t.name)} template">${iconSvg(t.icon)}${UI.esc(t.name)}</span>` : ''
     }
 
     // A template app binds a whole asset group, so count what that resolves to.
@@ -261,7 +263,7 @@
         .map(
           (a) => `
         <tr class="clickable-row" data-open="${applicationHref(a)}">
-          <td class="card-title-cell"><div class="group-name-cell"><span>${a.name}${a.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}${templateBadge(a)}</span>${a.description ? `<p class="group-description">${a.description}</p>` : ''}</div></td>
+          <td class="card-title-cell"><div class="group-name-cell"><span>${UI.esc(a.name)}${a.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}${templateBadge(a)}</span>${a.description ? `<p class="group-description">${UI.esc(a.description)}</p>` : ''}</div></td>
           <td data-label="Devices">${boundCounts(a, data).devices}</td>
           <td data-label="Assets">${boundCounts(a, data).assets}</td>
           <td data-label="Asset Groups">${(a.groupNames || []).length}</td>
@@ -339,7 +341,7 @@
       document.getElementById('app-devices-list').innerHTML =
         data.devices.length === 0
           ? '<span class="section-empty">No devices available</span>'
-          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${selectedIds.includes(d.id) ? 'checked' : ''}/> ${UI.esc(d.name)}</label>`).join('')
     }
 
     function renderAssetsList(selectedIds) {
@@ -347,7 +349,7 @@
       document.getElementById('app-assets-list').innerHTML =
         data.assets.length === 0
           ? '<span class="section-empty">No assets available</span>'
-          : data.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${a.name}</label>`).join('')
+          : data.assets.map((a) => `<label class="modal-checkbox"><input type="checkbox" data-asset="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''}/> ${UI.esc(a.name)}</label>`).join('')
     }
 
     function renderGroupsList(selectedNames) {
@@ -355,7 +357,7 @@
       document.getElementById('app-groups-list').innerHTML =
         data.assetGroups.length === 0
           ? '<span class="section-empty">No asset groups available</span>'
-          : data.assetGroups.map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${g.name}" ${selectedNames.includes(g.name) ? 'checked' : ''}/> ${g.name}</label>`).join('')
+          : data.assetGroups.map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${UI.esc(g.name)}" ${selectedNames.includes(g.name) ? 'checked' : ''}/> ${UI.esc(g.name)}</label>`).join('')
     }
 
     function openAdd() {
@@ -404,7 +406,7 @@
       const a = Store.get().applications.find((x) => x.id === id)
       if (!a) return
       UI.confirm({
-        message: `Delete <strong>${a.name}</strong>? This can't be undone.`,
+        message: `Delete <strong>${UI.esc(a.name)}</strong>? This can't be undone.`,
         onConfirm: () => {
           Store.removeApplication(id)
           render()
@@ -439,7 +441,7 @@
           <p class="rt-help">Start from a template: the template decides the KPIs, reports, and screens, and you bind it to your own assets and device data. Or start blank with a Custom App page workspace.</p>
           <div class="rt-template-gallery">
             ${AppTemplates.list().map((t) => `
-              <button type="button" class="rt-template-card" data-pick-template="${t.key}" title="Use the ${escHtml(t.name)} template">
+              <button type="button" class="rt-template-card" data-pick-template="${UI.esc(t.key)}" title="Use the ${escHtml(t.name)} template">
                 <span class="rt-template-card-icon">${iconSvg(t.icon)}</span>
                 <span class="rt-template-card-tag">${escHtml(t.category)}</span>
                 <span class="rt-template-card-name">${escHtml(t.name)}</span>
@@ -479,7 +481,7 @@
       const t = templateDraft.template
       const data = Store.get()
       const entityCount = data.assets.filter((a) => (a.groupNames || []).includes(templateDraft.assetGroup)).length
-      document.getElementById('template-modal-title').textContent = `New ${t.name} application`
+      document.getElementById('template-modal-title').textContent = `New ${UI.esc(t.name)} application`
       body.innerHTML = `
         <div class="modal-field"><label for="tpl-name">Application name*</label><input id="tpl-name" type="text" value="${escHtml(templateDraft.name)}" /></div>
         <div class="modal-field"><label for="tpl-description">Description</label><textarea id="tpl-description" rows="2">${escHtml(templateDraft.description)}</textarea></div>

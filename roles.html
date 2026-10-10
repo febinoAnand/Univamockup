@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -244,7 +246,7 @@
       if (!template) return
       PERMISSION_MODULES.push({
         key: 'app:' + app.id,
-        label: `${app.name} (${template.name})`,
+        label: `${UI.esc(app.name)} (${UI.esc(template.name)})`,
         iconFamily: 'app',
         fields: template.views.map((view) => ({ key: 'view:' + view.key, label: view.label + ' tab' }))
           .concat([{ key: 'manualEntries', label: 'Manual data entry (forms & data sheets)' }]),
@@ -381,10 +383,10 @@
           <span class="role-stripe tier-${role.tier}"></span>
           <span class="role-card-body">
             <span class="role-card-top">
-              <span class="role-name">${role.name}</span>
+              <span class="role-name">${UI.esc(role.name)}</span>
               ${role.system ? `<span class="system-badge" title="System role — always has full access, cannot be edited or removed">${SHIELD_SVG}System</span>` : ''}
             </span>
-            <p class="role-desc">${role.description}</p>
+            <p class="role-desc">${UI.esc(role.description)}</p>
             <span class="role-meta">
               <span>${role.userCount} user${role.userCount === 1 ? '' : 's'}</span>
               <span class="meta-dot"></span>
@@ -427,15 +429,15 @@
               const granted = fieldPermission[action.key]
               return `<td><span class="permission-mark small${granted ? ' granted' : ' denied'}">${granted ? CHECK_MARK_SVG : DASH_MARK_SVG}</span></td>`
             }).join('')
-            return `<tr class="field-row"><td class="module-cell field-cell">${field.label}</td>${cells}</tr>`
+            return `<tr class="field-row"><td class="module-cell field-cell">${UI.esc(field.label)}</td>${cells}</tr>`
           }).join('')
         }
         return `
         <tr>
           <td class="module-cell">
-            ${hasFields ? `<button type="button" class="module-expand-toggle" data-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields" title="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
+            ${hasFields ? `<button type="button" class="module-expand-toggle" data-expand="${UI.esc(module.key)}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${UI.esc(module.label)} fields" title="${expanded ? 'Collapse' : 'Expand'} ${UI.esc(module.label)} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
             <span class="module-icon">${MODULE_ICON_SVG[module.iconFamily]}</span>
-            ${module.label}
+            ${UI.esc(module.label)}
           </td>
           ${actionCells}
         </tr>
@@ -445,9 +447,9 @@
       pane.innerHTML = `
         <div class="detail-head">
           <div class="detail-head-left">
-            <span class="role-avatar tier-${selectedRole.tier}">${selectedRole.name.charAt(0)}</span>
+            <span class="role-avatar tier-${selectedRole.tier}">${UI.esc(selectedRole.name.charAt(0))}</span>
             <div>
-              <h2>${selectedRole.name}</h2>
+              <h2>${UI.esc(selectedRole.name)}</h2>
               <p>${selectedCoverage.granted} of ${selectedCoverage.total} permissions granted &middot; ${selectedRole.userCount} user${selectedRole.userCount === 1 ? '' : 's'} assigned</p>
             </div>
           </div>
@@ -459,7 +461,7 @@
         ${selectedRole.system ? `<p class="system-hint">${INFO_SVG}Owner is a system role &mdash; it always has full access and cannot be edited or removed.</p>` : ''}
         <div class="matrix-wrap">
           <table class="permission-matrix">
-            <thead><tr><th>Module</th>${PERMISSION_ACTIONS.map((a) => `<th>${a.label}</th>`).join('')}</tr></thead>
+            <thead><tr><th>Module</th>${PERMISSION_ACTIONS.map((a) => `<th>${UI.esc(a.label)}</th>`).join('')}</tr></thead>
             <tbody>${rowsHtml}</tbody>
           </table>
         </div>
@@ -486,7 +488,7 @@
         return
       }
       UI.confirm({
-        message: `Delete the <strong>${role.name}</strong> role? This can't be undone.`,
+        message: `Delete the <strong>${UI.esc(role.name)}</strong> role? This can't be undone.`,
         onConfirm: () => {
           roles = roles.filter((item) => item.id !== role.id)
           if (selectedId === role.id) selectedId = roles[0] ? roles[0].id : null
@@ -538,7 +540,7 @@
       editingRoleId = role.id
       editDraft = clonePermissions(role.permissions)
       editExpandedModules = new Set()
-      document.getElementById('edit-permissions-title').textContent = `Edit permissions — ${role.name}`
+      document.getElementById('edit-permissions-title').textContent = `Edit permissions — ${UI.esc(role.name)}`
       document.getElementById('edit-permissions-locked-hint').classList.toggle('hidden', !role.system)
       const footer = document.getElementById('edit-permissions-footer')
       footer.innerHTML = role.system
@@ -561,7 +563,7 @@
         '<th>Module</th>' +
         PERMISSION_ACTIONS.map((action) => {
           const allOn = PERMISSION_MODULES.every((module) => editDraft[module.key][action.key])
-          return `<th><label class="matrix-column-toggle"><input type="checkbox" data-toggle-column="${action.key}" ${allOn ? 'checked' : ''} ${locked ? 'disabled' : ''}/>${action.label}</label></th>`
+          return `<th><label class="matrix-column-toggle"><input type="checkbox" data-toggle-column="${UI.esc(action.key)}" ${allOn ? 'checked' : ''} ${locked ? 'disabled' : ''}/>${UI.esc(action.label)}</label></th>`
         }).join('')
 
       document.getElementById('edit-permissions-body').innerHTML = PERMISSION_MODULES.map((module) => {
@@ -570,7 +572,7 @@
         const hasFields = moduleFields.length > 0
         const cells = PERMISSION_ACTIONS.map((action) => {
           const checked = editDraft[module.key][action.key]
-          return `<td><input type="checkbox" data-cell-module="${module.key}" data-cell-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${module.label}" title="${action.label} ${module.label}"/></td>`
+          return `<td><input type="checkbox" data-cell-module="${UI.esc(module.key)}" data-cell-action="${UI.esc(action.key)}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${UI.esc(action.label)} ${UI.esc(module.label)}" title="${UI.esc(action.label)} ${UI.esc(module.label)}"/></td>`
         }).join('')
         let fieldRowsHtml = ''
         if (expanded) {
@@ -579,16 +581,16 @@
             const fieldCells = PERMISSION_ACTIONS.map((action) => {
               if (!FIELD_ACTION_KEYS.includes(action.key)) return '<td></td>'
               const checked = fieldPermission[action.key]
-              return `<td><input type="checkbox" data-field-module="${module.key}" data-field-key="${field.key}" data-field-action="${action.key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${action.label} ${field.label} on ${module.label}" title="${action.label} ${field.label} on ${module.label}"/></td>`
+              return `<td><input type="checkbox" data-field-module="${UI.esc(module.key)}" data-field-key="${UI.esc(field.key)}" data-field-action="${UI.esc(action.key)}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-label="${UI.esc(action.label)} ${UI.esc(field.label)} on ${UI.esc(module.label)}" title="${UI.esc(action.label)} ${UI.esc(field.label)} on ${UI.esc(module.label)}"/></td>`
             }).join('')
-            return `<tr class="field-row"><td class="module-cell field-cell">${field.label}</td>${fieldCells}</tr>`
+            return `<tr class="field-row"><td class="module-cell field-cell">${UI.esc(field.label)}</td>${fieldCells}</tr>`
           }).join('')
         }
         return `
         <tr>
           <td class="module-cell">
-            ${hasFields ? `<button type="button" class="module-expand-toggle" data-edit-expand="${module.key}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields" title="${expanded ? 'Collapse' : 'Expand'} ${module.label} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
-            ${module.label}
+            ${hasFields ? `<button type="button" class="module-expand-toggle" data-edit-expand="${UI.esc(module.key)}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${UI.esc(module.label)} fields" title="${expanded ? 'Collapse' : 'Expand'} ${UI.esc(module.label)} fields">${chevronSvg(expanded)}</button>` : '<span class="module-expand-spacer"></span>'}
+            ${UI.esc(module.label)}
           </td>
           ${cells}
         </tr>

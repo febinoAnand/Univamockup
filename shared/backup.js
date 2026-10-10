@@ -247,7 +247,7 @@
     const list = backups()
     const excess = list.length - keep
     if (excess <= 0) return 0
-    list.slice(0, excess).forEach((b) => Store.removeBackup(b.id))
+    Store.removeBackups(list.slice(0, excess).map((b) => b.id))
     return excess
   }
 

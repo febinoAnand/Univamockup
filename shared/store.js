@@ -530,20 +530,58 @@ const DEMO_ACCOUNTS = {
   adminapprove: { password: 'admin', pendingApproval: true },
 }
 
+function parseStored(raw) {
+  const parsed = JSON.parse(raw)
+  // Per-application backups were stored here before backups became
+  // workspace-wide with their own key; they can't be shown any more.
+  delete parsed.applicationBackups
+  delete parsed.applicationBackupSettings
+  return parsed
+}
+
+// A copy of the stored data that the caller may change and hand to saveData().
 function loadData() {
+  let raw = null
+  try { raw = localStorage.getItem(STORAGE_KEY) } catch (err) { /* storage unavailable: use the seed */ }
+  if (!raw) return structuredCloneSafe(DEFAULT_DATA)
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return structuredCloneSafe(DEFAULT_DATA)
-    const parsed = JSON.parse(raw)
-    // Per-application backups were stored here before backups became
-    // workspace-wide with their own key; they can't be shown any more.
-    delete parsed.applicationBackups
-    delete parsed.applicationBackupSettings
-    // shallow-merge so new seed keys introduced later still show up
-    return Object.assign(structuredCloneSafe(DEFAULT_DATA), parsed)
+    const data = parseStored(raw)
+    // Seed keys added after this data was saved still show up. Only those are
+    // copied, not the whole seed on every call.
+    Object.keys(DEFAULT_DATA).forEach((key) => {
+      if (!(key in data)) data[key] = structuredCloneSafe(DEFAULT_DATA[key])
+    })
+    return data
   } catch (err) {
+    keepCorruptCopy(raw)
     return structuredCloneSafe(DEFAULT_DATA)
   }
+}
+
+// Unreadable data falls back to the seed, and the next save overwrites it, so
+// keep the first unreadable copy where it can still be recovered.
+function keepCorruptCopy(raw) {
+  try {
+    if (localStorage.getItem(STORAGE_KEY + '-corrupt') === null) localStorage.setItem(STORAGE_KEY + '-corrupt', raw)
+  } catch (err) { /* storage full or unavailable */ }
+}
+
+// Read-only view of the stored data for hot paths such as permission checks,
+// which the sidebar runs dozens of times per page. It is parsed once per change
+// to the stored data and handed out without copying, so callers must not modify it.
+let peekCache = { raw: null, data: null }
+function peekData() {
+  let raw = null
+  try { raw = localStorage.getItem(STORAGE_KEY) } catch (err) { /* storage unavailable */ }
+  if (!raw) return DEFAULT_DATA
+  if (raw !== peekCache.raw) {
+    try {
+      peekCache = { raw, data: Object.assign({}, DEFAULT_DATA, parseStored(raw)) }
+    } catch (err) {
+      return DEFAULT_DATA
+    }
+  }
+  return peekCache.data
 }
 
 function structuredCloneSafe(value) {
@@ -551,7 +589,41 @@ function structuredCloneSafe(value) {
 }
 
 function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch (err) {
+    // Say so, then let the error stop the caller: otherwise it would go on to
+    // announce a success that never reached storage.
+    if (window.UI && UI.toast) UI.toast("Couldn't save your changes: this browser's storage is full or unavailable. Delete some backups or data and try again.")
+    throw err
+  }
+}
+
+// A bump of STORAGE_KEY leaves the data saved under every earlier version in
+// the browser for good. Remove the older ones (never a newer one, in case an
+// older copy of the site is open somewhere).
+function removeOldStorageKeys() {
+  try {
+    const current = Number((/-v(\d+)$/.exec(STORAGE_KEY) || [])[1])
+    const stale = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const found = /^univa-html-demo-v(\d+)$/.exec(localStorage.key(i) || '')
+      if (found && Number(found[1]) < current) stale.push(localStorage.key(i))
+    }
+    stale.forEach((key) => localStorage.removeItem(key))
+  } catch (err) { /* storage unavailable */ }
+}
+removeOldStorageKeys()
+
+// The outcome of a delivered command, which the mockup decides at random.
+function settleCommand(command) {
+  const succeeded = Math.random() < 0.85
+  command.status = succeeded ? 'delivered' : 'failed'
+  command.statusCode = succeeded ? 200 : 504
+  command.reasonPhrase = succeeded ? 'OK' : 'Gateway Timeout'
+  command.responsePayload = succeeded ? '{"result":"ok"}' : '{"error":"timeout"}'
+  command.updatedDate = nowStamp()
+  delete command.dueAt
 }
 
 function uid(prefix) {
@@ -651,7 +723,12 @@ const Store = {
     return record
   },
   removeBackup(id) {
-    localStorage.setItem(BACKUPS_KEY, JSON.stringify(Store.listBackups().filter((b) => b.id !== id)))
+    Store.removeBackups([id])
+  },
+  // Several at once: one write, however many backups go.
+  removeBackups(ids) {
+    const drop = new Set(ids)
+    localStorage.setItem(BACKUPS_KEY, JSON.stringify(Store.listBackups().filter((b) => !drop.has(b.id))))
   },
   setBackupSettings(settings) {
     const store = loadData()
@@ -711,11 +788,11 @@ const Store = {
   },
 
   isLoggedIn() {
-    return loadData().auth.loggedIn === true
+    return peekData().auth.loggedIn === true
   },
 
   getRolePermissions(roleName) {
-    const data = loadData()
+    const data = peekData()
     const scope = data.auth && data.auth.tenantId ? findTenant(data, data.auth.tenantId) : data
     const permissions = scope && scope.rolePermissions && scope.rolePermissions[String(roleName || '').toLowerCase()]
     return permissions ? structuredCloneSafe(permissions) : null
@@ -731,7 +808,7 @@ const Store = {
   },
 
   hasPermission(moduleKey, action) {
-    const auth = loadData().auth || {}
+    const auth = peekData().auth || {}
     const role = String(auth.role || 'Owner').toLowerCase()
     // Settings (database backup) is for owners and admins only. It isn't one of
     // the modules on the Roles & permissions page, so no role can be given it.
@@ -859,23 +936,41 @@ const Store = {
       status: 'pending', statusCode: null, reasonPhrase: 'Pending', responsePayload: '',
       createdDate: stamp, updatedDate: stamp,
     })
+    const delay = payload.executionType === 'sync' ? 0 : 1200 + Math.random() * 1800
+    // When it falls due. If the page is left before the timer fires, the command
+    // is settled the next time the device is looked at (settleCommands).
+    device.commands[0].dueAt = Date.now() + delay
     saveData(data)
     function resolveCommand() {
       const latest = loadData()
       const dev = latest.devices.find((d) => d.id === deviceId)
       if (!dev) return
       const command = dev.commands.find((c) => c.id === commandId)
-      if (!command) return
-      const succeeded = Math.random() < 0.85
-      command.status = succeeded ? 'delivered' : 'failed'
-      command.statusCode = succeeded ? 200 : 504
-      command.reasonPhrase = succeeded ? 'OK' : 'Gateway Timeout'
-      command.responsePayload = succeeded ? '{"result":"ok"}' : '{"error":"timeout"}'
-      command.updatedDate = nowStamp()
+      if (!command || command.status !== 'pending') return
+      settleCommand(command)
       saveData(latest)
     }
-    if (payload.executionType === 'sync') resolveCommand()
-    else setTimeout(resolveCommand, 1200 + Math.random() * 1800)
+    if (delay === 0) resolveCommand()
+    else setTimeout(resolveCommand, delay)
+  },
+  // Settles the commands of a device (or of every device) whose time has come
+  // but whose timer never fired because the page was closed or left.
+  settleCommands(deviceId) {
+    const data = loadData()
+    let changed = false
+    data.devices.forEach((dev) => {
+      if (deviceId && dev.id !== deviceId) return
+      ;(dev.commands || []).forEach((command) => {
+        if (command.status !== 'pending') return
+        // Commands saved before dueAt existed count as due after 10 seconds.
+        const created = new Date(String(command.createdDate).replace(' ', 'T')).getTime()
+        const due = command.dueAt || (isNaN(created) ? 0 : created + 10000)
+        if (due > Date.now()) return
+        settleCommand(command)
+        changed = true
+      })
+    })
+    if (changed) saveData(data)
   },
   addRelation(deviceId, relation) {
     const data = loadData()

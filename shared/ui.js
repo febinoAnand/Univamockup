@@ -15,6 +15,13 @@ const UI = {
     if (overlay) overlay.classList.remove('open')
   },
 
+  // Makes text safe to put inside an HTML string. Anything a user typed (a
+  // device or application name, say) goes through this before it is built into
+  // markup: table cells, attribute values, UI.confirm messages.
+  esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+  },
+
   // Matches the real app's RowMenu.jsx: it portals the dropdown into
   // document.body and positions it with getBoundingClientRect so it always
   // escapes any ancestor's overflow clipping (table wrappers, cards, etc).
@@ -163,11 +170,13 @@ const UI = {
         <span class="device-toast-icon">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
-        <span class="device-toast-message">${message}</span>
+        <span class="device-toast-message"></span>
         <button type="button" class="device-toast-close" aria-label="Dismiss" title="Dismiss">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
         </button>
       </div>`
+    // The message is plain text, so a name inside it can't turn into markup.
+    el.querySelector('.device-toast-message').textContent = message
     el.querySelector('.device-toast-close').addEventListener('click', () => {
       el.innerHTML = ''
       clearTimeout(el._timer)
