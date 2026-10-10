@@ -1,0 +1,129 @@
+/* ==========================================================================
+   Univa — static HTML build. Styles for the Forklift Tracking application
+   (forklift-tracking.html, shared/forklift-tracking.js). Builds on app.css, on
+   the KPI tiles and toolbar of app-runtime.css, and on the card, tab and form
+   chrome of email-tracking.css (the page loads both).
+   ========================================================================== */
+
+/* The four states of a forklift. */
+.ft-state {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ft-state-active { color: #15803d; background: #dcfce7; }
+.ft-state-idle { color: #b45309; background: #fef3c7; }
+.ft-state-inactive { color: #57534e; background: #e7e5e4; }
+.ft-state-alert { color: #b91c1c; background: #fee2e2; }
+.ft-state-nodata { color: var(--text-subtle); background: var(--surface-alt); }
+
+.ft-table td:nth-child(2), .ft-table td:nth-child(3) { white-space: nowrap; }
+.ft-kpi-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+.ft-toolbar { align-items: flex-end; }
+.ft-toolbar .rt-field select { min-width: 280px; }
+.ft-toolbar .ft-show { height: 38px; }
+.ft-form-error { margin: -0.5rem 0 1rem; }
+.ft-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+.ft-two > .detail-card { min-width: 0; }
+@media (max-width: 1000px) { .ft-two { grid-template-columns: minmax(0, 1fr); } }
+.ft-subhead { margin-top: 1.25rem; }
+.ft-chart-empty { padding: 2rem 0; text-align: center; color: var(--text-subtle); font-size: 0.9rem; }
+
+/* ------------------------------------------------------------ fleet cards */
+.ft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1rem;
+}
+.ft-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.ft-card header { display: flex; align-items: flex-start; gap: 0.6rem; }
+.ft-card header > div:first-child { flex: 1; min-width: 0; }
+.ft-card h3 { margin: 0; font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
+.ft-card header p { margin: 0.15rem 0 0; font-size: 0.76rem; color: var(--text-subtle); }
+.ft-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem 1rem;
+  margin: 0;
+}
+.ft-card dt { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
+.ft-card dd { margin: 0.1rem 0 0; font-size: 0.88rem; font-weight: 600; overflow-wrap: anywhere; }
+.ft-card footer {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.ft-card footer a { font-size: 0.84rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+.ft-card footer a:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------- timeline and map */
+.ft-timeline {
+  position: relative;
+  height: 34px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: repeating-linear-gradient(135deg, #f5f5f4, #f5f5f4 6px, #fafaf9 6px, #fafaf9 12px);
+  border: 1px solid var(--border);
+}
+.ft-run { position: absolute; top: 0; bottom: 0; min-width: 1px; }
+.ft-ticks { position: relative; height: 1.2rem; margin-top: 0.3rem; font-size: 0.7rem; color: var(--text-subtle); }
+.ft-ticks span { position: absolute; transform: translateX(-50%); }
+.ft-ticks span:first-child { transform: none; }
+.ft-legend, .ft-hours { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin: 0.6rem 0 0; font-size: 0.8rem; color: var(--text-secondary); }
+.ft-legend i, .ft-hours i { display: inline-block; width: 10px; height: 10px; margin-right: 0.35rem; border-radius: 3px; }
+.ft-map { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; display: block; }
+.ft-map-place { font-size: 10px; fill: #78716c; }
+.ft-map-note { margin: 0.6rem 0 0; font-size: 0.76rem; color: var(--text-subtle); }
+
+/* ---------------------------------------------------- gauges and details */
+.ft-gauge-card { text-align: center; }
+.ft-gauge-card h2 { text-align: left; }
+.ft-gauge { width: min(300px, 100%); height: auto; }
+.ft-gauge-end { font-size: 10px; fill: var(--text-faint); }
+.ft-gauge-value { margin: -0.2rem 0 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ft-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.85rem 1.5rem; margin: 0; }
+.ft-details dt { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
+.ft-details dd { margin: 0.15rem 0 0; font-size: 0.92rem; font-weight: 600; overflow-wrap: anywhere; }
+.ft-bars { letter-spacing: 0.1em; color: var(--accent); }
+.ft-battery {
+  position: relative;
+  height: 26px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+.ft-battery span { position: absolute; inset: 0 auto 0 0; }
+.ft-battery b { position: relative; display: block; line-height: 24px; text-align: center; font-size: 0.8rem; color: #1c1917; }
+.ft-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: var(--text-subtle);
+}
+.ft-form-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+@media (max-width: 600px) { .ft-form-pair { grid-template-columns: minmax(0, 1fr); } }

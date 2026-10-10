@@ -92,7 +92,11 @@ function appUsesWorkspace(app) {
   return !app.isDefault && !app.templateKey
 }
 
+// Built-in applications with a page of their own; application-detail.html#<id> is still their "Manage" page.
+const APPLICATION_PAGES = { app_email: 'email-tracking.html', app_forklift: 'forklift-tracking.html' }
+
 function applicationHref(app) {
+  if (APPLICATION_PAGES[app.id]) return `${APPLICATION_PAGES[app.id]}#${app.id}`
   return `${appUsesWorkspace(app) ? 'notion.html' : 'application-detail.html'}#${app.id}`
 }
 

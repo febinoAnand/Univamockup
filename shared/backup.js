@@ -165,6 +165,9 @@
     return layouts
   }
 
+  // The collections the Email Tracking application keeps (see shared/store.js).
+  const EMAIL_COLLECTIONS = ['emailInbox', 'emailTickets', 'emailReports', 'emailDepartments', 'emailUsers', 'emailFromAddresses', 'emailNotifications', 'emailSms', 'emailSettings', 'emailNotificationSettings', 'emailSmsSettings']
+
   // Everything one application keeps for itself.
   function applicationPage(store, app) {
     const data = {}
@@ -183,6 +186,8 @@
       add('emsEnergyData', store.emsEnergyData)
     }
     if (app.id === 'app_cms') add('cmsMachines', store.cmsMachines)
+    if (app.id === 'app_email') EMAIL_COLLECTIONS.forEach((key) => add(key, store[key]))
+    if (app.id === 'app_forklift') add('forkliftDevices', store.forkliftDevices)
     const layouts = applicationLayouts(app)
     const layoutCount = Object.keys(layouts).length
     if (layoutCount > 0) {
@@ -302,6 +307,10 @@
     applicationRecords: 'application_records', notionPages: 'notion_pages',
     emsMeters: 'ems_meters', emsTodReadings: 'ems_tod_readings', emsEnergyData: 'ems_energy_data',
     cmsMachines: 'cms_machines',
+    emailInbox: 'email_inbox', emailTickets: 'email_tickets', emailReports: 'email_reports', emailDepartments: 'email_departments',
+    emailUsers: 'email_users', emailFromAddresses: 'email_from_addresses', emailNotifications: 'email_notifications', emailSms: 'email_sms',
+    emailSettings: 'email_settings', emailNotificationSettings: 'email_notification_settings', emailSmsSettings: 'email_sms_settings',
+    forkliftDevices: 'forklift_devices',
   }
 
   function snake(name) {

@@ -28,27 +28,27 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
   await reset()
   await openAdmin('t1')
   let rows = await adminRows()
-  check('lists every platform app, default first then custom', same(rows.map((r) => r.name), ['PMS', 'EMS', 'Custom App', 'CMS', 'Fleet Tracker']), rows)
-  check('types: 4 Default + 1 Custom', same(rows.map((r) => r.type), ['Default', 'Default', 'Default', 'Default', 'Custom']), rows.map((r) => r.type))
-  check('Northbridge (t1) has all five ticked', rows.every((r) => r.ticked === true))
-  check('limit badge shows selected / plan max', (await page.textContent('#applications-limit-badge')).trim() === '5 / 200', await page.textContent('#applications-limit-badge'))
+  check('lists every platform app, default first then custom', same(rows.map((r) => r.name), ['PMS', 'EMS', 'Custom App', 'CMS', 'Email Tracking', 'Forklift Tracking', 'Fleet Tracker']), rows)
+  check('types: 6 Default + 1 Custom', same(rows.map((r) => r.type), ['Default', 'Default', 'Default', 'Default', 'Default', 'Default', 'Custom']), rows.map((r) => r.type))
+  check('Northbridge (t1) has all seven ticked', rows.every((r) => r.ticked === true))
+  check('limit badge shows selected / plan max', (await page.textContent('#applications-limit-badge')).trim() === '7 / 200', await page.textContent('#applications-limit-badge'))
   check('"Add application" button is still there', await page.locator('#add-application-btn').isVisible())
-  check('only custom rows have a row menu (default rows are built in)', same(await page.$$eval('#applications-tbody tr', (trs) => trs.map((tr) => !!tr.querySelector('.row-menu'))), [false, false, false, false, true]))
+  check('only custom rows have a row menu (default rows are built in)', same(await page.$$eval('#applications-tbody tr', (trs) => trs.map((tr) => !!tr.querySelector('.row-menu'))), [false, false, false, false, false, false, true]))
   check('header select-all is ticked when everything is', await page.$eval('#applications-select-all', (e) => e.checked === true && e.indeterminate === false))
   check('Organization ID shown in the tenant header', (await page.textContent('#tenant-meta')).includes('NORTHBRIDGE'), await page.textContent('#tenant-meta'))
 
   await openAdmin('t2')
   rows = await adminRows()
-  check('Cradlewell (t2): four defaults ticked, Fleet Tracker not', same(rows.map((r) => r.ticked), [true, true, true, true, false]), rows.map((r) => r.ticked))
+  check('Cradlewell (t2): six defaults ticked, Fleet Tracker not', same(rows.map((r) => r.ticked), [true, true, true, true, true, true, false]), rows.map((r) => r.ticked))
   check('t2 select-all is indeterminate (partial)', await page.$eval('#applications-select-all', (e) => e.checked === false && e.indeterminate === true))
-  check('t2 badge is 4 / 50 (Default plan)', (await page.textContent('#applications-limit-badge')).trim() === '4 / 50')
+  check('t2 badge is 6 / 50 (Default plan)', (await page.textContent('#applications-limit-badge')).trim() === '6 / 50')
 
   // untick one
   await page.uncheck('[data-app-access="app0"]')
   await page.waitForTimeout(200)
-  check('unticking PMS saves it', same(await tenantIds('t2'), ['app_ems', 'app_notion', 'app_cms']), await tenantIds('t2'))
+  check('unticking PMS saves it', same(await tenantIds('t2'), ['app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift']), await tenantIds('t2'))
   check('toast says PMS is no longer available', /"PMS" is no longer available to Cradlewell Facilities/.test(await toast()), await toast())
-  check('badge updates to 3 / 50', (await page.textContent('#applications-limit-badge')).trim() === '3 / 50')
+  check('badge updates to 5 / 50', (await page.textContent('#applications-limit-badge')).trim() === '5 / 50')
   // tick Fleet Tracker
   await page.check('[data-app-access="app1"]')
   await page.waitForTimeout(200)
@@ -66,12 +66,12 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
   await page.waitForTimeout(150)
   await page.check('#applications-select-all')
   await page.waitForTimeout(200)
-  check('select-all ticks everything', same((await tenantIds('t2')).sort(), ['app0', 'app1', 'app_cms', 'app_ems', 'app_notion']), await tenantIds('t2'))
+  check('select-all ticks everything', same((await tenantIds('t2')).sort(), ['app0', 'app1', 'app_cms', 'app_email', 'app_ems', 'app_forklift', 'app_notion']), await tenantIds('t2'))
   check('bulk toast names the count', /applications are now available/.test(await toast()) || /is now available/.test(await toast()), await toast())
   await page.uncheck('#applications-select-all')
   await page.waitForTimeout(200)
   check('select-all off leaves the tenant with none', same(await tenantIds('t2'), []), await tenantIds('t2'))
-  check('empty selection still shows all rows (unticked)', (await adminRows()).every((r) => r.ticked === false) && (await adminRows()).length === 5)
+  check('empty selection still shows all rows (unticked)', (await adminRows()).every((r) => r.ticked === false) && (await adminRows()).length === 7)
 
   // ======================================================== ADD / EDIT / SUSPEND / DELETE
   section('admin: Add application + row menu')
@@ -92,7 +92,7 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
   const hubId = await page.evaluate(() => (Store.allApplications().find((a) => a.name === 'Warehouse Hub') || {}).id)
   check('it is a platform app enabled for this tenant', !!hubId && (await tenantIds('t1')).includes(hubId))
   check('with its linked device + asset counted', await page.$eval(`tr:has([data-app-access="${hubId}"])`, (tr) => tr.querySelector('td[data-label="Devices"]').textContent.trim() === '1' && tr.querySelector('td[data-label="Assets"]').textContent.trim() === '1'))
-  check('limit badge counts it (6 / 200)', (await page.textContent('#applications-limit-badge')).trim() === '6 / 200', await page.textContent('#applications-limit-badge'))
+  check('limit badge counts it (8 / 200)', (await page.textContent('#applications-limit-badge')).trim() === '8 / 200', await page.textContent('#applications-limit-badge'))
   check('toast confirms the add', /"Warehouse Hub" application added successfully/.test(await toast()), await toast())
   await openAdmin('t2')
   rows = await adminRows()
@@ -170,7 +170,7 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
   await page.evaluate(() => Store.updateTenantProfile('tp1', { name: 'Default', maxApplications: 50 }))
 
   // plan limit on ticking (start from a tenant with nothing ticked)
-  await page.evaluate(() => Store.setTenantApplicationAccess('t2', ['app0', 'app_ems', 'app_notion', 'app_cms', 'app1'], false))
+  await page.evaluate(() => Store.setTenantApplicationAccess('t2', ['app0', 'app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift', 'app1'], false))
   await page.evaluate(() => Store.updateTenantProfile('tp1', { name: 'Default', maxApplications: 2 }))
   await openAdmin('t2')
   await page.click('#applications-select-all') // ends up partly ticked (indeterminate), so click rather than check()
@@ -191,7 +191,7 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
   await page.waitForTimeout(200)
   const cardBoxes = await page.locator('#applications-table-scroll.view-widget [data-app-access]:visible').count()
   if (cardBoxes > 0) {
-    check('card view still shows a checkbox per app', cardBoxes === 5, cardBoxes)
+    check('card view still shows a checkbox per app', cardBoxes === 7, cardBoxes)
   }
 
   // =========================================================== ENFORCEMENT
@@ -202,8 +202,8 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
 
   await signIn('NORTHBRIDGE')
   await goto('applications.html')
-  check('scoped sidebar hides PMS', same(await sidebarApps(), ['EMS', 'Custom App', 'CMS', 'Fleet Tracker']), await sidebarApps())
-  check('scoped applications list hides PMS', same(await listApps(), ['EMS', 'Custom App', 'CMS', 'Fleet Tracker']), await listApps())
+  check('scoped sidebar hides PMS', same(await sidebarApps(), ['EMS', 'Custom App', 'CMS', 'Email Tracking', 'Forklift Tracking', 'Fleet Tracker']), await sidebarApps())
+  check('scoped applications list hides PMS', same(await listApps(), ['EMS', 'Custom App', 'CMS', 'Email Tracking', 'Forklift Tracking', 'Fleet Tracker']), await listApps())
   await goto('application-detail.html#app0')
   check('direct link to a hidden app -> not found', (await page.locator('text=Application not found').count()) === 1 && /isn't enabled for your organization/.test(await page.textContent('#app-detail-root')))
   await goto('application-detail.html#app_ems')
@@ -221,26 +221,26 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
   // case-insensitive org id + other tenant + blank + unknown
   await signIn('northbridge')
   await goto('applications.html')
-  check('organization id is case-insensitive', same(await listApps(), ['EMS', 'Custom App', 'CMS', 'Fleet Tracker']), await listApps())
+  check('organization id is case-insensitive', same(await listApps(), ['EMS', 'Custom App', 'CMS', 'Email Tracking', 'Forklift Tracking', 'Fleet Tracker']), await listApps())
   await signIn('CRADLEWELL')
   await goto('applications.html')
-  check('another tenant has its own list (no Fleet Tracker)', same(await listApps(), ['PMS', 'EMS', 'Custom App', 'CMS']), await listApps())
+  check('another tenant has its own list (no Fleet Tracker)', same(await listApps(), ['PMS', 'EMS', 'Custom App', 'CMS', 'Email Tracking', 'Forklift Tracking']), await listApps())
   await goto('notion.html#app1')
   check('Fleet Tracker hidden for Cradlewell', (await page.locator('text=Application not found').count()) === 1)
   await signIn('')
   await goto('applications.html')
-  check('blank organization id -> plain demo session sees everything', same(await listApps(), ['PMS', 'EMS', 'Custom App', 'CMS', 'Fleet Tracker']), await listApps())
+  check('blank organization id -> plain demo session sees everything', same(await listApps(), ['PMS', 'EMS', 'Custom App', 'CMS', 'Email Tracking', 'Forklift Tracking', 'Fleet Tracker']), await listApps())
   await signIn('NOSUCHORG')
   await goto('applications.html')
-  check('unknown organization id -> plain demo session sees everything', (await listApps()).length === 5, await listApps())
+  check('unknown organization id -> plain demo session sees everything', (await listApps()).length === 7, await listApps())
 
   // filtering is display-only
   await signIn('NORTHBRIDGE')
   await goto('applications.html')
   await page.evaluate(() => Store.toggleApplicationStatus('app_ems'))
-  check('writes in a scoped session keep hidden apps in storage', (await page.evaluate(() => Store.allApplications().length)) === 5 && (await page.evaluate(() => Store.get().applications.length)) === 4)
+  check('writes in a scoped session keep hidden apps in storage', (await page.evaluate(() => Store.allApplications().length)) === 7 && (await page.evaluate(() => Store.get().applications.length)) === 6)
   await openAdmin('t1')
-  check('admin table still lists every app while a scoped session exists', (await adminRows()).length === 5 && (await adminRows())[0].name === 'PMS' && (await adminRows())[0].ticked === false, (await adminRows()).map((r) => r.name))
+  check('admin table still lists every app while a scoped session exists', (await adminRows()).length === 7 && (await adminRows())[0].name === 'PMS' && (await adminRows())[0].ticked === false, (await adminRows()).map((r) => r.name))
 
   // creating an app as a tenant grants it
   await goto('applications.html')
@@ -258,7 +258,7 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
   check('deleting an app removes it from every tenant list', !(await tenantIds('t1')).includes(created))
 
   // zero apps
-  await page.evaluate(() => Store.setTenantApplicationAccess('t1', ['app0', 'app_ems', 'app_notion', 'app_cms', 'app1'], false))
+  await page.evaluate(() => Store.setTenantApplicationAccess('t1', ['app0', 'app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift', 'app1'], false))
   await goto('applications.html')
   check('tenant with nothing enabled: empty sidebar section', same(await sidebarApps(), []), await sidebarApps())
   check('tenant with nothing enabled: helpful empty state', /No applications are enabled for your organization yet/.test(await page.textContent('#tbody')), await page.textContent('#tbody'))
@@ -270,28 +270,28 @@ Tests.suite('tenant-apps', 'Tenant application access', async ({ page, BASE, che
     delete raw.tenants[1].organizationId
     localStorage.setItem(STORAGE_KEY, JSON.stringify(raw))
   })
-  check('legacy tenant (no saved list) can view every app', (await tenantIds('t2')).length === 5, await tenantIds('t2'))
+  check('legacy tenant (no saved list) can view every app', (await tenantIds('t2')).length === 7, await tenantIds('t2'))
   check('legacy tenant org id derived from its email', (await page.evaluate(() => Store.tenantOrganizationId('t2'))) === 'CRADLEWELL')
   await signIn('CRADLEWELL')
   await goto('applications.html')
-  check('legacy tenant logs in with the derived org id and sees all', (await listApps()).length === 5, await listApps())
+  check('legacy tenant logs in with the derived org id and sees all', (await listApps()).length === 7, await listApps())
   await page.evaluate(() => Store.updateTenant('t2', { title: 'Cradlewell Facilities', email: 'someone@elsewhere.org' }))
   check('editing the email does not change a legacy tenant org id', (await page.evaluate(() => Store.tenantOrganizationId('t2'))) === 'CRADLEWELL')
   await openAdmin('t2')
   check('legacy tenant shows all ticked in the admin table', (await adminRows()).every((r) => r.ticked === true))
   await page.uncheck('[data-app-access="app_cms"]')
   await page.waitForTimeout(200)
-  check('first explicit change keeps the rest', same((await tenantIds('t2')).sort(), ['app0', 'app1', 'app_ems', 'app_notion']), await tenantIds('t2'))
+  check('first explicit change keeps the rest', same((await tenantIds('t2')).sort(), ['app0', 'app1', 'app_email', 'app_ems', 'app_forklift', 'app_notion']), await tenantIds('t2'))
 
   // new tenants
   const t5 = await page.evaluate(() => Store.addTenant({ title: 'Acme Corp', email: 'ops@gmail.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'US', tenantProfileName: 'Default' }))
   const t6 = await page.evaluate(() => Store.addTenant({ title: 'Acme Corp', email: 'x@gmail.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'US', tenantProfileName: 'Default' }))
   check('new tenant gets an organization id from its title', t5.organizationId === 'ACMECORP', t5.organizationId)
   check('organization ids are unique', t6.organizationId === 'ACMECORP2', t6.organizationId)
-  check('new tenant starts with the four default apps', same(t5.applicationIds, ['app0', 'app_ems', 'app_notion', 'app_cms']), t5.applicationIds)
+  check('new tenant starts with the six default apps', same(t5.applicationIds, ['app0', 'app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift']), t5.applicationIds)
   await signIn('ACMECORP')
   await goto('applications.html')
-  check('new tenant logs in and sees only the defaults', same(await listApps(), ['PMS', 'EMS', 'Custom App', 'CMS']), await listApps())
+  check('new tenant logs in and sees only the defaults', same(await listApps(), ['PMS', 'EMS', 'Custom App', 'CMS', 'Email Tracking', 'Forklift Tracking']), await listApps())
 
   // real login form + logout clears the scope
   section('login form / logout')

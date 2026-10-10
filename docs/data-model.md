@@ -222,6 +222,63 @@ The mockup has no database. Everything below is in the browser, so a backend rep
 
 If a save fails because the browser's storage is full, the app says so (a toast) and stops the action instead of reporting a success that never reached storage.
 
+## 12. Email Tracking (built-in application)
+
+`app_email` is a built-in default application, like EMS and CMS: every tenant may view it, it cannot be deleted, and it has its own page (`email-tracking.html`) instead of a template. It is a port of the `ifmEmailTracking` React app. Emails that reach a mailbox become tickets, and the people of the department named in the subject are told by push notification and SMS.
+
+The data is not tenant-scoped and is not device data. Dates are `'YYYY-MM-DD HH:MM:SS'`. In the mockup each collection is a top-level key of the stored data and each is its own table in a backup (§10):
+
+| Collection (table) | Row |
+|---|---|
+| `emailInbox` (`email_inbox`) | `id, fromEmail, toEmail, subject, message, receivedDate, outcome, ticketId` |
+| `emailTickets` (`email_tickets`) | `id, ticketName, receivedDate, emailId, department, fields` (`fields` is JSON: the `Key: value` lines of the email) |
+| `emailReports` (`email_reports`) | `id, sentDate, message, department, sendToUsers` (usernames, JSON) |
+| `emailDepartments` (`email_departments`) | `id, alias, department, userIds` |
+| `emailUsers` (`email_users`) | `id, username, email, designation, mobileNo, deviceId, active, expiryTime, createdDate` — the people who are notified; they are not Univa users |
+| `emailFromAddresses` (`email_from_addresses`) | `id, email, active` |
+| `emailNotifications` (`email_notifications`) | `id, sentDate, title, message, sendToUser, deliveryStatus` (`delivered`, `failed` or `pending`) |
+| `emailSms` (`email_sms`) | `id, sentDate, toNumber, fromNumber, message, delivered` |
+| `emailSettings`, `emailNotificationSettings`, `emailSmsSettings` | one row each: the mailbox (`host, port, username, password, checkStatus, checkInterval`), the push application (`applicationId`) and the SMS gateway (`sid, authToken, fromNumber, isActive`) |
+
+**What turns an email into a ticket.** The mockup has no mail server, so `receiveEmail()` and `processIncomingEmail()` in `shared/store.js` stand in for the backend. An email becomes a ticket when it comes from an **active** From address and its subject carries a department **alias** in square brackets, for example `[NET] Link down at Kochi PoP`. The result is kept on the email as `outcome`: `ticket`, or `sender` (not an active From address), `no-alias` or `unknown-alias`. For a ticket:
+
+1. the `Key: value` lines of the body become the ticket's `fields`;
+2. a report row is written, naming the department and the users told;
+3. every **active** user in the department gets a push notification (`delivered`, or `failed` when the user has no `deviceId` or no push application is set);
+4. if the SMS gateway is on, each of them with a mobile number also gets a text (`delivered` only for a number in international form, such as `+91 98450 11201`).
+
+A department alias is unique (it is how the subject picks a department). Removing a user also removes them from every department; removing a ticket, report, notification or email takes nothing else with it, because those are history.
+
+The mailbox password and the SMS auth token are kept as plain text in the mockup. A backend must store them encrypted and never send them back to the browser.
+
+## 13. Forklift Tracking (built-in application)
+
+`app_forklift` is a built-in default application like Email Tracking (§12), with its own page (`forklift-tracking.html`). It is a port of the `Forklift_TCP_Live` Django app: a GPS tracker on each forklift reports to a TCP server (Teltonika codec 8E for the position and ignition, codec 12 for the forklift's own controller), and the pages show where each forklift is, how it is being used and how its battery is doing, live, over time and as daily reports.
+
+**What is stored.** Only the registered forklifts, in `forkliftDevices` (table `forklift_devices`): `id, deviceId, vehicleName, deviceModel, vehicleId, driver, manufacturer, hardwareVersion, softwareVersion, addDate`. `deviceId` is the tracker's IMEI (15 characters at most, unique, never changed once registered). It matches the React app's `tracker_device` table.
+
+**What is not stored.** The readings. A tracker sends one a few seconds, which the real system keeps as rows in two tables; the mockup has no tracker, so `shared/forklift-data.js` makes them on read, one a minute, the same for the same forklift and day every time (as `shared/telemetry.js` does for devices). A forklift has readings from the day it was registered, up to the current minute. A backend would keep them, and the React app's models are the ones to use:
+
+| Table | Row |
+|---|---|
+| `GPSData` | `device_id, date, time, latitude, longitude, speed, distance, state, ignition, movementState, gsmOperatorCode, gsmSignal, gsmAreaCode, odometer, satellite` |
+| `EXTData` | `device_id, server_date, server_time, date, time, speed, distance, batt_voltage, batt_amp, batt_capacity, batt_power, watt_hr` (from the forklift's controller) |
+
+`distance` and `watt_hr` are per reading, so a day's figure is their sum.
+
+**The four states**, as the TCP server works them out for each GPS reading (`tcpserver.py`):
+
+| Ignition | Moving | State |
+|---|---|---|
+| on | yes | 3 Active |
+| on | no | 2 Idle |
+| off | no | 1 Inactive |
+| off | yes | 4 Alert (pushed or towed) |
+
+The hours a forklift spent in each state are the number of readings in it divided by 60. The Reports tab adds up, for each day, the GPS distance, the controller's ("odometer") distance, the watt-hours and those hours.
+
+The map is a drawing of the site seen from above, not map tiles (there is no network to fetch them from). `ForkliftData.toSite()` turns a latitude and longitude into metres on that drawing.
+
 ## Migration notes
 
 - **PMS** runs on this model today (template `production-monitoring`).
