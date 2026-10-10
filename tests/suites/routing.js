@@ -141,9 +141,9 @@ Tests.suite('routing', 'Application pages and routing', async ({ page, BASE, che
 
   // ================= 8. Legacy stored data (pages saved before appId existed)
   await page.evaluate(() => {
-    const raw = JSON.parse(localStorage.getItem('univa-html-demo-v26'))
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY))
     raw.notionPages.forEach((p) => { delete p.appId })
-    localStorage.setItem('univa-html-demo-v26', JSON.stringify(raw))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(raw))
   })
   await goto('notion.html#app_notion')
   check('legacy pages (no appId) still belong to Custom App', JSON.stringify(await tabs()) === JSON.stringify(['Getting started', 'Line A shift log', 'Meeting notes']), await tabs())

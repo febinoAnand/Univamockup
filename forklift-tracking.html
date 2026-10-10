@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
+  <link rel="stylesheet" href="shared/email-tracking.css" />
+  <link rel="stylesheet" href="shared/forklift-tracking.css" />
+  <title>Forklift Tracking — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div id="ft-root"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register or edit a forklift -->
+  <div class="modal-overlay" id="forklift-modal">
+    <div class="modal-card" style="max-width:600px;">
+      <div class="modal-header">
+        <h2 id="forklift-title">Register forklift</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('forklift-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="forklift-form" novalidate>
+          <div class="et-modal-field">
+            <label for="fk-device-id">Device ID*</label>
+            <input id="fk-device-id" type="text" placeholder="The tracker's IMEI, e.g. 352093081452251" autocomplete="off" />
+            <p class="et-hint">What the tracker reports under. It cannot be changed afterwards.</p>
+            <p class="et-error" id="fk-device-id-error" hidden></p>
+          </div>
+          <div class="ft-form-pair">
+            <div class="et-modal-field"><label for="fk-name">Vehicle name*</label><input id="fk-name" type="text" autocomplete="off" /><p class="et-error" id="fk-name-error" hidden></p></div>
+            <div class="et-modal-field"><label for="fk-vehicle-id">Vehicle ID*</label><input id="fk-vehicle-id" type="text" autocomplete="off" /><p class="et-error" id="fk-vehicle-id-error" hidden></p></div>
+          </div>
+          <div class="ft-form-pair">
+            <div class="et-modal-field"><label for="fk-model">Device model*</label><input id="fk-model" type="text" autocomplete="off" /><p class="et-error" id="fk-model-error" hidden></p></div>
+            <div class="et-modal-field"><label for="fk-manufacturer">Manufacturer</label><input id="fk-manufacturer" type="text" autocomplete="off" /><p class="et-error" id="fk-manufacturer-error" hidden></p></div>
+          </div>
+          <div class="ft-form-pair">
+            <div class="et-modal-field"><label for="fk-hardware">Hardware version</label><input id="fk-hardware" type="text" autocomplete="off" /><p class="et-error" id="fk-hardware-error" hidden></p></div>
+            <div class="et-modal-field"><label for="fk-software">Software version</label><input id="fk-software" type="text" autocomplete="off" /><p class="et-error" id="fk-software-error" hidden></p></div>
+          </div>
+          <div class="et-modal-field"><label for="fk-driver">Driver</label><input id="fk-driver" type="text" autocomplete="off" /><p class="et-error" id="fk-driver-error" hidden></p></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('forklift-modal')">Cancel</button>
+        <button type="submit" form="forklift-form" class="modal-button primary" id="forklift-save">Register</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.49.1/apexcharts.min.js"></script>
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script src="shared/downloads.js"></script>
+  <script src="shared/forklift-data.js"></script>
+  <script src="shared/forklift-tracking.js"></script>
+  <script>
+    // The tab and the forklift follow the application id in the URL hash
+    // ("app_forklift:live:352093081452251"), so a link can open any of them.
+    Layout.mount({
+      active: 'application-app_forklift',
+      breadcrumbs: ForkliftTracking.breadcrumbs(),
+    })
+    ForkliftTracking.boot(document.getElementById('ft-root'))
+  </script>
+</body>
+</html>

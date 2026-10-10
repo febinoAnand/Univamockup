@@ -91,23 +91,23 @@ Tests.suite('storage', 'Browser storage: speed, failures, clean-up', async ({ pa
   // ------------------------------------------------------------ unreadable data
   section('Data that can\'t be read')
   await page.goto(BASE + 'login.html')
-  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('univa-html-demo-v26', '{this is not json') })
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem(STORAGE_KEY, '{this is not json') })
   await open('login.html')
   const corrupt = await page.evaluate(() => ({
     works: Store.isLoggedIn() === false && Store.get().devices.length > 0,
-    copy: localStorage.getItem('univa-html-demo-v26-corrupt'),
+    copy: localStorage.getItem(STORAGE_KEY + '-corrupt'),
   }))
   check('the app starts from the seed instead of breaking', corrupt.works, corrupt)
   check('the unreadable text is kept under a "-corrupt" key', corrupt.copy === '{this is not json', corrupt.copy)
   const afterSave = await page.evaluate(() => {
     Store.login('admin', 'admin') // a real save
-    const saved = localStorage.getItem('univa-html-demo-v26')
+    const saved = localStorage.getItem(STORAGE_KEY)
     let valid = true
     try { JSON.parse(saved) } catch (err) { valid = false }
     // the data goes bad again later: the first copy kept must not be overwritten
-    localStorage.setItem('univa-html-demo-v26', '{a second broken one')
+    localStorage.setItem(STORAGE_KEY, '{a second broken one')
     Store.get()
-    return { valid, copy: localStorage.getItem('univa-html-demo-v26-corrupt') }
+    return { valid, copy: localStorage.getItem(STORAGE_KEY + '-corrupt') }
   })
   check('the next save replaces the broken data with good data', afterSave.valid, afterSave)
   check('a later broken copy does not overwrite the first one kept', afterSave.copy === '{this is not json', afterSave.copy)
@@ -117,15 +117,16 @@ Tests.suite('storage', 'Browser storage: speed, failures, clean-up', async ({ pa
   await page.goto(BASE + 'login.html')
   await page.evaluate(() => {
     localStorage.clear()
-    ;['univa-html-demo-v3', 'univa-html-demo-v25', 'univa-html-demo-v26', 'univa-html-demo-v999', 'univa-html-demo-v26-corrupt', 'univa-html-backups-v1', 'univa_dashboard_layout_v1', 'univa-chatbot-history']
+    ;['univa-html-demo-v3', 'univa-html-demo-v25', STORAGE_KEY, 'univa-html-demo-v999', STORAGE_KEY + '-corrupt', 'univa-html-backups-v1', 'univa_dashboard_layout_v1', 'univa-chatbot-history']
       .forEach((key) => localStorage.setItem(key, '[]'))
   })
   await open('login.html')
   const kept = await page.evaluate(() => Object.keys(localStorage).sort())
+  const currentKey = await page.evaluate(() => STORAGE_KEY)
   check('older versions\' data is removed', !kept.includes('univa-html-demo-v3') && !kept.includes('univa-html-demo-v25'), kept)
-  check('the current data is kept', kept.includes('univa-html-demo-v26'))
+  check('the current data is kept', kept.includes(currentKey))
   check('a newer version\'s data is left alone (an older copy of the site may be open)', kept.includes('univa-html-demo-v999'))
-  check('backups, layouts and everything else are untouched', ['univa-html-demo-v26-corrupt', 'univa-html-backups-v1', 'univa_dashboard_layout_v1', 'univa-chatbot-history'].every((key) => kept.includes(key)), kept)
+  check('backups, layouts and everything else are untouched', [currentKey + '-corrupt', 'univa-html-backups-v1', 'univa_dashboard_layout_v1', 'univa-chatbot-history'].every((key) => kept.includes(key)), kept)
 
   // -------------------------------------------------------------- backups
   section('Removing backups')

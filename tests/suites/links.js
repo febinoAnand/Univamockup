@@ -25,12 +25,12 @@ Tests.suite('links', 'Links, images and the menu all lead somewhere', async ({ p
   const PAGES = [
     'index.html', '404.html', 'login.html', 'signup.html', 'forgot-password.html', 'reset-password.html', 'create-password.html', 'verify-email.html',
     'organization-created.html', 'awaiting-approval.html', 'sysadmin-login.html', 'admin-dashboard.html', 'admin-tenants.html', 'admin-tenant-detail.html',
-    'admin-tenant-profiles.html', 'dashboard.html', 'applications.html', 'application-detail.html', 'notion.html', 'devices.html', 'device-detail.html',
+    'admin-tenant-profiles.html', 'dashboard.html', 'applications.html', 'application-detail.html', 'notion.html', 'email-tracking.html', 'forklift-tracking.html', 'devices.html', 'device-detail.html',
     'device-data.html', 'device-profiles.html', 'credentials.html', 'software-ota.html', 'assets.html', 'asset-detail.html', 'asset-groups.html',
     'asset-profiles.html', 'shift-management.html', 'shift-schedules.html', 'shift-instances.html', 'rule-engines.html', 'rule-engine-reports.html',
     'users.html', 'user-groups.html', 'roles.html', 'settings.html', 'ems-meter-dashboard.html', 'cms-machine-dashboard.html',
   ]
-  const SCRIPTS = ['shared/layout.js', 'shared/ui.js', 'shared/store.js', 'shared/chatbot.js', 'shared/backup.js', 'shared/dashboard.js', 'shared/device-detail.js', 'shared/app-runtime.js', 'shared/app-templates.js', 'shared/app-entries.js', 'shared/notion-data-blocks.js', 'shared/telemetry.js']
+  const SCRIPTS = ['shared/layout.js', 'shared/ui.js', 'shared/store.js', 'shared/email-tracking.js', 'shared/forklift-tracking.js', 'shared/forklift-data.js', 'shared/downloads.js', 'shared/chatbot.js', 'shared/backup.js', 'shared/dashboard.js', 'shared/device-detail.js', 'shared/app-runtime.js', 'shared/app-templates.js', 'shared/app-entries.js', 'shared/notion-data-blocks.js', 'shared/telemetry.js']
 
   const sources = {}
   for (const url of PAGES.concat(SCRIPTS)) sources[url] = await get(url)
@@ -108,7 +108,7 @@ Tests.suite('links', 'Links, images and the menu all lead somewhere', async ({ p
     const open = (app) => applicationHref(app)
     return {
       custom: open({ id: 'app_notion' }),
-      defaults: [open({ id: 'app0', isDefault: true, templateKey: 'production-monitoring' }), open({ id: 'app_ems', isDefault: true }), open({ id: 'app_cms', isDefault: true })],
+      defaults: [open({ id: 'app0', isDefault: true, templateKey: 'production-monitoring' }), open({ id: 'app_ems', isDefault: true }), open({ id: 'app_cms', isDefault: true }), open({ id: 'app_email', isDefault: true }), open({ id: 'app_forklift', isDefault: true })],
       made: open({ id: 'apn-1' }),
       fromTemplate: open({ id: 'apn-2', templateKey: 'energy-monitoring' }),
       uses: [appUsesWorkspace(null), appUsesWorkspace({ id: 'app_notion', isDefault: true }), appUsesWorkspace({ id: 'x' }), appUsesWorkspace({ id: 'x', templateKey: 'crane-monitoring' }), appUsesWorkspace({ id: 'x', isDefault: true })],
@@ -117,7 +117,7 @@ Tests.suite('links', 'Links, images and the menu all lead somewhere', async ({ p
     }
   })
   check('the Custom App and applications people make open the page workspace', apps.custom === 'notion.html#app_notion' && apps.made === 'notion.html#apn-1', apps)
-  check('the built-in applications and applications made from a template open their own pages', same(apps.defaults, ['application-detail.html#app0', 'application-detail.html#app_ems', 'application-detail.html#app_cms']) && apps.fromTemplate === 'application-detail.html#apn-2', apps)
+  check('the built-in applications and applications made from a template open their own pages', same(apps.defaults, ['application-detail.html#app0', 'application-detail.html#app_ems', 'application-detail.html#app_cms', 'email-tracking.html#app_email', 'forklift-tracking.html#app_forklift']) && apps.fromTemplate === 'application-detail.html#apn-2', apps)
   check('an application that is not there does not use the workspace', same(apps.uses, [false, true, true, false, false]), apps.uses)
   check('each menu item maps to its permission module (device data is under devices, applications are app:<id>, an unknown key stands for itself)', same(apps.module, ['devices', 'app:apn-1', 'rolesPermissions', 'settings', 'something-new']), apps.module)
   check('names put into the menu are escaped', apps.escaped === '&lt;b&gt;&quot;x&quot; &amp; &#39;y&#39;&lt;/b&gt;', apps.escaped)

@@ -4,7 +4,7 @@
 
 const AUTH_PROTECTED_PAGES = [
   'dashboard.html', 'applications.html', 'application-detail.html#app0', 'application-detail.html#app_ems', 'application-detail.html#app_cms',
-  'notion.html#app_notion', 'devices.html', 'device-detail.html#d1', 'device-data.html', 'device-profiles.html', 'credentials.html',
+  'notion.html#app_notion', 'email-tracking.html#app_email', 'forklift-tracking.html#app_forklift', 'devices.html', 'device-detail.html#d1', 'device-data.html', 'device-profiles.html', 'credentials.html',
   'software-ota.html', 'assets.html', 'asset-detail.html#a1', 'asset-groups.html', 'asset-profiles.html', 'shift-management.html',
   'shift-schedules.html', 'shift-instances.html', 'rule-engines.html', 'rule-engine-reports.html', 'users.html', 'user-groups.html',
   'roles.html', 'settings.html', 'ems-meter-dashboard.html#m1', 'cms-machine-dashboard.html#cm1',

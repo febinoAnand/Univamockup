@@ -25,6 +25,18 @@ function expectedTables(data, layouts) {
     ems_tod_readings: data['app:app_ems'].emsTodReadings.length,
     ems_energy_data: data['app:app_ems'].emsEnergyData.length,
     cms_machines: data['app:app_cms'].cmsMachines.length,
+    email_inbox: data['app:app_email'].emailInbox.length,
+    email_tickets: data['app:app_email'].emailTickets.length,
+    email_reports: data['app:app_email'].emailReports.length,
+    email_departments: data['app:app_email'].emailDepartments.length,
+    email_users: data['app:app_email'].emailUsers.length,
+    email_from_addresses: data['app:app_email'].emailFromAddresses.length,
+    email_notifications: data['app:app_email'].emailNotifications.length,
+    email_sms: data['app:app_email'].emailSms.length,
+    email_settings: data['app:app_email'].emailSettings.length,
+    email_notification_settings: data['app:app_email'].emailNotificationSettings.length,
+    email_sms_settings: data['app:app_email'].emailSmsSettings.length,
+    forklift_devices: data['app:app_forklift'].forkliftDevices.length,
     dashboard_layouts: layouts,
   }
 }
@@ -53,12 +65,12 @@ Tests.suite('backup-sql', 'Backup SQL download', async ({ page, BASE, check, ski
   await page.evaluate(() => {
     Store.reset()
     Store.login('admin', 'admin')
-    const raw = JSON.parse(localStorage.getItem('univa-html-demo-v26'))
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY))
     raw.devices[0].name = 'O\'Brien\'s "sensor"\nline two — ünï'
     raw.devices[1].extra = 5
     raw.devices[2].extra = 'five'
     raw.rolePermissions = { member: { devices: { view: true, edit: false, fields: {} } } }
-    localStorage.setItem('univa-html-demo-v26', JSON.stringify(raw))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(raw))
     localStorage.setItem('univa_dashboard_layout_v1', JSON.stringify([{ id: 'w1', layout: { x: 0, y: 0 } }]))
     localStorage.setItem('univa_dashboard_layout_v1__app-app1', JSON.stringify([{ id: 'w9', layout: { x: 0, y: 0 } }]))
     localStorage.setItem('univa_dashboard_layout_v1__ems-meter-meter1', JSON.stringify([{ id: 'w5', layout: { x: 0, y: 0 } }]))
@@ -74,7 +86,7 @@ Tests.suite('backup-sql', 'Backup SQL download', async ({ page, BASE, check, ski
   const expected = expectedTables(backup.data, 3)
 
   check('file is named for the time and ends in .sql', /^univa-backup-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(name), name)
-  check('header says when, by whom and which pages', /^-- Univa database backup\n-- Taken: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} by admin \(manual\)\n-- Pages \(20\): Dashboard, All applications, PMS/.test(sql), sql.split('\n').slice(0, 3))
+  check('header says when, by whom and which pages', /^-- Univa database backup\n-- Taken: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} by admin \(manual\)\n-- Pages \(22\): Dashboard, All applications, PMS/.test(sql), sql.split('\n').slice(0, 3))
   check('one transaction', sql.includes('\nBEGIN;\n') && sql.trimEnd().endsWith('COMMIT;'))
   check('a table for every collection, and only those', same(Object.keys(expected).filter((t) => rowsIn(sql, t) > 0).sort(), Object.keys(expected).sort()) && (sql.match(/^CREATE TABLE /gm) || []).length === Object.keys(expected).length, (sql.match(/^CREATE TABLE /gm) || []).length)
   for (const [table, count] of Object.entries(expected)) check(`${table}: ${count} rows`, rowsIn(sql, table) === count, rowsIn(sql, table))
@@ -102,7 +114,7 @@ Tests.suite('backup-sql', 'Backup SQL download', async ({ page, BASE, check, ski
   await page.click('#bk-take')
   await page.waitForTimeout(300)
   const partial = (await downloadNewest()).sql
-  check('header counts the pages that went in', /-- Pages \(15\): /.test(partial))
+  check('header counts the pages that went in', /-- Pages \(17\): /.test(partial))
   check('unticked pages leave no table', !partial.includes('CREATE TABLE "devices"') && !partial.includes('CREATE TABLE "users"') && !partial.includes('CREATE TABLE "user_groups"') && !partial.includes('CREATE TABLE "role_permissions"') && !partial.includes('CREATE TABLE "ems_meters"'))
   check('the others are still there', partial.includes('CREATE TABLE "device_profiles"') && partial.includes('CREATE TABLE "cms_machines"') && partial.includes('CREATE TABLE "applications"'))
   check('EMS data is left out but the application list still names EMS', rowsIn(partial, 'applications') === expected.applications && !partial.includes('INSERT INTO "ems_') && partial.includes("'app_ems'"))

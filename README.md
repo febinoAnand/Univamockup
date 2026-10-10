@@ -41,6 +41,9 @@ shared/layout.js  sidebar, top bar and role checks for every signed-in page
 shared/ui.js      modals, confirm dialog, toasts
 shared/*.css      one stylesheet per area; colours are the variables in app.css
 shared/backup.js  Settings > Backup (owners and admins only)
+email-tracking.html + shared/email-tracking.js   the built-in Email Tracking application
+forklift-tracking.html + shared/forklift-*.js   the built-in Forklift Tracking application
+shared/downloads.js   CSV and PDF downloads
 docs/             the data model
 tests/            the test page (see below)
 ```
@@ -53,7 +56,7 @@ data through `Store`.
 ## Rules to know before changing things
 
 - **Seed data changes need a new storage key.** The demo data is saved in the
-  browser under `STORAGE_KEY` (`shared/store.js`, currently `univa-html-demo-v26`).
+  browser under `STORAGE_KEY` (`shared/store.js`, currently `univa-html-demo-v28`).
   If you change the shape of the seed data, bump the number, otherwise browsers
   that already saved the old data keep serving it. Backups live under their own
   key (`BACKUPS_KEY`), so a bump doesn't delete them.

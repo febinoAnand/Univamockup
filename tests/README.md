@@ -48,6 +48,8 @@ my data** button the next time you open it.
 | Links | `suites/links.js` | Every link, image and page named in the pages and scripts exists; the menu, its icons and the pages that highlight it agree; where each application opens; links in the documents |
 | Shared pieces | `suites/ui-helpers.js` | Escaping, toasts, the "are you sure" dialog, dialogs, row menus, the table/widget switch, maximising a panel, form helpers, the menu and the top bar |
 | A device's page | `suites/device-detail.js` | All seven tabs: metadata, token, telemetry, alerts, commands (including one that falls due while the page is closed), relations, data publish and logs, custom widgets, deleting the device |
+| Email Tracking | `suites/email-tracking.js` | The built-in application: the rules that turn an email into a ticket and say who is told (sender, subject alias, active people, push and SMS outcomes), then every tab used as a person would: inbox, departments, tickets and reports with their downloads, notifications, SMS gateway, users, mailbox settings, and who can see it |
+| Forklift Tracking | `suites/forklift-tracking.js` | The readings the trackers make (each follows the state, speed, distance, position and battery rules, for 56 forklift-days), the hours and distances worked out from them, then every tab used as a person would: the Fleet cards and registering, the Live view, History with its window and paging, and Reports with their CSV and PDF |
 
 ## On GitHub
 

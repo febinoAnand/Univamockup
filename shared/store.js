@@ -9,7 +9,7 @@
 // stored data over the defaults, so a browser with an old key would otherwise
 // keep serving stale/missing fields (e.g. undefined dates, dropped entities)
 // forever instead of picking up fixes made here.
-const STORAGE_KEY = 'univa-html-demo-v26'
+const STORAGE_KEY = 'univa-html-demo-v28'
 // Workspace backups (Settings > Backup). Separate from STORAGE_KEY so a backup
 // isn't re-written with the data on every change, and so bumping STORAGE_KEY
 // for a seed change doesn't throw the backups away.
@@ -178,6 +178,145 @@ function seedManualEntries() {
     }))
 }
 
+// ------------------------------------------------- Email Tracking (built-in app)
+// The built-in "Email Tracking" application (id app_email) turns the emails that
+// reach a mailbox into tickets and tells a department's people about them by
+// push notification and SMS. There is no mail server here, so the rules below
+// stand in for the backend's. An email becomes a ticket when
+//   1. it comes from an active "From" address, and
+//   2. its subject carries a department alias in square brackets, e.g. "[NET] Link down".
+// Then the "Key: value" lines of its body become the ticket's fields, a report
+// line is written, and each active person in that department gets a push
+// notification and (when the SMS gateway is on) a text message.
+const EMAIL_SMS_NUMBER = /^\+\d[\d ]{8,}$/
+
+function stampFromMs(ms) {
+  const d = new Date(ms)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+// "Customer: Zenith Foods" lines in the body of an email become ticket fields.
+function parseEmailFields(message) {
+  const fields = {}
+  String(message || '').split(/\r?\n/).forEach((line) => {
+    const found = /^\s*([A-Za-z][A-Za-z0-9 _.-]{0,39}?)\s*:\s*(\S.*?)\s*$/.exec(line)
+    if (found && Object.keys(fields).length < 12 && !(found[1] in fields)) fields[found[1]] = found[2]
+  })
+  return fields
+}
+
+// Works out what an incoming email causes and writes it into `state` (the
+// email collections). `idOf(prefix)` makes the ids. Returns what happened.
+function processIncomingEmail(state, email, idOf) {
+  const result = { outcome: 'ticket', ticket: null, report: null, notified: 0, texted: 0 }
+  const sender = state.emailFromAddresses.find((a) => a.email.toLowerCase() === String(email.fromEmail || '').trim().toLowerCase())
+  const alias = (/\[([A-Za-z0-9_-]+)\]/.exec(email.subject || '') || [])[1]
+  const department = alias ? state.emailDepartments.find((d) => d.alias.toLowerCase() === alias.toLowerCase()) : null
+  if (!sender || !sender.active) result.outcome = 'sender'
+  else if (!alias) result.outcome = 'no-alias'
+  else if (!department) result.outcome = 'unknown-alias'
+  email.outcome = result.outcome
+  if (result.outcome !== 'ticket') return result
+
+  const stamp = email.receivedDate
+  const ticket = { id: idOf('tk'), ticketName: email.subject, receivedDate: stamp, emailId: email.id, department: department.department, fields: parseEmailFields(email.message) }
+  state.emailTickets.push(ticket)
+  email.ticketId = ticket.id
+  const sms = (state.emailSmsSettings || [])[0] || {}
+  const push = (state.emailNotificationSettings || [])[0] || {}
+  const people = department.userIds.map((id) => state.emailUsers.find((u) => u.id === id)).filter((u) => u && u.active)
+  people.forEach((person) => {
+    state.emailNotifications.push({ id: idOf('pn'), sentDate: stamp, title: `New ticket · ${department.alias}`, message: email.subject, sendToUser: person.username, deliveryStatus: push.applicationId && person.deviceId ? 'delivered' : 'failed' })
+    result.notified++
+    if (sms.isActive && person.mobileNo) {
+      state.emailSms.push({ id: idOf('sm'), sentDate: stamp, toNumber: person.mobileNo, fromNumber: sms.fromNumber || '', message: `New ticket: ${email.subject}`, delivered: EMAIL_SMS_NUMBER.test(person.mobileNo) })
+      result.texted++
+    }
+  })
+  const report = { id: idOf('rp'), sentDate: stamp, message: `New ticket "${email.subject}" from ${email.fromEmail}`, department: department.department, sendToUsers: people.map((p) => p.username) }
+  state.emailReports.push(report)
+  result.ticket = ticket
+  result.report = report
+  return result
+}
+
+// A support mailbox with a week of mail: most of it becomes tickets, some of it
+// does not (an unknown sender, no department in the subject, an inactive sender).
+function emailTrackingSeed() {
+  const now = Date.now()
+  let count = 0
+  const idOf = (prefix) => prefix + (++count)
+  const state = {
+    emailUsers: [
+      { id: 'eu1', username: 'meera.nair', email: 'meera.nair@acmetelecom.test', designation: 'Support lead', mobileNo: '+91 98450 11201', deviceId: 'dev-meera-a1', active: true, expiryTime: '2027-03-31 23:59:59', createdDate: '2025-11-02 09:30:00' },
+      { id: 'eu2', username: 'arjun.menon', email: 'arjun.menon@acmetelecom.test', designation: 'Network engineer', mobileNo: '+91 98450 11202', deviceId: 'dev-arjun-b2', active: true, expiryTime: '2027-03-31 23:59:59', createdDate: '2025-11-02 09:32:00' },
+      { id: 'eu3', username: 'priya.raman', email: 'priya.raman@acmetelecom.test', designation: 'Billing executive', mobileNo: '98450 11203', deviceId: 'dev-priya-c3', active: true, expiryTime: '2027-03-31 23:59:59', createdDate: '2025-12-04 10:10:00' },
+      { id: 'eu4', username: 'kiran.patel', email: 'kiran.patel@acmetelecom.test', designation: 'Field technician', mobileNo: '+91 98450 11204', deviceId: 'dev-kiran-d4', active: true, expiryTime: '2027-03-31 23:59:59', createdDate: '2025-12-04 10:12:00' },
+      { id: 'eu5', username: 'sanjay.iyer', email: 'sanjay.iyer@acmetelecom.test', designation: 'Account manager', mobileNo: '+91 98450 11205', deviceId: 'dev-sanjay-e5', active: false, expiryTime: '2026-01-31 23:59:59', createdDate: '2026-01-08 11:00:00' },
+      { id: 'eu6', username: 'divya.shetty', email: 'divya.shetty@acmetelecom.test', designation: 'Operations manager', mobileNo: '+91 98450 11206', deviceId: '', active: true, expiryTime: '2027-03-31 23:59:59', createdDate: '2026-02-12 15:45:00' },
+    ],
+    emailDepartments: [
+      { id: 'ed1', alias: 'NET', department: 'Network operations', userIds: ['eu2', 'eu4'] },
+      { id: 'ed2', alias: 'BILL', department: 'Billing and accounts', userIds: ['eu3', 'eu5'] },
+      { id: 'ed3', alias: 'SUP', department: 'Customer support', userIds: ['eu1', 'eu6'] },
+      { id: 'ed4', alias: 'FIELD', department: 'Field service', userIds: ['eu4', 'eu6'] },
+    ],
+    emailFromAddresses: [
+      { id: 'ef1', email: 'alerts@acmetelecom.test', active: true },
+      { id: 'ef2', email: 'noc@acmetelecom.test', active: true },
+      { id: 'ef3', email: 'billing@acmetelecom.test', active: true },
+      { id: 'ef4', email: 'old-monitor@acmetelecom.test', active: false },
+    ],
+    emailSettings: [{ id: 'es1', host: 'imap.acmetelecom.test', port: 993, username: 'tickets@acmetelecom.test', password: 'demo-password', checkStatus: true, checkInterval: 60 }],
+    emailNotificationSettings: [{ id: 'ens1', applicationId: 'demo-push-app-0001' }],
+    emailSmsSettings: [{ id: 'ess1', sid: 'ACdemo00000000000000000000000000', authToken: 'demo-auth-token', fromNumber: '+1 555 010 0100', isActive: true }],
+    emailInbox: [],
+    emailTickets: [],
+    emailReports: [],
+    emailNotifications: [],
+    emailSms: [],
+  }
+  // [minutes ago, from, subject, body], oldest first
+  ;[
+    [5760, 'noc@acmetelecom.test', 'Out of office: NOC desk', 'The NOC desk is closed until Monday.\nContact: noc-duty@acmetelecom.test'],
+    [4680, 'noc@acmetelecom.test', '[FIELD] Cable fault near Mangaluru', 'Customer: Coastal Cold Chain\nSite: Mangaluru, NH66 junction\nPriority: High\nIssue: Fibre cut by roadworks, 40 m to splice'],
+    [4320, 'billing@acmetelecom.test', '[BILL] Credit note CN-118 raised', 'Customer: Cradlewell Facilities\nInvoice: INV-2187\nPriority: Low\nIssue: Credit note raised after the January outage'],
+    [3060, 'alerts@acmetelecom.test', '[NET] Power failure at Hubli PoP', 'Customer: Multiple\nSite: Hubli PoP\nPriority: High\nIssue: Mains lost, running on batteries (est. 40 min)'],
+    [2880, 'noc@acmetelecom.test', '[SUP] Customer asks for upgrade quote', 'Customer: Northbridge Logistics\nPriority: Low\nIssue: Wants a quote for a 1 Gbps upgrade at the Pune depot'],
+    [1740, 'old-monitor@acmetelecom.test', '[NET] Link flapping at Mysuru', 'Customer: Eastdepot Rentals\nSite: Mysuru PoP\nPriority: Medium\nIssue: Link up/down every 2 minutes'],
+    [1440, 'alerts@acmetelecom.test', '[NET] Packet loss at Chennai PoP', 'Customer: Harbor Dock Ops\nSite: Chennai PoP\nPriority: Medium\nIssue: 4% packet loss towards the Singapore gateway'],
+    [540, 'billing@acmetelecom.test', '[BILL] Payment received for INV-2210', 'Customer: Zenith Foods\nInvoice: INV-2210\nPriority: Low\nIssue: Payment of 84,500 received, please reconcile'],
+    [360, 'noc@acmetelecom.test', 'Weekly maintenance summary', 'Eleven planned changes this week, none customer-affecting.\nFull list is on the shared drive.'],
+    [300, 'alerts@acmetelecom.test', '[FIELD] Engineer needed at Harbor Dock', 'Customer: Harbor Dock Ops\nSite: Pier 3\nPriority: High\nIssue: Router replacement, spare is at the Chennai store'],
+    [180, 'customer@zenithfoods.test', '[SUP] Cannot log in to the portal', 'Hello, I cannot log in to the customer portal since this morning.\nPlease help.'],
+    [120, 'billing@acmetelecom.test', '[BILL] Invoice INV-2291 disputed', 'Customer: Cradlewell Facilities\nInvoice: INV-2291\nPriority: Low\nIssue: Customer disputes the late fee'],
+    [45, 'noc@acmetelecom.test', '[NET] High latency on Bengaluru backbone', 'Customer: Northbridge Logistics\nSite: Bengaluru core\nPriority: Medium\nIssue: Latency above 180 ms since 08:15'],
+    [12, 'alerts@acmetelecom.test', '[NET] Link down at Kochi PoP', 'Customer: Zenith Foods\nSite: Kochi PoP\nPriority: High\nIssue: Leased line LL-4471 down since 09:40'],
+  ].forEach(([minutes, fromEmail, subject, message], i) => {
+    const email = { id: 'em' + (i + 1), fromEmail, toEmail: 'tickets@acmetelecom.test', subject, message, receivedDate: stampFromMs(now - minutes * 60000), outcome: 'sender', ticketId: null }
+    state.emailInbox.push(email)
+    processIncomingEmail(state, email, idOf)
+  })
+  return state
+}
+const EMAIL_SEED = emailTrackingSeed()
+
+// ----------------------------------------- Forklift Tracking (built-in app)
+// The forklifts that have a GPS tracker. Their positions, speeds and battery
+// readings are not stored: shared/forklift-data.js makes them on read.
+function forkliftSeed() {
+  const now = Date.now()
+  const added = (days) => stampFromMs(now - days * 86400000)
+  return [
+    { id: 'fk1', deviceId: '352093081452251', vehicleName: 'Forklift 01', deviceModel: 'FMB920', vehicleId: 'FL-2301', driver: 'Ravi Kumar', manufacturer: 'Teltonika', hardwareVersion: '07', softwareVersion: '03.28.07', addDate: added(45) },
+    { id: 'fk2', deviceId: '352093081452269', vehicleName: 'Forklift 02', deviceModel: 'FMB920', vehicleId: 'FL-2302', driver: 'Suresh B', manufacturer: 'Teltonika', hardwareVersion: '07', softwareVersion: '03.28.07', addDate: added(45) },
+    { id: 'fk3', deviceId: '352093081452277', vehicleName: 'Reach truck 03', deviceModel: 'FMB130', vehicleId: 'FL-2303', driver: 'Anil Das', manufacturer: 'Teltonika', hardwareVersion: '05', softwareVersion: '03.27.14', addDate: added(30) },
+    { id: 'fk4', deviceId: '352093081452285', vehicleName: 'Pallet truck 04', deviceModel: 'FMC130', vehicleId: 'FL-2304', driver: 'Meena S', manufacturer: 'Teltonika', hardwareVersion: '03', softwareVersion: '03.28.07', addDate: added(4) },
+    { id: 'fk5', deviceId: '352093081452293', vehicleName: 'Forklift 05', deviceModel: 'FMB920', vehicleId: 'FL-2305', driver: '', manufacturer: 'Teltonika', hardwareVersion: '07', softwareVersion: '03.28.05', addDate: added(20) },
+  ]
+}
+
 const DEFAULT_DATA = {
   auth: { loggedIn: false, username: '', pendingApproval: false },
   devices: [
@@ -204,6 +343,8 @@ const DEFAULT_DATA = {
     { id: 'app_ems', name: 'EMS', description: 'Built-in energy management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_notion', name: 'Custom App', description: 'Built-in page workspace for notes, logs, and live data — available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'report', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app_cms', name: 'CMS', description: 'Built-in crane management application available to every tenant.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'device', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    { id: 'app_email', name: 'Email Tracking', description: 'Built-in email tracking application: turns incoming emails into tickets and tells each department by push notification and SMS.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'mail', isDefault: true, createdDate: '2025-11-01 08:00:00' },
+    { id: 'app_forklift', name: 'Forklift Tracking', description: 'Built-in forklift tracking application: the live position, state, speed and battery of each forklift from its GPS tracker, with history and daily reports.', status: 'active', deviceIds: [], assetIds: [], groupNames: [], metadata: [], icon: 'truck', isDefault: true, createdDate: '2025-11-01 08:00:00' },
     { id: 'app1', name: 'Fleet Tracker', description: 'Customer-facing dashboard for live fleet tracking.', status: 'active', deviceIds: ['d1', 'd5'], assetIds: ['a1', 'a4'], groupNames: ['Vehicles'], metadata: [], icon: 'asset', createdDate: '2025-11-02 09:14:00' },
   ],
   assets: [
@@ -284,7 +425,7 @@ const DEFAULT_DATA = {
       assets: [
         { id: 'tas1', name: 'Forklift Unit 3', status: 'operational', createdDate: '2025-11-05 10:00:00' },
       ],
-      applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms', 'app1'],
+      applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift', 'app1'],
     },
     { id: 't2', organizationId: 'CRADLEWELL', title: 'Cradlewell Facilities', email: 'admin@cradlewell.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United Kingdom', tenantProfileName: 'Default', deviceCount: 42, status: 'active', createdDate: '2025-12-19 14:02:00',
       users: [
@@ -296,10 +437,10 @@ const DEFAULT_DATA = {
       assets: [
         { id: 'tas2', name: 'HVAC Compressor A', status: 'operational', createdDate: '2025-12-20 09:30:00' },
       ],
-      applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms'],
+      applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift'],
     },
-    { id: 't3', organizationId: 'HARBORDOCK', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00', users: [], devices: [], assets: [], applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms'] },
-    { id: 't4', organizationId: 'EASTDEPOT', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00', users: [], devices: [], assets: [], applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms'] },
+    { id: 't3', organizationId: 'HARBORDOCK', title: 'Harbor Dock Ops', email: 'admin@harbordock.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'Canada', tenantProfileName: 'Default', deviceCount: 67, status: 'suspended', createdDate: '2026-01-08 11:47:00', users: [], devices: [], assets: [], applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift'] },
+    { id: 't4', organizationId: 'EASTDEPOT', title: 'East Depot Rentals', email: 'admin@eastdepot.com', phone: '', address: '', city: '', state: '', postalCode: '', country: 'United States', tenantProfileName: 'Default', deviceCount: 9, status: 'active', createdDate: '2026-03-22 08:30:00', users: [], devices: [], assets: [], applicationIds: ['app0', 'app_ems', 'app_notion', 'app_cms', 'app_email', 'app_forklift'] },
   ],
   tenantProfiles: [
     { id: 'tp1', name: 'Default', description: 'Default tenant profile with standard platform limits.', isDefault: true, maxDevices: 500, maxAssets: 500, maxUsers: 50, maxDashboards: 50, maxApplications: 50, createdDate: '2025-11-02 09:10:00' },
@@ -523,6 +664,23 @@ const DEFAULT_DATA = {
       alerts: [],
     },
   ],
+
+  // ------------------------------------------ Email Tracking (built-in app)
+  // See the rules at emailTrackingSeed(). Dates are 'YYYY-MM-DD HH:MM:SS'.
+  emailUsers: EMAIL_SEED.emailUsers,
+  emailDepartments: EMAIL_SEED.emailDepartments,
+  emailFromAddresses: EMAIL_SEED.emailFromAddresses,
+  emailSettings: EMAIL_SEED.emailSettings,
+  emailNotificationSettings: EMAIL_SEED.emailNotificationSettings,
+  emailSmsSettings: EMAIL_SEED.emailSmsSettings,
+  emailInbox: EMAIL_SEED.emailInbox,
+  emailTickets: EMAIL_SEED.emailTickets,
+  emailReports: EMAIL_SEED.emailReports,
+  emailNotifications: EMAIL_SEED.emailNotifications,
+  emailSms: EMAIL_SEED.emailSms,
+
+  // --------------------------------------- Forklift Tracking (built-in app)
+  forkliftDevices: forkliftSeed(),
 }
 
 const DEMO_ACCOUNTS = {
@@ -1858,6 +2016,168 @@ const Store = {
     store.cmsMachines = store.cmsMachines.filter((m) => m.id !== id)
     saveData(store)
   },
+
+  // ------------------------------------------- Email Tracking (built-in app)
+  // Users here are the people the app notifies (they use its mobile app); they
+  // are not Univa users. Rows removed from a history (inbox, tickets, reports,
+  // notifications, SMS) take nothing else with them.
+  addEmailUser(data) {
+    const store = loadData()
+    const record = { id: uid('eu'), username: String(data.username).trim(), email: String(data.email || '').trim(), designation: String(data.designation || '').trim(), mobileNo: String(data.mobileNo || '').trim(), deviceId: String(data.deviceId || '').trim(), active: data.active !== false, expiryTime: data.expiryTime || '', createdDate: nowStamp() }
+    store.emailUsers.push(record)
+    saveData(store)
+    return record
+  },
+  updateEmailUser(id, data) {
+    const store = loadData()
+    const user = store.emailUsers.find((u) => u.id === id)
+    if (user) ['username', 'email', 'designation', 'mobileNo', 'deviceId', 'active', 'expiryTime'].forEach((key) => { if (key in data) user[key] = data[key] })
+    saveData(store)
+    return user
+  },
+  // A removed person also leaves every department they were in.
+  removeEmailUsers(ids) {
+    const drop = new Set(ids)
+    const store = loadData()
+    store.emailUsers = store.emailUsers.filter((u) => !drop.has(u.id))
+    store.emailDepartments.forEach((d) => { d.userIds = d.userIds.filter((id) => !drop.has(id)) })
+    saveData(store)
+  },
+
+  // The alias is how an email's subject picks its department ("[NET] ..."), so
+  // it has to be unique.
+  emailAliasTaken(alias, exceptId) {
+    const wanted = String(alias || '').trim().toLowerCase()
+    return loadData().emailDepartments.some((d) => d.id !== exceptId && d.alias.toLowerCase() === wanted)
+  },
+  addEmailDepartment(data) {
+    const store = loadData()
+    const record = { id: uid('ed'), alias: String(data.alias).trim(), department: String(data.department).trim(), userIds: (data.userIds || []).slice() }
+    store.emailDepartments.push(record)
+    saveData(store)
+    return record
+  },
+  updateEmailDepartment(id, data) {
+    const store = loadData()
+    const department = store.emailDepartments.find((d) => d.id === id)
+    if (department) Object.assign(department, { alias: String(data.alias).trim(), department: String(data.department).trim(), userIds: (data.userIds || []).slice() })
+    saveData(store)
+    return department
+  },
+  removeEmailDepartments(ids) {
+    removeRowsFrom('emailDepartments', ids)
+  },
+
+  // An email arrives (there is no mail server, so this stands in for one). The
+  // result says what came of it: { email, outcome, ticket, report, notified,
+  // texted }, where outcome is 'ticket', or why not: 'sender' (not an active
+  // From address), 'no-alias' or 'unknown-alias'.
+  receiveEmail(data) {
+    const store = loadData()
+    const mailbox = (store.emailSettings || [])[0] || {}
+    const email = { id: uid('em'), fromEmail: String(data.fromEmail || '').trim(), toEmail: data.toEmail || mailbox.username || '', subject: String(data.subject || '').trim(), message: String(data.message || ''), receivedDate: nowStamp(), outcome: 'sender', ticketId: null }
+    store.emailInbox.push(email)
+    const result = processIncomingEmail(store, email, uid)
+    saveData(store)
+    return Object.assign({ email }, result)
+  },
+  removeEmailInbox(ids) {
+    removeRowsFrom('emailInbox', ids)
+  },
+  removeEmailTickets(ids) {
+    removeRowsFrom('emailTickets', ids)
+  },
+  removeEmailReports(ids) {
+    removeRowsFrom('emailReports', ids)
+  },
+  removeEmailNotifications(ids) {
+    removeRowsFrom('emailNotifications', ids)
+  },
+  removeEmailSms(ids) {
+    removeRowsFrom('emailSms', ids)
+  },
+
+  // Mailbox, push and SMS settings: each is one row.
+  updateEmailSettings(data) {
+    const store = loadData()
+    const row = emailSingleton(store, 'emailSettings', 'es')
+    Object.assign(row, { host: String(data.host).trim(), port: Number(data.port), username: String(data.username).trim(), password: data.password, checkStatus: Boolean(data.checkStatus), checkInterval: data.checkInterval === '' || data.checkInterval == null ? null : Number(data.checkInterval) })
+    saveData(store)
+    return row
+  },
+  updateEmailNotificationSettings(data) {
+    const store = loadData()
+    const row = emailSingleton(store, 'emailNotificationSettings', 'ens')
+    row.applicationId = String(data.applicationId).trim()
+    saveData(store)
+    return row
+  },
+  updateEmailSmsSettings(data) {
+    const store = loadData()
+    const row = emailSingleton(store, 'emailSmsSettings', 'ess')
+    Object.assign(row, { sid: String(data.sid).trim(), authToken: data.authToken, fromNumber: String(data.fromNumber || '').trim(), isActive: Boolean(data.isActive) })
+    saveData(store)
+    return row
+  },
+
+  // The addresses mail is accepted from.
+  addEmailFromAddress(email) {
+    const store = loadData()
+    const record = { id: uid('ef'), email: String(email).trim(), active: true }
+    store.emailFromAddresses.push(record)
+    saveData(store)
+    return record
+  },
+  toggleEmailFromAddress(id) {
+    const store = loadData()
+    const address = store.emailFromAddresses.find((a) => a.id === id)
+    if (address) address.active = !address.active
+    saveData(store)
+  },
+  removeEmailFromAddress(id) {
+    removeRowsFrom('emailFromAddresses', [id])
+  },
+
+  // ----------------------------------------- Forklift Tracking (built-in app)
+  // The device id (the tracker's IMEI) is what its data is filed under, so it
+  // is unique and is not changed once the forklift is registered.
+  forkliftDeviceIdTaken(deviceId, exceptId) {
+    const wanted = String(deviceId || '').trim().toLowerCase()
+    return loadData().forkliftDevices.some((d) => d.id !== exceptId && d.deviceId.toLowerCase() === wanted)
+  },
+  addForkliftDevice(data) {
+    const store = loadData()
+    const text = (key) => String(data[key] || '').trim()
+    const record = { id: uid('fk'), deviceId: text('deviceId'), vehicleName: text('vehicleName'), deviceModel: text('deviceModel'), vehicleId: text('vehicleId'), driver: text('driver'), manufacturer: text('manufacturer'), hardwareVersion: text('hardwareVersion'), softwareVersion: text('softwareVersion'), addDate: nowStamp() }
+    store.forkliftDevices.push(record)
+    saveData(store)
+    return record
+  },
+  updateForkliftDevice(id, data) {
+    const store = loadData()
+    const device = store.forkliftDevices.find((d) => d.id === id)
+    if (device) ['vehicleName', 'deviceModel', 'vehicleId', 'driver', 'manufacturer', 'hardwareVersion', 'softwareVersion'].forEach((key) => { if (key in data) device[key] = String(data[key] || '').trim() })
+    saveData(store)
+    return device
+  },
+  removeForkliftDevice(id) {
+    removeRowsFrom('forkliftDevices', [id])
+  },
+}
+
+// Removes rows (by id) from one of the collections of the data.
+function removeRowsFrom(key, ids) {
+  const drop = new Set(ids)
+  const store = loadData()
+  store[key] = store[key].filter((row) => !drop.has(row.id))
+  saveData(store)
+}
+
+// One-row collections (the mailbox, push and SMS settings).
+function emailSingleton(store, key, prefix) {
+  if (!Array.isArray(store[key])) store[key] = []
+  if (!store[key].length) store[key].push({ id: uid(prefix) })
+  return store[key][0]
 }
 
 window.Store = Store

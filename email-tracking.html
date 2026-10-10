@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/app.css" />
+  <link rel="stylesheet" href="shared/app-runtime.css" />
+  <link rel="stylesheet" href="shared/email-tracking.css" />
+  <title>Email Tracking — Univa</title>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <div class="app-main">
+      <div class="app-content" id="app-content">
+        <div id="et-root"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- An email, in full -->
+  <div class="modal-overlay" id="inbox-modal">
+    <div class="modal-card" style="max-width:640px;">
+      <div class="modal-header">
+        <h2>E-mail details</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('inbox-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="inbox-detail"></div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('inbox-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stands in for the mail server: an email arrives -->
+  <div class="modal-overlay" id="receive-modal">
+    <div class="modal-card" style="max-width:560px;">
+      <div class="modal-header">
+        <h2>Receive a test email</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('receive-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="et-card-note" style="margin-top:0;">There is no mail server here. This stands in for one: the email lands in the inbox, and if it comes from an active From address and has a department in its subject, such as <strong>[NET]</strong>, it becomes a ticket.</p>
+        <form id="receive-form" novalidate>
+          <div class="et-modal-field"><label for="receive-from">From</label><select id="receive-from"></select></div>
+          <div class="et-modal-field"><label for="receive-subject">Subject*</label><input id="receive-subject" type="text" /></div>
+          <div class="et-modal-field"><label for="receive-message">Message</label><textarea id="receive-message" rows="6"></textarea><p class="et-hint">Lines written as <code>Key: value</code> become the ticket's fields.</p></div>
+          <p class="et-error" id="receive-error" hidden></p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('receive-modal')">Cancel</button>
+        <button type="submit" form="receive-form" class="modal-button primary" id="receive-save">Receive email</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create or edit a department -->
+  <div class="modal-overlay" id="department-modal">
+    <div class="modal-card" style="max-width:560px;">
+      <div class="modal-header">
+        <h2 id="department-title">Create department</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('department-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="department-form" novalidate>
+          <div class="et-modal-field">
+            <label for="dep-alias">Department alias*</label>
+            <input id="dep-alias" type="text" placeholder="e.g. NET" autocomplete="off" />
+            <p class="et-hint">An email picks its department by this alias in the subject, for example <strong>[NET] Link down</strong>. Letters, digits, - and _ only.</p>
+            <p class="et-error" id="dep-alias-error" hidden></p>
+          </div>
+          <div class="et-modal-field">
+            <label for="dep-name">Department*</label>
+            <input id="dep-name" type="text" placeholder="e.g. Network operations" autocomplete="off" />
+            <p class="et-error" id="dep-name-error" hidden></p>
+          </div>
+          <div class="et-modal-field">
+            <label>Users to notify</label>
+            <div class="checklist-search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+              <input type="text" id="dep-users-search" placeholder="Search users" />
+            </div>
+            <div class="group-checkbox-list" id="dep-users-list"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('department-modal')">Cancel</button>
+        <button type="submit" form="department-form" class="modal-button primary" id="department-save">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add or edit a person the app notifies -->
+  <div class="modal-overlay" id="user-modal">
+    <div class="modal-card" style="max-width:560px;">
+      <div class="modal-header">
+        <h2 id="user-title">Add user</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('user-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="user-form" novalidate>
+          <div class="et-modal-field"><label for="eu-username">User name*</label><input id="eu-username" type="text" autocomplete="off" /><p class="et-error" id="eu-username-error" hidden></p></div>
+          <div class="et-modal-field"><label for="eu-email">Email address</label><input id="eu-email" type="email" autocomplete="off" /><p class="et-error" id="eu-email-error" hidden></p></div>
+          <div class="et-modal-field"><label for="eu-designation">Designation</label><input id="eu-designation" type="text" autocomplete="off" /></div>
+          <div class="et-modal-field"><label for="eu-mobile">Mobile no</label><input id="eu-mobile" type="text" placeholder="+91 98450 11201" autocomplete="off" /><p class="et-hint">With the country code, such as +91 98450 11201. A text message to a number without it is reported as failed.</p></div>
+          <div class="et-modal-field"><label for="eu-device">Device ID</label><input id="eu-device" type="text" autocomplete="off" /><p class="et-hint">The phone the push notifications go to. With none, they are reported as failed.</p></div>
+          <div class="et-modal-field"><label for="eu-expiry">Expiry time</label><input id="eu-expiry" type="datetime-local" /></div>
+          <div class="et-modal-field"><label>Active status</label><label class="et-switch" title="Active or inactive"><input type="checkbox" id="eu-active" aria-label="Active status" /><span></span></label></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('user-modal')">Cancel</button>
+        <button type="submit" form="user-form" class="modal-button primary" id="user-save">Add user</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update a person's password -->
+  <div class="modal-overlay" id="password-modal">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="modal-header">
+        <h2>Update password</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('password-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="password-form" novalidate>
+          <div class="et-modal-field"><label for="pw-user">User name</label><input id="pw-user" type="text" class="et-readonly" readonly /></div>
+          <div class="et-modal-field"><label for="pw-new">New password*</label><input id="pw-new" type="password" autocomplete="new-password" /></div>
+          <ul class="requirements-list" id="pw-requirements"></ul>
+          <div class="et-modal-field"><label for="pw-confirm">Confirm password*</label><input id="pw-confirm" type="password" autocomplete="new-password" /><p class="et-error" id="pw-error" hidden></p></div>
+          <p class="et-hint">The mockup does not keep passwords. This only checks them and says it is done.</p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('password-modal')">Cancel</button>
+        <button type="submit" form="password-form" class="modal-button primary">Update password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add a From address -->
+  <div class="modal-overlay" id="from-modal">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-header">
+        <h2>Add From email</h2>
+        <button type="button" class="modal-close" onclick="UI.closeModal('from-modal')" aria-label="Close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="from-form" novalidate>
+          <div class="et-modal-field"><label for="from-email">Email address*</label><input id="from-email" type="email" placeholder="Enter new email" autocomplete="off" /><p class="et-error" id="from-error" hidden></p></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button secondary" onclick="UI.closeModal('from-modal')">Cancel</button>
+        <button type="submit" form="from-form" class="modal-button primary">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.49.1/apexcharts.min.js"></script>
+  <script src="shared/store.js"></script>
+  <script src="shared/layout.js"></script>
+  <script src="shared/ui.js"></script>
+  <script src="shared/downloads.js"></script>
+  <script src="shared/email-tracking.js"></script>
+  <script>
+    // The tab can follow the application id in the URL hash ("app_email:inbox"),
+    // so a link can open any of them.
+    Layout.mount({
+      active: 'application-app_email',
+      breadcrumbs: EmailTracking.breadcrumbs(),
+    })
+    EmailTracking.boot(document.getElementById('et-root'))
+  </script>
+</body>
+</html>
