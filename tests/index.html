@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Univa tests</title>
+  <style>
+    :root {
+      --bg: #fafaf9; --surface: #ffffff; --border: #e7e5e4; --text: #1c1917; --muted: #78716c;
+      --accent: #7c3aed; --good: #16a34a; --good-bg: #dcfce7; --bad: #dc2626; --bad-bg: #fee2e2; --warn: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text); background: var(--bg); }
+    header.top { padding: 1.25rem 1.5rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+    h1 { margin: 0; font-size: 1.25rem; }
+    .lead { margin: 0.35rem 0 0; font-size: 0.85rem; color: var(--muted); max-width: 70ch; line-height: 1.5; }
+    .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1rem; }
+    button { font: inherit; cursor: pointer; }
+    #run-all { padding: 0.55rem 1.3rem; font-weight: 700; color: #fff; background: var(--accent); border: 0; border-radius: 10px; }
+    #run-all:disabled, .run-one:disabled { opacity: 0.5; cursor: not-allowed; }
+    .summary { display: flex; gap: 1.1rem; font-weight: 700; padding: 0.4rem 0.9rem; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); }
+    .summary.good { background: var(--good-bg); border-color: transparent; }
+    .summary.bad { background: var(--bad-bg); border-color: transparent; }
+    .summary .p { color: var(--good); } .summary .f { color: var(--bad); } .summary .s { color: var(--warn); }
+    #status { font-size: 0.82rem; color: var(--muted); }
+    #recover { margin: 1rem 1.5rem 0; padding: 0.8rem 1rem; font-size: 0.85rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px; }
+    #recover button { margin-left: 0.6rem; padding: 0.3rem 0.8rem; border: 0; border-radius: 8px; background: var(--warn); color: #fff; font-weight: 600; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 480px; gap: 1.25rem; padding: 1.25rem 1.5rem 2rem; align-items: start; }
+    .suite { margin-bottom: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .suite > summary { display: flex; align-items: center; gap: 0.7rem; padding: 0.75rem 1rem; cursor: pointer; list-style: none; }
+    .suite > summary::-webkit-details-marker { display: none; }
+    .suite-title { font-weight: 700; }
+    .suite code { color: var(--muted); font-size: 0.75rem; }
+    .badge { margin-left: auto; padding: 0.15rem 0.65rem; font-size: 0.75rem; font-weight: 700; color: var(--muted); background: var(--bg); border-radius: 999px; }
+    .badge.good { color: var(--good); background: var(--good-bg); }
+    .badge.bad { color: var(--bad); background: var(--bad-bg); }
+    .run-one { padding: 0.25rem 0.8rem; font-size: 0.78rem; font-weight: 600; color: var(--accent); background: #ede9fe; border: 0; border-radius: 8px; }
+    .checks { margin: 0; padding: 0 1rem 0.8rem; list-style: none; border-top: 1px solid var(--border); }
+    .checks li { display: flex; gap: 0.55rem; padding: 0.22rem 0; font-size: 0.82rem; line-height: 1.4; }
+    .checks .mark { width: 1rem; flex-shrink: 0; font-weight: 700; }
+    .checks .pass .mark { color: var(--good); }
+    .checks .fail { background: var(--bad-bg); margin: 0 -1rem; padding: 0.3rem 1rem; }
+    .checks .fail .mark, .checks .fail .name { color: var(--bad); font-weight: 600; }
+    .checks .skip .mark, .checks .skip .name { color: var(--warn); }
+    .checks .detail { display: block; margin-left: 0.4rem; color: var(--muted); font-size: 0.74rem; word-break: break-all; }
+    .checks .section { margin-top: 0.75rem; padding: 0.2rem 0; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    aside { position: sticky; top: 1rem; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; margin-bottom: 0.75rem; }
+    .panel h2 { margin: 0 0 0.5rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    #preview { width: 456px; height: 317px; overflow: hidden; background: #f5f5f4; border-radius: 8px; border: 1px solid var(--border); }
+    #preview iframe { border: 0; background: #fff; transform: scale(0.3167); transform-origin: top left; }
+    #artifacts { margin: 0; padding-left: 1.1rem; font-size: 0.82rem; }
+    .note { font-size: 0.78rem; color: var(--muted); line-height: 1.5; margin: 0; }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; } aside { position: static; order: -1; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <h1>Univa tests</h1>
+    <p class="lead">Runs the app's pages in the frame on the right and checks them the way a person would: clicking, typing, reading what is on screen. No install needed &mdash; serve the folder and open this page.</p>
+    <div class="bar">
+      <button type="button" id="run-all">Run all tests</button>
+      <div class="summary" id="summary"><span class="p"><span id="passed">0</span> passed</span><span class="f"><span id="failed">0</span> failed</span><span class="s"><span id="skipped">0</span> skipped</span></div>
+      <span id="status"></span>
+    </div>
+  </header>
+
+  <div id="recover" hidden>
+    A previous run was interrupted before it could put your data back.
+    <button type="button" id="restore">Restore my data</button>
+  </div>
+
+  <main>
+    <section id="suites"></section>
+    <aside>
+      <div class="panel">
+        <h2>Page under test</h2>
+        <div id="preview"></div>
+      </div>
+      <div class="panel" id="artifacts-box" hidden>
+        <h2>Files produced</h2>
+        <ul id="artifacts"></ul>
+      </div>
+      <div class="panel">
+        <p class="note">The tests reset the demo data (<code>Store.reset()</code>) and use the same browser storage as the app. Whatever was there before is saved when a run starts and put back when it ends.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="driver.js"></script>
+  <script src="runner.js"></script>
+  <script src="suites/routing.js"></script>
+  <script src="suites/tenant-apps.js"></script>
+  <script src="suites/backup.js"></script>
+  <script src="suites/backup-sql.js"></script>
+  <script>Tests.start()</script>
+</body>
+</html>
