@@ -36,6 +36,18 @@ my data** button the next time you open it.
 | Tenant application access | `suites/tenant-apps.js` | The tenant's Applications tab in the admin area, tenant users signing in with their email, and what each tenant, role and permission can see |
 | Settings > Backup | `suites/backup.js` | The page picker, taking, listing, downloading and deleting backups, automatic backups, retention, a full browser, and owner/admin-only access |
 | Backup SQL download | `suites/backup-sql.js` | The `.sql` file a backup downloads as: its tables, rows, column types and escaping, and the effect of unticking pages |
+| Names are shown as text | `suites/security.js` | Every kind of record is created with markup in its name; each page, tab, delete dialog and toast must show it as text and not run it, and show it exactly as typed (not escaped twice) |
+| Assistant tools | `suites/chatbot.js` | The floating assistant's tools follow the signed-in role, read only what they should, keep secrets out of what the model sees, report the real result of a status change, and keep the API key for the tab only |
+| Browser storage | `suites/storage.js` | Reading the data cheaply, permission checks never going stale, a failed save being reported, unreadable data being kept, old storage keys being cleaned up, backups being removed in one write |
+| Every page | `suites/pages.js` | All 39 pages load without errors (signed out, signed in, administrator); every script and stylesheet they name exists; no file has CRLF line endings; no unfinished tags; head tags and shared scripts are present |
+
+## On GitHub
+
+`.github/workflows/tests.yml` runs this same page in Chrome on every pull request
+and every push to `main`, through `.github/scripts/run_tests.py` (it needs
+Python and `pip install playwright`, and only on the CI machine). It also parses
+the backup SQL with PostgreSQL's grammar. You can run the script by hand the same
+way: `python .github/scripts/run_tests.py`.
 
 ## Checking the SQL with PostgreSQL's parser (optional)
 

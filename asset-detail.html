@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -509,12 +511,12 @@
           body = `
             <div class="telemetry-chart-wrap" id="telemetry-chart-wrap">
               <div class="telemetry-chart-body">
-                <div class="chart-y-axis">${yTicks.map((t) => `<span>${t.label}</span>`).join('')}</div>
+                <div class="chart-y-axis">${yTicks.map((t) => `<span>${UI.esc(t.label)}</span>`).join('')}</div>
                 <div class="chart-plot-col">
                   <svg id="telemetry-svg" viewBox="0 0 ${CHART_WIDTH} ${CHART_HEIGHT}" preserveAspectRatio="none">
                     ${gridLines}${paths}<g id="chart-hover-overlay">${hoverMarkup}</g>
                   </svg>
-                  <div class="chart-x-axis">${xTicks.map((t) => `<span>${t.label}</span>`).join('')}</div>
+                  <div class="chart-x-axis">${xTicks.map((t) => `<span>${UI.esc(t.label)}</span>`).join('')}</div>
                   <div id="chart-tooltip-slot">${tooltipMarkup}</div>
                 </div>
               </div>
@@ -647,14 +649,14 @@
     function populateForm(groupNames, profileName, deviceIds) {
       const data = Store.get()
       document.getElementById('asset-groups-list').innerHTML = data.assetGroups
-        .map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${g.name}" ${groupNames.includes(g.name) ? 'checked' : ''}/> ${g.name}</label>`)
+        .map((g) => `<label class="modal-checkbox"><input type="checkbox" data-group="${UI.esc(g.name)}" ${groupNames.includes(g.name) ? 'checked' : ''}/> ${UI.esc(g.name)}</label>`)
         .join('')
-      document.getElementById('asset-profile').innerHTML = data.assetProfiles.map((p) => `<option value="${p.name}">${p.name}</option>`).join('')
+      document.getElementById('asset-profile').innerHTML = data.assetProfiles.map((p) => `<option value="${UI.esc(p.name)}">${UI.esc(p.name)}</option>`).join('')
       document.getElementById('asset-profile').value = profileName
       document.getElementById('asset-devices-list').innerHTML =
         data.devices.length === 0
           ? '<span class="section-empty">No devices available</span>'
-          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${deviceIds.includes(d.id) ? 'checked' : ''}/> ${d.name}</label>`).join('')
+          : data.devices.map((d) => `<label class="modal-checkbox"><input type="checkbox" data-device="${d.id}" ${deviceIds.includes(d.id) ? 'checked' : ''}/> ${UI.esc(d.name)}</label>`).join('')
     }
 
     function openEdit() {
@@ -688,7 +690,7 @@
       const asset = getAsset()
       if (!asset) return
       UI.confirm({
-        message: `Delete <strong>${asset.name}</strong>? This can't be undone.`,
+        message: `Delete <strong>${UI.esc(asset.name)}</strong>? This can't be undone.`,
         onConfirm: () => {
           Store.removeAsset(asset.id)
           UI.toast(`"${asset.name}" deleted successfully!`)

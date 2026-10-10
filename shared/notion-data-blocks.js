@@ -411,7 +411,10 @@
 
   function downloadCsv(block, ctx) {
     const model = sheetModel(block, ctx)
-    const quote = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`
+    // A text cell that starts with = + - or @ is run as a formula when the file
+    // is opened in a spreadsheet, so mark it as text. Real numbers are left alone.
+    const safe = (v) => (typeof v === 'string' && /^[=+\-@\t\r]/.test(v) && !/^-?\d+(\.\d+)?$/.test(v) ? "'" + v : v)
+    const quote = (v) => `"${String(v == null ? '' : safe(v)).replace(/"/g, '""')}"`
     const lines = [[block.rowsMode === 'assets' ? ctx.template.entity.label : 'Time'].concat(model.cols.map((c) => c.label)).map(quote).join(',')]
     model.rows.forEach((row) => {
       lines.push([row.label].concat(model.cols.map((c) => {

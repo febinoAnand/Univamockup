@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -183,12 +185,12 @@
       const conditions = e.conditions || []
       if (conditions.length === 0) return 'Always'
       const joiner = ` ${e.conditionLogic || 'AND'} `
-      return conditions.map((c) => `${c.metric} ${c.operator} ${c.value}`).join(joiner)
+      return conditions.map((c) => `${c.metric} ${c.operator} ${UI.esc(c.value)}`).join(joiner)
     }
 
     function populateDeviceOptions() {
       const devices = Store.get().devices
-      document.getElementById('engine-device').innerHTML = devices.map((d) => `<option value="${d.id}">${d.name}</option>`).join('')
+      document.getElementById('engine-device').innerHTML = devices.map((d) => `<option value="${d.id}">${UI.esc(d.name)}</option>`).join('')
     }
 
     function setEngineScope(scope) {
@@ -218,7 +220,7 @@
       }
       const seen = new Map()
       Store.get().deviceProfiles.forEach((p) => (p.dataPoints || []).forEach((dp) => {
-        if (!seen.has(dp.key)) seen.set(dp.key, `${dp.label || dp.key} · ${p.name}`)
+        if (!seen.has(dp.key)) seen.set(dp.key, `${dp.label || dp.key} · ${UI.esc(p.name)}`)
       }))
       list.innerHTML = Array.from(seen.entries()).map(([key, label]) => `<option value="${key}">${label}</option>`).join('')
     }
@@ -237,7 +239,7 @@
               ${['>', '<', '>=', '<=', '==', '!='].map((op) => `<option ${c.operator === op ? 'selected' : ''}>${op}</option>`).join('')}
             </select>
           </div>
-          <div class="modal-field"><label>Value</label><input type="text" placeholder="e.g. 30" data-condition-field="value" data-condition-index="${i}" value="${c.value}" /></div>
+          <div class="modal-field"><label>Value</label><input type="text" placeholder="e.g. 30" data-condition-field="value" data-condition-index="${i}" value="${UI.esc(c.value)}" /></div>
           <button type="button" class="condition-remove-button" data-remove-condition="${i}" aria-label="Remove condition" title="Remove condition">&times;</button>
         </div>`,
         )
@@ -286,7 +288,7 @@
         .map(
           (e) => `
         <tr>
-          <td class="card-title-cell">${e.name}</td>
+          <td class="card-title-cell">${UI.esc(e.name)}</td>
           <td data-label="Trigger">
             <span class="rule-summary-pill">${e.triggerType}</span>
             <div class="rule-scope-note">${e.scope === 'Specific device' ? deviceNameById(e.deviceId) : 'All devices'}</div>
@@ -425,7 +427,7 @@
       const e = Store.get().ruleEngines.find((x) => x.id === id)
       if (!e) return
       UI.confirm({
-        message: `Delete <strong>${e.name}</strong>? This can't be undone.`,
+        message: `Delete <strong>${UI.esc(e.name)}</strong>? This can't be undone.`,
         onConfirm: () => {
           Store.removeRuleEngine(id)
           render()

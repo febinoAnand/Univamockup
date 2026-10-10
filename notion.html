@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -1628,7 +1630,7 @@
     function notionSlashMenu(block) {
       return `
         <div class="notion-slash-menu" data-notion-slash-menu="${block.id}" style="display:none;">
-          ${NOTION_BLOCK_TYPES.map((t) => `<button type="button" class="notion-slash-item" data-notion-slash-pick="${block.id}:${t.type}" data-label="${t.label.toLowerCase()}">${t.label}</button>`).join('')}
+          ${NOTION_BLOCK_TYPES.map((t) => `<button type="button" class="notion-slash-item" data-notion-slash-pick="${block.id}:${t.type}" data-label="${t.label.toLowerCase()}">${UI.esc(t.label)}</button>`).join('')}
         </div>`
     }
 
@@ -1802,7 +1804,7 @@
               (c) => `
               <div class="notion-embed-gallery-chip">
                 <span class="notion-embed-gallery-icon">${c.icon}</span>
-                <span class="notion-embed-gallery-text"><strong>${c.label}</strong><br>${c.services}</span>
+                <span class="notion-embed-gallery-text"><strong>${UI.esc(c.label)}</strong><br>${c.services}</span>
               </div>`,
             ).join('')}
           </div>
@@ -1923,7 +1925,7 @@
             ${dragHandle}
             <div class="notion-timer-widget">
               <div class="notion-timer-presets">
-                ${NOTION_TIMER_PRESETS.map((p) => `<button type="button" class="notion-timer-preset${block.minutes === p.minutes ? ' active' : ''}" data-notion-timer-preset="${block.id}:${p.minutes}">${p.label}</button>`).join('')}
+                ${NOTION_TIMER_PRESETS.map((p) => `<button type="button" class="notion-timer-preset${block.minutes === p.minutes ? ' active' : ''}" data-notion-timer-preset="${block.id}:${p.minutes}">${UI.esc(p.label)}</button>`).join('')}
               </div>
               <span class="notion-timer-display" data-notion-timer>${notionFormatTimer(state.remaining)}</span>
               <div class="notion-timer-controls">
@@ -2052,7 +2054,7 @@
     // how Board/List/Gallery/Calendar/Timeline all manage the schema through
     // one settings surface rather than per-column header chrome.
     function notionColumnHeaderHtml(block, prop) {
-      return `<th class="notion-db-th"><input type="text" class="notion-db-col-name-input" data-notion-db-rename-col="${block.id}:${prop.id}" value="${prop.name || ''}" /></th>`
+      return `<th class="notion-db-th"><input type="text" class="notion-db-col-name-input" data-notion-db-rename-col="${block.id}:${prop.id}" value="${UI.esc(prop.name || '')}" /></th>`
     }
 
     function renderNotionDbTable(block) {
@@ -2089,7 +2091,7 @@
           (prop) => `
         <div class="notion-db-properties-row">
           <span class="notion-db-properties-type-badge" title="${prop.type} property">${prop.type}</span>
-          <input type="text" class="notion-db-col-name-input" data-notion-db-rename-col="${block.id}:${prop.id}" value="${prop.name || ''}" />
+          <input type="text" class="notion-db-col-name-input" data-notion-db-rename-col="${block.id}:${prop.id}" value="${UI.esc(prop.name || '')}" />
           ${prop.id === 'title' ? '' : `<button type="button" class="notion-block-action-btn" data-notion-db-delete-col="${block.id}:${prop.id}" aria-label="Delete property" title="Delete property">${notionTrashIcon()}</button>`}
         </div>`,
         )
@@ -2123,7 +2125,7 @@
           (i) => `
         <div class="notion-db-list-row" data-notion-db-open-item="${block.id}:${i.id}" title="${i.status || 'No status'} — click to open">
           <span class="notion-db-status-dot" style="background:${notionDbStatusColor(i.status)};" title="${i.status || 'No status'}"></span>
-          <span class="notion-db-list-title">${i.title || 'Untitled'}</span>
+          <span class="notion-db-list-title">${UI.esc(i.title || 'Untitled')}</span>
           ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
           ${i.date ? `<span class="notion-db-list-date">${i.date}</span>` : ''}
         </div>`,
@@ -2145,8 +2147,8 @@
                 .filter((i) => i.status === status)
                 .map(
                   (i) => `
-                <div class="notion-db-board-card" draggable="true" data-notion-db-card="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}" title="${i.title || 'Untitled'} — drag to move, click to open">
-                  <p class="notion-db-board-card-title">${i.title || 'Untitled'}</p>
+                <div class="notion-db-board-card" draggable="true" data-notion-db-card="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}" title="${UI.esc(i.title || 'Untitled')} — drag to move, click to open">
+                  <p class="notion-db-board-card-title">${UI.esc(i.title || 'Untitled')}</p>
                   ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
                 </div>`,
                 )
@@ -2190,7 +2192,7 @@
             <p class="notion-db-cal-daynum">${d}</p>
             ${dayItems
               .map(
-                (i) => `<span class="notion-db-cal-item" draggable="true" data-notion-db-cal-item="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}" title="${i.title || ''}">${i.title || 'Untitled'}</span>`,
+                (i) => `<span class="notion-db-cal-item" draggable="true" data-notion-db-cal-item="${block.id}:${i.id}" data-notion-db-open-item="${block.id}:${i.id}" title="${UI.esc(i.title || '')}">${UI.esc(i.title || 'Untitled')}</span>`,
               )
               .join('')}
           </div>`)
@@ -2229,9 +2231,9 @@
                 const duration = Math.max(1, Math.round((toTime(i.endDate || i.date) - toTime(i.date)) / dayMs) + 1)
                 return `
                 <div class="notion-db-timeline-row">
-                  <span class="notion-db-timeline-label" data-notion-db-open-item="${block.id}:${i.id}">${i.title || 'Untitled'}</span>
+                  <span class="notion-db-timeline-label" data-notion-db-open-item="${block.id}:${i.id}">${UI.esc(i.title || 'Untitled')}</span>
                   <div class="notion-db-timeline-track" style="width:${trackWidth}px;">
-                    <span class="notion-db-timeline-bar" data-notion-db-timeline-bar="${block.id}:${i.id}" style="left:${startOffset * dayWidth}px; width:${duration * dayWidth}px; background:${notionDbStatusColor(i.status)};" title="${i.title || 'Untitled'} (${i.status || 'No status'}): ${i.date}${i.endDate ? ' – ' + i.endDate : ''}">
+                    <span class="notion-db-timeline-bar" data-notion-db-timeline-bar="${block.id}:${i.id}" style="left:${startOffset * dayWidth}px; width:${duration * dayWidth}px; background:${notionDbStatusColor(i.status)};" title="${UI.esc(i.title || 'Untitled')} (${i.status || 'No status'}): ${i.date}${i.endDate ? ' – ' + i.endDate : ''}">
                       <span class="notion-db-timeline-handle" title="Drag to resize"></span>
                     </span>
                   </div>
@@ -2246,9 +2248,9 @@
       const cards = items
         .map(
           (i) => `
-        <div class="notion-db-gallery-card" data-notion-db-open-item="${block.id}:${i.id}" title="${i.title || 'Untitled'} — click to open">
+        <div class="notion-db-gallery-card" data-notion-db-open-item="${block.id}:${i.id}" title="${UI.esc(i.title || 'Untitled')} — click to open">
           <div class="notion-db-gallery-cover" style="--notion-db-cover-color:${notionDbStatusColor(i.status)};" title="${i.status || 'No status'}"></div>
-          <p class="notion-db-gallery-title">${i.title || 'Untitled'}</p>
+          <p class="notion-db-gallery-title">${UI.esc(i.title || 'Untitled')}</p>
           <div class="notion-db-gallery-meta">
             <span class="notion-db-status-pill" style="background:${notionDbStatusColor(i.status)};">${i.status}</span>
             ${i.tag ? `<span class="notion-db-tag-pill">${i.tag}</span>` : ''}
@@ -2278,7 +2280,7 @@
           <div class="notion-block notion-block-database" data-notion-block-id="${block.id}">
             ${dragHandle}
             <div class="notion-db-views">
-              ${NOTION_DB_VIEWS.map((v) => `<button type="button" class="notion-db-view-tab${view === v.key ? ' active' : ''}" data-notion-db-view="${block.id}:${v.key}">${v.label}</button>`).join('')}
+              ${NOTION_DB_VIEWS.map((v) => `<button type="button" class="notion-db-view-tab${view === v.key ? ' active' : ''}" data-notion-db-view="${block.id}:${UI.esc(v.key)}">${UI.esc(v.label)}</button>`).join('')}
             </div>
             <button type="button" class="notion-db-properties-btn" data-notion-db-properties-toggle="${block.id}">${notionSettingsIcon()}Properties</button>
             ${actions}
@@ -2304,7 +2306,7 @@
               ${NOTION_PAGE_ICONS.map((e) => `<button type="button" class="notion-icon-option" data-notion-icon-pick="${e}">${e}</button>`).join('')}
             </div>
           </div>
-          <input type="text" class="notion-title-input" id="notion-title-input" value="${page.title || ''}" placeholder="Untitled" />
+          <input type="text" class="notion-title-input" id="notion-title-input" value="${UI.esc(page.title || '')}" placeholder="Untitled" />
           <button type="button" class="icon-button" id="notion-delete-page-btn" aria-label="Delete page" title="Delete page">${notionTrashIcon()}</button>
         </div>
         <p class="notion-updated-note">Last edited ${page.updatedDate || page.createdDate || ''}</p>
@@ -2314,7 +2316,7 @@
             : blocksHtml}
         </div>
         <div class="notion-add-block-row">
-          ${NOTION_BLOCK_TYPES.map((t) => `<button type="button" class="notion-add-block-btn" data-notion-add-block="${t.type}">${notionAddIcon()}${t.label}</button>`).join('')}
+          ${NOTION_BLOCK_TYPES.map((t) => `<button type="button" class="notion-add-block-btn" data-notion-add-block="${t.type}">${notionAddIcon()}${UI.esc(t.label)}</button>`).join('')}
         </div>`
     }
 
@@ -2329,9 +2331,9 @@
           ${pages
             .map(
               (p) => `
-            <button type="button" role="tab" class="detail-tab-button${p.id === notionActivePageId ? ' active' : ''}" data-notion-page="${p.id}" aria-selected="${p.id === notionActivePageId}" title="${p.title || 'Untitled'}">
+            <button type="button" role="tab" class="detail-tab-button${p.id === notionActivePageId ? ' active' : ''}" data-notion-page="${p.id}" aria-selected="${p.id === notionActivePageId}" title="${UI.esc(p.title || 'Untitled')}">
               <span class="notion-page-icon">${p.icon || '📄'}</span>
-              <span class="notion-page-title">${p.title || 'Untitled'}</span>
+              <span class="notion-page-title">${UI.esc(p.title || 'Untitled')}</span>
             </button>`,
             )
             .join('')}
@@ -2372,7 +2374,7 @@
         const page = (Store.get().notionPages || []).find((p) => p.id === notionActivePageId)
         if (!page) return
         UI.confirm({
-          message: `Delete <strong>${page.title || 'Untitled'}</strong>? This can't be undone.`,
+          message: `Delete <strong>${UI.esc(page.title || 'Untitled')}</strong>? This can't be undone.`,
           onConfirm: () => {
             Store.removeNotionPage(page.id)
             notionActivePageId = null
@@ -2918,7 +2920,7 @@
       const app = getApp()
       if (!app) return
       UI.confirm({
-        message: `Delete <strong>${app.name}</strong>? This can't be undone.`,
+        message: `Delete <strong>${UI.esc(app.name)}</strong>? This can't be undone.`,
         onConfirm: () => {
           Store.removeApplication(app.id)
           UI.toast(`"${app.name}" deleted successfully!`)
@@ -2940,13 +2942,13 @@
         return
       }
 
-      document.title = `${app.name} — Univa`
+      document.title = `${UI.esc(app.name)} — Univa`
       root.innerHTML = `
         <a class="detail-back-link" href="applications.html">&larr; Back to Applications</a>
         <div class="page-header">
           <div>
-            <h1 class="page-title">${app.name}${app.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}</h1>
-            <p class="page-subtitle">${app.description || 'No description provided.'}</p>
+            <h1 class="page-title">${UI.esc(app.name)}${app.isDefault ? ' <span class="default-profile-badge" title="Built-in default application">Default</span>' : ''}</h1>
+            <p class="page-subtitle">${UI.esc(app.description || 'No description provided.')}</p>
           </div>
           <div class="page-header-actions">
             <span class="status-pill status-${app.status}" title="${app.status}">${app.status}</span>

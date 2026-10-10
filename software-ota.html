@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -172,9 +174,9 @@
         .map(
           (v) => `
         <tr>
-          <td class="card-title-cell">${v.version}</td>
+          <td class="card-title-cell">${UI.esc(v.version)}</td>
           <td data-label="Firmware file">${v.firmwareFileName}</td>
-          <td data-label="Description">${v.description || '—'}</td>
+          <td data-label="Description">${UI.esc(v.description || '—')}</td>
           <td data-label="Rollout">${ROLLOUT_LABELS[v.rollout]}</td>
           <td data-label="Created date">${v.createdDate}</td>
           <td class="row-menu-col">
@@ -249,7 +251,7 @@
 
     function populateUpgradableFrom() {
       const select = document.getElementById('upgradable-from')
-      select.innerHTML = '<option value="" disabled selected>1.0.0</option>' + versions.map((v) => `<option value="${v.version}">${v.version}</option>`).join('')
+      select.innerHTML = '<option value="" disabled selected>1.0.0</option>' + versions.map((v) => `<option value="${UI.esc(v.version)}">${UI.esc(v.version)}</option>`).join('')
     }
 
     function openAdd() {
@@ -291,7 +293,7 @@
       const v = versions.find((x) => x.id === id)
       if (!v) return
       UI.confirm({
-        message: `Delete version <strong>${v.version}</strong>? This can't be undone.`,
+        message: `Delete version <strong>${UI.esc(v.version)}</strong>? This can't be undone.`,
         onConfirm: () => {
           versions = versions.filter((x) => x.id !== id)
           render()

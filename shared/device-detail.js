@@ -111,6 +111,7 @@ const TABS = [
 function refreshDevice() {
   // Hash, not query string — see the comment in device-detail.html.
   const id = window.location.hash.slice(1)
+  Store.settleCommands(id)
   device = Store.get().devices.find((d) => d.id === id) || null
 }
 

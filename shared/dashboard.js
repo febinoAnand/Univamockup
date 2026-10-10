@@ -881,19 +881,19 @@ function renderStatusListContent(config) {
   })
 
   if (variant === 'card-grid') {
-    return `<div class="status-list-widget status-card-grid">${rows.map((r) => `<div class="status-card"><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span><span class="status-card-name">${r.name}</span><span class="status-card-uptime">${r.uptimePct}% up</span></div>`).join('')}</div>`
+    return `<div class="status-list-widget status-card-grid">${rows.map((r) => `<div class="status-card"><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"></span><span class="status-card-name">${r.name}</span><span class="status-card-uptime">${r.uptimePct}% up</span></div>`).join('')}</div>`
   }
   if (variant === 'avatar-list') {
-    return `<ul class="status-list-widget status-avatar-list">${rows.map((r) => `<li><span class="status-avatar">${initials(r.name)}</span><span class="status-row-name">${r.name}</span><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span></li>`).join('')}</ul>`
+    return `<ul class="status-list-widget status-avatar-list">${rows.map((r) => `<li><span class="status-avatar">${initials(r.name)}</span><span class="status-row-name">${r.name}</span><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"></span></li>`).join('')}</ul>`
   }
   if (variant === 'progress-rows') {
     return `<ul class="status-list-widget status-progress-rows">${rows.map((r) => `<li><div class="status-progress-head"><span>${r.name}</span><span>${r.uptimePct}%</span></div><div class="status-progress-track"><div class="status-progress-fill" style="width:${r.uptimePct}%;background:${r.online ? '#16a34a' : '#dc2626'}"></div></div></li>`).join('')}</ul>`
   }
   if (variant === 'timeline') {
-    return `<ul class="status-list-widget status-timeline">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span><div class="status-timeline-body"><span class="status-row-name">${r.name}</span><span class="status-timeline-meta">${r.online ? 'Connected' : 'Disconnected'} · ${r.activeAlerts} alerts</span></div></li>`).join('')}</ul>`
+    return `<ul class="status-list-widget status-timeline">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"></span><div class="status-timeline-body"><span class="status-row-name">${r.name}</span><span class="status-timeline-meta">${r.online ? 'Connected' : 'Disconnected'} · ${r.activeAlerts} alerts</span></div></li>`).join('')}</ul>`
   }
   if (variant === 'table-style') {
-    return `<table class="status-list-widget status-table"><thead><tr><th>Device</th><th>Status</th><th>Alerts</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r.name}</td><td><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span> ${r.online ? 'Online' : 'Offline'}</td><td>${r.activeAlerts}</td></tr>`).join('')}</tbody></table>`
+    return `<table class="status-list-widget status-table"><thead><tr><th>Device</th><th>Status</th><th>Alerts</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r.name}</td><td><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"></span> ${r.online ? 'Online' : 'Offline'}</td><td>${r.activeAlerts}</td></tr>`).join('')}</tbody></table>`
   }
   if (variant === 'compact-chips') {
     return `<div class="status-list-widget status-compact-chips">${rows.map((r) => `<span class="status-chip${r.online ? ' online' : ' offline'}" title="${r.name} — ${r.online ? 'Online' : 'Offline'}">${r.name}</span>`).join('')}</div>`
@@ -907,7 +907,7 @@ function renderStatusListContent(config) {
   if (variant === 'badge-list') {
     return `<ul class="status-list-widget status-badge-list">${rows.map((r) => `<li><span class="status-row-name">${r.name}</span><span class="status-badge${r.online ? ' online' : ' offline'}">${r.online ? 'Online' : 'Offline'}</span></li>`).join('')}</ul>`
   }
-  return `<ul class="status-list-widget status-dot-list">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"</span><span class="status-row-name">${r.name}</span><span class="status-row-meta">${r.activeAlerts} alerts</span></li>`).join('')}</ul>`
+  return `<ul class="status-list-widget status-dot-list">${rows.map((r) => `<li><span class="status-dot${r.online ? ' online' : ' offline'}" title="${r.online ? 'Online' : 'Offline'}"></span><span class="status-row-name">${r.name}</span><span class="status-row-meta">${r.activeAlerts} alerts</span></li>`).join('')}</ul>`
 }
 
 const TABLE_MODIFIER_CLASS = { basic: '', striped: 'table-striped', bordered: 'table-bordered', compact: 'table-compact', 'dark-header': 'table-dark-header', minimal: 'table-minimal', 'hover-highlight': 'table-hover-highlight' }

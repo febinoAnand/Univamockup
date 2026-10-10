@@ -206,6 +206,22 @@ The mockup has no scheduler, so `Layout.mount()` calls `Backup.runDue()` on ever
 
 In the mockup the backups are kept in the browser under their own storage key (`univa-html-backups-v1`), apart from the data blob, so a backup is not re-written on every change.
 
+## 11. Where the mockup keeps things (browser storage)
+
+The mockup has no database. Everything below is in the browser, so a backend replaces all of it. This table is for anyone debugging the mockup.
+
+| Key | Where | What it holds |
+|---|---|---|
+| `univa-html-demo-v<N>` (`STORAGE_KEY`, `shared/store.js`) | `localStorage` | All the demo data: devices, assets, applications, tenants, users, roles, shifts, rule engines, application records, Custom App pages, the session (`auth`), and the backup settings. Bump `N` when the seed data changes shape; older versions' keys are removed on the next page load. |
+| `univa-html-demo-v<N>-corrupt` | `localStorage` | The first copy of stored data the app could not read. The app starts from the seed instead and the next save replaces the data, so this is where the unreadable text is kept. Safe to delete. |
+| `univa-html-backups-v1` (`BACKUPS_KEY`) | `localStorage` | The backups taken on Settings > Backup (§10). Separate from the data above so a backup is not rewritten on every change, and so changing `STORAGE_KEY` does not delete them. |
+| `univa_dashboard_layout_v1` and `univa_dashboard_layout_v1__<scope>` | `localStorage` | Widget dashboards: the main Dashboard, `app-<id>` for an application's own dashboard, `ems-meter-<id>` for each EMS meter. |
+| `univa-view-<page>` | `localStorage` | Whether a list page shows its table or card view. |
+| `univa-chatbot-api-key` | `sessionStorage` | The assistant's API key, for this tab only. An earlier version kept it in `localStorage`; it is moved over once and removed from there. |
+| `univa-chatbot-history`, `univa-chatbot-open`, `univa-chatbot-pending-continuation` | `sessionStorage` | The assistant's conversation and window state, for this tab only. |
+
+If a save fails because the browser's storage is full, the app says so (a toast) and stops the action instead of reporting a success that never reached storage.
+
 ## Migration notes
 
 - **PMS** runs on this model today (template `production-monitoring`).
