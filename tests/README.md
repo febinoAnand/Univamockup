@@ -40,6 +40,14 @@ my data** button the next time you open it.
 | Assistant tools | `suites/chatbot.js` | The floating assistant's tools follow the signed-in role, read only what they should, keep secrets out of what the model sees, report the real result of a status change, and keep the API key for the tab only |
 | Browser storage | `suites/storage.js` | Reading the data cheaply, permission checks never going stale, a failed save being reported, unreadable data being kept, old storage keys being cleaned up, backups being removed in one write |
 | Every page | `suites/pages.js` | All 39 pages load without errors (signed out, signed in, administrator); every script and stylesheet they name exists; no file has CRLF line endings; no unfinished tags; head tags and shared scripts are present |
+| Data layer | `suites/records.js` | Adding, changing and removing devices, profiles, assets, groups, rule engines, shifts, schedules, users, applications, tenants, Custom App pages, meters and cranes, and what else changes with each (renames, cascades, protected records, commands settling) |
+| Formulas and numbers | `suites/calculations.js` | The KPI formula evaluator, that each application template hangs together, manual entries, the generated device data, shift windows, and the figures on the PMS and Energy pages checked against each other |
+| Signing in and out | `suites/auth.js` | The sign-in page and every way it can fail, tenant sign-in, signing out, every signed-in page redirecting when signed out, sign-up, email verification, password reset, the administrator's sign-in |
+| Roles and permissions | `suites/permissions.js` | The rules for each role, per-tenant role settings, the menu following the role, pages a role may not open, and the Roles & permissions page end to end |
+| List pages | `suites/lists.js` | Add, search, sort, edit, suspend and delete on the list pages (asset groups, user groups, shifts, asset profiles, users, assets, rule engines, tenants), including what cannot be deleted while in use |
+| Links | `suites/links.js` | Every link, image and page named in the pages and scripts exists; the menu, its icons and the pages that highlight it agree; where each application opens; links in the documents |
+| Shared pieces | `suites/ui-helpers.js` | Escaping, toasts, the "are you sure" dialog, dialogs, row menus, the table/widget switch, maximising a panel, form helpers, the menu and the top bar |
+| A device's page | `suites/device-detail.js` | All seven tabs: metadata, token, telemetry, alerts, commands (including one that falls due while the page is closed), relations, data publish and logs, custom widgets, deleting the device |
 
 ## On GitHub
 
