@@ -849,6 +849,7 @@
   <script src="shared/telemetry.js"></script>
   <script src="shared/app-templates.js"></script>
   <script src="shared/app-entries.js"></script>
+  <script src="shared/app-shifts.js"></script>
   <script src="shared/app-runtime.js"></script>
   <script>
     // The application id travels in the URL hash — see device-detail.html
@@ -1233,6 +1234,7 @@
       { key: 'meters', label: 'Meter List' },
       { key: 'todgrid', label: 'TOD Grid' },
       { key: 'energy', label: 'Energy Data' },
+      { key: 'shifts', label: 'Shifts' },
     ]
     const EMS_METER_FIELD_IDS = {
       name: 'ems-meter-name',
@@ -1606,12 +1608,14 @@
     }
 
     function renderEmsBody() {
-      const panel = emsActiveTab === 'todgrid' ? renderEmsTodGridPanel() : emsActiveTab === 'meters' ? renderEmsMeterListPanel() : renderEmsEnergyDataPanel()
+      // The Shifts tab (shared/app-shifts.js) is made of cards of its own.
+      const shifts = emsActiveTab === 'shifts'
+      const panel = shifts ? '<div id="app-shifts-host"></div>' : emsActiveTab === 'todgrid' ? renderEmsTodGridPanel() : emsActiveTab === 'meters' ? renderEmsMeterListPanel() : renderEmsEnergyDataPanel()
       return `
         <div class="detail-tabs">
           ${EMS_TABS.map((t) => `<button type="button" class="detail-tab-button${emsActiveTab === t.key ? ' active' : ''}" data-ems-tab="${UI.esc(t.key)}">${UI.esc(t.label)}</button>`).join('')}
         </div>
-        <div class="detail-card">${panel}</div>`
+        ${shifts ? panel : `<div class="detail-card">${panel}</div>`}`
     }
 
     function wireEmsBody() {
@@ -1633,6 +1637,7 @@
       )
       if (emsActiveTab === 'todgrid') wireEmsTodGridPanel()
       else if (emsActiveTab === 'meters') wireEmsMeterListPanel()
+      else if (emsActiveTab === 'shifts') AppShifts.mount(document.getElementById('app-shifts-host'), getApp())
       else wireEmsEnergyDataPanel()
     }
 
@@ -1712,6 +1717,7 @@
     const CMS_TABS = [
       { key: 'dashboard', label: 'Dashboard' },
       { key: 'machine', label: 'Machine' },
+      { key: 'shifts', label: 'Shifts' },
     ]
     const CMS_PER_PAGE = 10
     const CMS_MACHINE_FIELD_IDS = {
@@ -2065,7 +2071,7 @@
     }
 
     function renderCmsBody() {
-      const panel = cmsActiveTab === 'machine' ? renderCmsMachinePanel() : renderCmsDashboardPanel()
+      const panel = cmsActiveTab === 'machine' ? renderCmsMachinePanel() : cmsActiveTab === 'shifts' ? '<div id="app-shifts-host"></div>' : renderCmsDashboardPanel()
       return `
         <div class="detail-tabs">
           ${CMS_TABS.map((t) => `<button type="button" class="detail-tab-button${cmsActiveTab === t.key ? ' active' : ''}" data-cms-tab="${UI.esc(t.key)}">${UI.esc(t.label)}</button>`).join('')}
@@ -2081,6 +2087,7 @@
         }),
       )
       if (cmsActiveTab === 'machine') wireCmsMachinePanel()
+      else if (cmsActiveTab === 'shifts') AppShifts.mount(document.getElementById('app-shifts-host'), getApp())
       else wireCmsDashboardPanel()
     }
 

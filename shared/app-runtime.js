@@ -15,7 +15,9 @@
    added later.
    ========================================================================== */
 (function () {
-  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  // Dates, clock times and the shifts of a date live in shared/app-shifts.js
+  // (every application's Shifts tab uses them too); load it before this file.
+  const { localIso, atTime, clock } = AppShifts
   const CHART_ACCENT = '#7c3aed'
   const CHART_COMPARE = '#a8a29e'
 
@@ -34,22 +36,6 @@
   // ------------------------------------------------------------- helpers
   function esc(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
-  }
-
-  function localIso(date) {
-    const pad = (n) => String(n).padStart(2, '0')
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-  }
-
-  function atTime(dateIso, hhmm, addDays) {
-    const [y, m, d] = dateIso.split('-').map(Number)
-    const [hh, mm] = (hhmm || '00:00').split(':').map(Number)
-    return new Date(y, m - 1, d + (addDays || 0), hh, mm, 0, 0).getTime()
-  }
-
-  function clock(ms) {
-    const d = new Date(ms)
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }
 
   function stamp(ms) {
@@ -175,21 +161,9 @@
 
   // The bound schedule's shifts on `dateIso`, as time windows. A shift
   // whose end is at/before its start (or flagged midnightCrossed) ends the
-  // next day. No schedule → one full-day window.
+  // next day. No schedule (or a day with no shift) → one full-day window.
   function shiftWindows(app, dateIso) {
-    const data = Store.get()
-    const schedule = data.shiftSchedules.find((s) => s.id === (app.bindings || {}).shiftScheduleId)
-    const day = DAY_NAMES[new Date(atTime(dateIso, '00:00')).getDay()]
-    const shifts = schedule ? (schedule.assignments[day] || []).map((id) => data.shifts.find((s) => s.id === id)).filter(Boolean) : []
-    if (!shifts.length) return [{ id: 'day', name: 'Full day', from: atTime(dateIso, '00:00'), to: atTime(dateIso, '00:00', 1) }]
-    return shifts
-      .map((s) => {
-        const from = atTime(dateIso, s.startTime)
-        let to = atTime(dateIso, s.endTime)
-        if (to <= from || s.midnightCrossed) to = atTime(dateIso, s.endTime, 1)
-        return { id: s.id, name: s.name, startTime: s.startTime, endTime: s.endTime, from, to }
-      })
-      .sort((a, b) => a.from - b.from)
+    return AppShifts.windows(app, dateIso, { fullDay: true })
   }
 
   function selectedWindow(windows, shiftId) {
@@ -531,6 +505,34 @@
     wire() {},
   }
 
+
+  // --------------------------------------------------------------- shifts
+  // The bound shift schedule, drawn by shared/app-shifts.js as it is on every
+  // application's Shifts tab. `view.kpis` picks the figures shown per shift, so
+  // each template chooses the ones that matter to it. The schedule itself is
+  // chosen in this application's Configuration tab.
+  VIEWS.shifts = {
+    render(rt, view) {
+      const kpiKeys = view.kpis || []
+      const figures = {
+        labels: kpiKeys.map((k) => kpiDef(rt, k).label),
+        measure(from, to) {
+          const res = rt.entities.length ? computeAll(rt, rt.entities, from, to) : null
+          return kpiKeys.map((k) => (res ? formatKpi(rt, k, res.total[k]) : '—'))
+        },
+      }
+      return `
+        ${toolbar(rt, {})}
+        ${AppShifts.panelHtml({
+          app: rt.app,
+          date: rt.ui.date,
+          figures,
+          emptyHint: 'No shift schedule is bound to this application, so it reports on the full calendar day. Pick one in the <button type="button" class="rt-link-btn" data-rt-view="configuration">Configuration</button> tab.',
+          dayOffNote: 'This application reports on the full calendar day.',
+        })}`
+    },
+    wire() {},
+  }
 
   // ------------------------------------------------------------ event-log
   VIEWS['event-log'] = {

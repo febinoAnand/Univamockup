@@ -5,7 +5,7 @@
    and its people are told by push notification and SMS.
 
    Tabs: Dashboard, Inbox, Departments, Tickets, Reports, Notifications, SMS
-   gateway, Users, Settings. The data lives in the Store (emailInbox,
+   gateway, Users, Shifts, Settings. The data lives in the Store (emailInbox,
    emailDepartments, emailTickets, ... see shared/store.js, where the rules
    that turn an email into a ticket are written down) and is not tenant-scoped,
    like EMS and CMS.
@@ -26,6 +26,7 @@
     { key: 'notifications', label: 'Notifications', icon: 'bell' },
     { key: 'sms', label: 'SMS gateway', icon: 'phone' },
     { key: 'users', label: 'Users', icon: 'users' },
+    { key: 'shifts', label: 'Shifts', icon: 'shift' },
     { key: 'settings', label: 'Settings', icon: 'gear' },
   ]
 
@@ -705,6 +706,22 @@
     }
   }
 
+  // The Shifts tab (shared/app-shifts.js), with what the mailbox did in each
+  // shift: the emails that arrived and the tickets made from them.
+  function shiftFigures() {
+    const arrived = (row) => new Date(String(row.receivedDate).replace(' ', 'T')).getTime()
+    const count = (rows, from, to) => rows.filter((row) => arrived(row) >= from && arrived(row) < to).length
+    return {
+      labels: ['Emails', 'Tickets'],
+      measure: (from, to) => [String(count(data().emailInbox, from, to)), String(count(data().emailTickets, from, to))],
+    }
+  }
+
+  const shiftsView = {
+    render: () => '<div id="et-shifts-host"></div>',
+    wire: () => AppShifts.mount(document.getElementById('et-shifts-host'), getApp(), { figures: shiftFigures }),
+  }
+
   const VIEWS = {
     dashboard: dashboardView,
     inbox: listView(inboxConfig),
@@ -714,6 +731,7 @@
     notifications: notificationsView(),
     sms: smsView(),
     users: listView(usersConfig),
+    shifts: shiftsView,
     settings: settingsView(),
   }
 
