@@ -1404,6 +1404,7 @@
   <script src="shared/telemetry.js"></script>
   <script src="shared/app-templates.js"></script>
   <script src="shared/app-entries.js"></script>
+  <script src="shared/app-shifts.js"></script>
   <script src="shared/app-runtime.js"></script>
   <script src="shared/notion-data-blocks.js"></script>
   <script>
@@ -1427,6 +1428,9 @@
     // triggers a full renderPage() (it would drop input focus) — only
     // structural changes (add/delete/move/convert/switch page) do.
     let notionActivePageId = null
+    // The Shifts tab (shared/app-shifts.js) sits among the page tabs; while it is
+    // open no page is shown.
+    let notionShiftsOpen = false
     let notionFocusBlockId = null
     let notionDraggedBlockId = null
     let notionGlobalClickListenerAttached = false
@@ -2331,31 +2335,39 @@
           ${pages
             .map(
               (p) => `
-            <button type="button" role="tab" class="detail-tab-button${p.id === notionActivePageId ? ' active' : ''}" data-notion-page="${p.id}" aria-selected="${p.id === notionActivePageId}" title="${UI.esc(p.title || 'Untitled')}">
+            <button type="button" role="tab" class="detail-tab-button${p.id === notionActivePageId && !notionShiftsOpen ? ' active' : ''}" data-notion-page="${p.id}" aria-selected="${p.id === notionActivePageId && !notionShiftsOpen}" title="${UI.esc(p.title || 'Untitled')}">
               <span class="notion-page-icon">${p.icon || '📄'}</span>
               <span class="notion-page-title">${UI.esc(p.title || 'Untitled')}</span>
             </button>`,
             )
             .join('')}
+          <button type="button" role="tab" class="detail-tab-button${notionShiftsOpen ? ' active' : ''}" id="notion-shifts-tab" aria-selected="${notionShiftsOpen}" title="The shifts this application works to">${iconSvg('shift')}Shifts</button>
           <button type="button" class="detail-tab-button notion-new-page-tab" id="notion-new-page-btn" title="Create a new page">${notionAddIcon()}New page</button>
         </div>
-        <div class="detail-card">
+        ${notionShiftsOpen ? '<div id="app-shifts-host"></div>' : `<div class="detail-card">
           <div class="notion-editor">
             ${activePage ? renderNotionEditor(activePage) : '<span class="section-empty">No pages yet. Use "New page" to create one.</span>'}
           </div>
-        </div>`
+        </div>`}`
     }
 
     function wireNotionBody() {
       document.querySelectorAll('[data-notion-page]').forEach((btn) =>
         btn.addEventListener('click', () => {
           notionActivePageId = btn.getAttribute('data-notion-page')
+          notionShiftsOpen = false
           renderPage()
         }),
       )
+      document.getElementById('notion-shifts-tab')?.addEventListener('click', () => {
+        notionShiftsOpen = true
+        renderPage()
+      })
+      if (notionShiftsOpen) AppShifts.mount(document.getElementById('app-shifts-host'), getApp())
       document.getElementById('notion-new-page-btn')?.addEventListener('click', () => {
         const page = Store.addNotionPage({ title: 'Untitled', appId: applicationId })
         notionActivePageId = page.id
+        notionShiftsOpen = false
         renderPage()
         const title = document.getElementById('notion-title-input')
         if (title) title.select()
@@ -2986,6 +2998,7 @@
     window.addEventListener('hashchange', () => {
       applicationId = window.location.hash.slice(1)
       notionActivePageId = null
+      notionShiftsOpen = false
       Layout.setBreadcrumbs(breadcrumbsForApp(getApp()))
       Layout.setActive(`application-${applicationId}`)
       renderPage()

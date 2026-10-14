@@ -272,7 +272,7 @@ Tests.suite('email-tracking', 'Email Tracking application', async ({ page, BASE,
   section('The tabs')
   await open('email-tracking.html#app_email')
   const tabs = await page.$$eval('[data-et-tab]', (els) => els.map((el) => [el.getAttribute('data-et-tab'), el.textContent.trim()]))
-  check('there are nine tabs', same(tabs, [['dashboard', 'Dashboard'], ['inbox', 'Inbox'], ['departments', 'Departments'], ['tickets', 'Tickets'], ['reports', 'Reports'], ['notifications', 'Notifications'], ['sms', 'SMS gateway'], ['users', 'Users'], ['settings', 'Settings']]), tabs)
+  check('there are ten tabs', same(tabs, [['dashboard', 'Dashboard'], ['inbox', 'Inbox'], ['departments', 'Departments'], ['tickets', 'Tickets'], ['reports', 'Reports'], ['notifications', 'Notifications'], ['sms', 'SMS gateway'], ['users', 'Users'], ['shifts', 'Shifts'], ['settings', 'Settings']]), tabs)
   check('the Dashboard shows first', same(await page.$$eval('[data-et-tab].active', (els) => els.map((el) => el.getAttribute('data-et-tab'))), ['dashboard']))
   await page.click('[data-et-tab="inbox"]')
   await page.waitForSelector('[data-list="inbox"]')

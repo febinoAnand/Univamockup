@@ -199,7 +199,7 @@ Tests.suite('forklift-tracking', 'Forklift Tracking application', async ({ page,
   check('Suspend suspends it and says so', (await page.textContent('.page-header .status-pill')) === 'suspended' && (await toast()).includes('status updated'))
   await page.click('#toggle-status-btn')
   const tabs = await page.$$eval('[data-ft-tab]', (els) => els.map((el) => [el.getAttribute('data-ft-tab'), el.textContent.trim()]))
-  check('there are four tabs, and Fleet shows first', same(tabs, [['fleet', 'Fleet'], ['live', 'Live'], ['history', 'History'], ['reports', 'Reports']]) && same(await page.$$eval('[data-ft-tab].active', (els) => els.map((el) => el.getAttribute('data-ft-tab'))), ['fleet']))
+  check('there are five tabs, and Fleet shows first', same(tabs, [['fleet', 'Fleet'], ['live', 'Live'], ['history', 'History'], ['reports', 'Reports'], ['shifts', 'Shifts']]) && same(await page.$$eval('[data-ft-tab].active', (els) => els.map((el) => el.getAttribute('data-ft-tab'))), ['fleet']))
   await page.click('[data-ft-tab="live"]')
   await page.waitForSelector('#ft-details')
   check('a tab\'s button opens it and puts it, and the forklift, in the address', /#app_forklift:live:352093081452251$/.test(page.url()) && (await page.getAttribute('[data-ft-tab="live"]', 'aria-selected')) === 'true', page.url())

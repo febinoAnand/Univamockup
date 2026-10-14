@@ -193,7 +193,8 @@
 .rt-neg { color: var(--danger-dark); font-weight: 700; }
 .rt-pos { color: var(--success-dark); font-weight: 700; }
 .rt-future-row td { color: var(--text-faint); }
-.rt-live-row td { background: var(--accent-soft); }
+.rt-live-row td,
+.rt-current-row td { background: var(--accent-soft); }
 .rt-live-dot {
   display: inline-block;
   width: 7px;

@@ -4,7 +4,8 @@
    tracker on each forklift reports its position, speed, ignition and battery,
    and the pages show them live, over time, and as daily reports.
 
-   Tabs: Fleet (the list page), Live (the device dashboard), History, Reports.
+   Tabs: Fleet (the list page), Live (the device dashboard), History, Reports,
+   Shifts.
    The registered forklifts are in the Store (forkliftDevices); what they report
    is made by shared/forklift-data.js, which also says how the four states
    (Inactive, Idle, Active, Alert) are worked out.
@@ -23,6 +24,7 @@
     { key: 'live', label: 'Live', icon: 'map-pin' },
     { key: 'history', label: 'History', icon: 'clock' },
     { key: 'reports', label: 'Reports', icon: 'report' },
+    { key: 'shifts', label: 'Shifts', icon: 'shift' },
   ]
   const MORE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>'
   const EDIT_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -626,7 +628,43 @@
     },
   }
 
-  const VIEWS = { fleet: fleetView, live: liveView, history: historyView, reports: reportsView }
+  // The Shifts tab (shared/app-shifts.js), with what the whole fleet did in each
+  // shift: the time its forklifts were Active and Idle, and the distance they
+  // covered. Every minute row belongs to the shift its clock time falls in.
+  function shiftFigures() {
+    const rowsBetween = (device, from, to) => {
+      const rows = []
+      for (let iso = ForkliftData.isoOf(new Date(from)); iso <= ForkliftData.isoOf(new Date(to - 1)); iso = ForkliftData.addDays(iso, 1)) {
+        const start = AppShifts.atTime(iso, '00:00')
+        ForkliftData.day(device, iso).forEach((row) => {
+          const at = start + row.minute * 60000
+          if (at >= from && at < to) rows.push(row)
+        })
+      }
+      return rows
+    }
+    return {
+      labels: ['Active', 'Idle', 'Distance'],
+      measure(from, to) {
+        let active = 0
+        let idle = 0
+        let distance = 0
+        devices().forEach((device) => rowsBetween(device, from, to).forEach((row) => {
+          if (row.state === 3) active++
+          else if (row.state === 2) idle++
+          distance += row.distance
+        }))
+        return [hoursText(active / 60), hoursText(idle / 60), `${km(distance)} km`]
+      },
+    }
+  }
+
+  const shiftsView = {
+    render: () => '<div id="ft-shifts-host"></div>',
+    wire: () => AppShifts.mount($('ft-shifts-host'), getApp(), { figures: shiftFigures }),
+  }
+
+  const VIEWS = { fleet: fleetView, live: liveView, history: historyView, reports: reportsView, shifts: shiftsView }
 
   // -------------------------------------------------------------- dialog
   let editing = null

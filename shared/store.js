@@ -1240,6 +1240,16 @@ const Store = {
     }
     saveData(store)
   },
+  // The shift schedule an application's Shifts tab reports against; every
+  // application has one, not only template applications. Unlike
+  // updateApplicationBindings this changes nothing else — that one also
+  // re-derives the application's asset group and assets from its bindings.
+  setApplicationShiftSchedule(id, scheduleId) {
+    const store = loadData()
+    const app = store.applications.find((a) => a.id === id)
+    if (app) app.bindings = Object.assign({}, app.bindings || {}, { shiftScheduleId: scheduleId || '' })
+    saveData(store)
+  },
   // Upsert keyed by (appId, type, key) — e.g. one downtime-reason record
   // per event, or one Data-sheet row per (block, asset, time slot).
   // `extra` sets top-level fields such as entityId / ts.

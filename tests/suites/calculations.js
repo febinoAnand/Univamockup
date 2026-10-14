@@ -59,7 +59,7 @@ Tests.suite('calculations', 'Formulas, entries, device data and the figures on s
     const AGG = ['delta', 'avg', 'min', 'max', 'last', 'timeInState', 'minutes', 'manual']
     const FORMATS = ['int', 'number', 'decimal', 'percent', 'duration', 'currency']
     const COMBINE = ['sum', 'avg', 'max', 'formula']
-    const VIEW_TYPES = ['kpi-overview', 'shift-matrix', 'hourly-shift-report', 'event-log', 'entity-table', 'entry-log', 'bindings']
+    const VIEW_TYPES = ['kpi-overview', 'shift-matrix', 'hourly-shift-report', 'shifts', 'event-log', 'entity-table', 'entry-log', 'bindings']
     const KINDS = ['counter', 'gauge', 'state']
     AppTemplates.list().forEach((t) => {
       const bad = (why) => out.problems.push(`${t.key}: ${why}`)
@@ -427,7 +427,7 @@ Tests.suite('calculations', 'Formulas, entries, device data and the figures on s
   await page.goto(BASE + 'application-detail.html#app0')
   await page.waitForSelector('.rt-app')
   const tabNames = await page.$$eval('.rt-tabs .detail-tab-button', (els) => els.map((el) => el.textContent.trim()))
-  check('PMS shows the template\'s tabs', same(tabNames, ['Overview', 'Production', 'Shift report', 'Downtime', 'Machines', 'Manual entries', 'Configuration']), tabNames)
+  check('PMS shows the template\'s tabs', same(tabNames, ['Overview', 'Production', 'Shift report', 'Downtime', 'Machines', 'Shifts', 'Manual entries', 'Configuration']), tabNames)
 
   await page.fill('[data-rt="date"]', iso)
   await page.waitForTimeout(300)
@@ -496,6 +496,18 @@ Tests.suite('calculations', 'Formulas, entries, device data and the figures on s
   const machineRows = await page.$$eval('.rt-view table.data-table tbody tr', (rows) => rows.map((r) => r.textContent.replace(/\s+/g, ' ').trim()))
   check('the Machines tab lists the six machines with their target, cycle time, device and live values', machineRows.length === 6 && machineRows[0].startsWith('HSGMI1') && machineRows[0].includes('120 pcs/h') && machineRows[0].includes('28 s') && machineRows[0].includes('HSGMI1 PLC') && /running|idle|down/.test(machineRows[0]), machineRows[0])
 
+  await page.click('[data-rt-view="shifts"]')
+  await page.waitForSelector('.rt-view table.data-table')
+  const shiftCards = await page.$$eval('.rt-view .detail-card', (cards) => cards.map((c) => ({ title: c.querySelector('h2').textContent, head: Array.from(c.querySelectorAll('thead th')).map((th) => th.firstChild.textContent.trim()), rows: Array.from(c.querySelectorAll('tbody tr')).map((r) => ({ total: r.classList.contains('total-row'), cells: Array.from(r.children).map((td) => td.textContent.replace(/\s+/g, ' ').trim()) })) })))
+  const shiftRows = shiftCards[0].rows.filter((r) => !r.total)
+  const shiftDay = shiftCards[0].rows.find((r) => r.total)
+  check('the Shifts tab lists the three shifts of the day with their times and lengths', same(shiftRows.map((r) => r.cells.slice(0, 3)), [['Morning shift', '06:00–14:00', '8h'], ['Evening shift', '14:00–22:00', '8h'], ['Night shift', '22:00–06:00 next day', '8h']]), shiftRows.map((r) => r.cells))
+  check('a day in the past has every shift completed', shiftRows.every((r) => r.cells[3] === 'Completed'), shiftRows.map((r) => r.cells[3]))
+  check('it shows the figures the template asks for, for each shift', same(shiftCards[0].head, ['Shift', 'Time', 'Length', 'Status', 'Output', 'Target', 'OEE', 'Downtime']), shiftCards[0].head)
+  check('the shifts\' outputs add up to the whole day, which is the Overview\'s output', shiftRows.reduce((a, r) => a + num(r.cells[4]), 0) === num(shiftDay.cells[4]) && num(shiftDay.cells[4]) === output, { shifts: shiftRows.map((r) => r.cells[4]), day: shiftDay.cells[4], output })
+  check('the week lists all seven days with the shifts each one runs', shiftCards[1].rows.length === 7 && shiftCards[1].rows.every((r) => /Morning shift.*Evening shift.*Night shift/.test(r.cells[1])), shiftCards[1].rows.map((r) => r.cells))
+  check('exactly one weekday is marked as the selected date', (await page.$$eval('.rt-view .rt-current-row', (rows) => rows.length)) === 1)
+
   await page.click('[data-rt-view="configuration"]')
   await page.waitForSelector('[data-bindings-save]')
   check('the Configuration tab shows a row for each data role', (await page.$$eval('[data-keymap]', (els) => els.length)) === 4, 'expected one selector per role: count, rejects, state, load')
@@ -521,7 +533,7 @@ Tests.suite('calculations', 'Formulas, entries, device data and the figures on s
   check('the peak demand is at least the average demand, and the power factor is between 0 and 1', peak >= avgPower && avgPower > 0 && pf > 0 && pf <= 1, { avgPower, peak, pf })
   check('the energy for a day fits the power drawn (the average kW of the two meters, times 24 hours)', Math.abs(energy - avgPower * 24) / energy < 0.15, { energy, avgPower })
   const meterTabs = await page.$$eval('.rt-tabs .detail-tab-button', (els) => els.map((el) => el.textContent.trim()))
-  check('its tabs are the energy template\'s', same(meterTabs, ['Overview', 'Consumption by shift', 'Meters', 'Manual entries', 'Configuration']), meterTabs)
+  check('its tabs are the energy template\'s', same(meterTabs, ['Overview', 'Consumption by shift', 'Meters', 'Shifts', 'Manual entries', 'Configuration']), meterTabs)
 
   section('Every tab of every template draws')
   const crane = await page.evaluate(() => Store.addApplicationFromTemplate({ name: 'Cranes', templateKey: 'crane-monitoring', bindings: { assetGroup: 'Production line A', assetIds: [], shiftScheduleId: 'ss3', keyMap: AppRuntime.autoKeyMap(AppTemplates.get('crane-monitoring'), 'Production line A') } }).id)
@@ -543,6 +555,35 @@ Tests.suite('calculations', 'Formulas, entries, device data and the figures on s
     }
     check(`${key}: all ${views.length} tabs draw something`, drawn.length === 0, drawn)
   }
+
+  section('The Shifts tab without a schedule, and on a day off')
+  const unscheduled = await page.evaluate(() => Store.addApplicationFromTemplate({ name: 'No shifts', templateKey: 'production-monitoring', bindings: { assetGroup: 'Production line A', assetIds: [], shiftScheduleId: '', keyMap: AppRuntime.autoKeyMap(AppTemplates.get('production-monitoring'), 'Production line A') } }).id)
+  await page.goto('about:blank')
+  await page.goto(BASE + 'application-detail.html#' + unscheduled)
+  await page.waitForSelector('.rt-app')
+  await page.click('[data-rt-view="shifts"]')
+  await page.waitForTimeout(120)
+  const noSchedule = await page.$eval('.rt-view', (el) => ({ text: el.innerText, tables: el.querySelectorAll('table').length }))
+  check('an application with no schedule says so and points to Configuration instead of a table', /No shift schedule is bound/.test(noSchedule.text) && noSchedule.tables === 0 && (await page.$$eval('.rt-view [data-rt-view="configuration"]', (els) => els.length)) === 1, noSchedule)
+  await page.click('.rt-view [data-rt-view="configuration"]')
+  await page.waitForSelector('[data-bindings-save]')
+  check('and that link opens the Configuration tab', (await page.$$eval('.rt-tabs .detail-tab-button.active', (els) => els.map((el) => el.textContent.trim()))).join() === 'Configuration')
+
+  // "Evening coverage" has Saturday off, so the tab should say the day has no shift.
+  const dayOff = await page.evaluate(() => {
+    const app = Store.addApplicationFromTemplate({ name: 'Weekdays', templateKey: 'production-monitoring', bindings: { assetGroup: 'Production line A', assetIds: [], shiftScheduleId: 'ss2', keyMap: AppRuntime.autoKeyMap(AppTemplates.get('production-monitoring'), 'Production line A') } })
+    const d = new Date()
+    while (d.getDay() !== 6) d.setDate(d.getDate() - 1)
+    return { id: app.id, iso: AppRuntime.localIso(d) }
+  })
+  await page.goto('about:blank')
+  await page.goto(BASE + 'application-detail.html#' + dayOff.id)
+  await page.waitForSelector('.rt-app')
+  await page.click('[data-rt-view="shifts"]')
+  await page.fill('[data-rt="date"]', dayOff.iso)
+  await page.waitForTimeout(300)
+  const saturday = await page.$$eval('.rt-view .detail-card', (cards) => cards.map((c) => ({ tables: c.querySelectorAll('table').length, text: c.innerText.replace(/\s+/g, ' ') })))
+  check('a day the schedule has off says there is no shift and still shows the week', /no shift on Sat/.test(saturday[0].text) && saturday[0].tables === 0 && saturday[1].tables === 1 && /Sat.*Day off/.test(saturday[1].text), saturday)
 
   check('no JavaScript errors on any of these pages', errors.length === 0, errors.slice(0, 5))
 })
