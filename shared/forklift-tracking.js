@@ -37,8 +37,10 @@
   let liveMinute = null
   const ui = {
     search: '',
-    history: { date: '', from: '00:00', to: '23:59', applied: null, gpsPage: 1, extPage: 1 },
-    reports: { from: '', to: '', applied: null },
+    history: { date: '', from: '00:00', to: '23:59', shiftId: '', applied: null, gpsPage: 1, extPage: 1 },
+    reports: { from: '', to: '', shiftId: '', applied: null },
+    // The Date and Shift the Fleet tab's figures are cut down to (shared/app-shifts.js); no date means today so far.
+    fleet: { date: '', shiftId: 'all' },
   }
 
   // ------------------------------------------------------------- helpers
@@ -53,6 +55,25 @@
   const num = (value, digits) => Number(Number(value).toFixed(digits)).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })
   const hoursText = (h) => `${Math.floor(h)}h ${String(Math.round((h - Math.floor(h)) * 60)).padStart(2, '0')}m`
   const showError = (id, text) => { const el = $(id); el.hidden = !text; el.textContent = text || '' }
+
+  // A forklift's minute rows between two moments, from every day they touch
+  // (a shift can run past midnight).
+  function windowRows(device, from, to, now) {
+    const rows = []
+    for (let iso = ForkliftData.isoOf(new Date(from)); iso <= ForkliftData.isoOf(new Date(to - 1)); iso = ForkliftData.addDays(iso, 1)) {
+      const start = AppShifts.atTime(iso, '00:00')
+      ForkliftData.day(device, iso, now).forEach((row) => {
+        const at = start + row.minute * 60000
+        if (at >= from && at < to) rows.push(row)
+      })
+    }
+    return rows
+  }
+
+  // The options of a Shift menu for one date; `chosen` is the one selected.
+  function shiftOptions(date, chosen) {
+    return AppShifts.windows(getApp(), date).map((w) => `<option value="${esc(w.id)}"${chosen === w.id ? ' selected' : ''}>${esc(w.name)} (${AppShifts.clock(w.from)}–${AppShifts.clock(w.to)})</option>`).join('')
+  }
 
   function parseHash() {
     const parts = window.location.hash.slice(1).split(':')
@@ -92,7 +113,8 @@
   function timelineHtml(rows, from, to) {
     const span = to - from
     const runs = ForkliftData.timeline(rows)
-    const label = (m) => ForkliftData.clockOf(m, 0).slice(0, 5)
+    // A window that runs past midnight counts on from 24:00 (1440 minutes).
+    const label = (m) => ForkliftData.clockOf(m > 1440 || (m === 1440 && to > 1440) ? m - 1440 : m, 0).slice(0, 5)
     const ticks = []
     for (let m = Math.ceil(from / 180) * 180; m <= to; m += 180) ticks.push(m)
     return `
@@ -213,8 +235,9 @@
   // ---- Fleet
   function fleetRows(now) {
     const today = todayIso()
+    const scope = AppShifts.scope(getApp(), ui.fleet)
     return devices().map((device) => {
-      const rows = ForkliftData.day(device, today, now)
+      const rows = scope ? windowRows(device, scope.from, scope.to, now) : ForkliftData.day(device, today, now)
       const last = ForkliftData.latest(device, now)
       const sum = ForkliftData.summary(rows)
       return { device, last, sum, rows }
@@ -229,14 +252,16 @@
       const query = ui.search.trim().toLowerCase()
       const shown = query ? fleet.filter((f) => [f.device.vehicleName, f.device.deviceId, f.device.vehicleId, f.device.driver, f.device.deviceModel].join(' ').toLowerCase().includes(query)) : fleet
       const distance = fleet.reduce((a, f) => a + f.sum.gpsDistance, 0)
+      const scope = AppShifts.scope(getApp(), ui.fleet)
       return `
+        ${AppShifts.scopeBarHtml(getApp(), ui.fleet, { allowAll: true, allLabel: 'Today so far', shiftsHref: `#${APP_ID}:shifts` })}
         <div class="rt-kpi-grid ft-kpi-grid">
           ${tile('Forklifts', fleet.length, 'With a tracker')}
           ${tile('Active now', count(3), 'Ignition on, moving', count(3) ? 'good' : '')}
           ${tile('Idle now', count(2), 'Ignition on, not moving', count(2) ? 'warn' : '')}
           ${tile('Inactive now', count(1), 'Ignition off')}
           ${tile('Alerts now', count(4), 'Moving with ignition off', count(4) ? 'bad' : '')}
-          ${tile('Distance today', km(distance) + ' km', 'All forklifts, by GPS')}
+          ${tile(scope ? 'Distance' : 'Distance today', km(distance) + ' km', scope ? scope.label : 'All forklifts, by GPS')}
         </div>
         <div class="detail-card" data-fleet>
           <h2><span class="section-icon">${iconSvg('truck')}</span>Forklifts
@@ -248,6 +273,7 @@
         </div>`
     },
     wire() {
+      AppShifts.wireScopeBar($('ft-view'), getApp(), ui.fleet, renderView, { allowAll: true })
       $('ft-register').addEventListener('click', () => openForklift(null))
       $('ft-search').addEventListener('input', (event) => {
         ui.search = event.target.value
@@ -262,6 +288,7 @@
   }
 
   function cardsHtml(fleet) {
+    const scope = AppShifts.scope(getApp(), ui.fleet)
     if (!fleet.length) return `<p class="section-empty">${devices().length ? 'No matching forklifts found.' : 'No forklifts yet. Register one to start tracking it.'}</p>`
     return fleet.map(({ device, last, sum }) => `
       <article class="ft-card" data-device="${esc(device.deviceId)}">
@@ -281,8 +308,8 @@
           <div><dt>Driver</dt><dd>${device.driver ? esc(device.driver) : '<span class="et-muted">None</span>'}</dd></div>
           <div><dt>Tracker</dt><dd>${esc(device.deviceModel)}</dd></div>
           <div><dt>Battery</dt><dd>${last ? last.ext.capacity + '%' : '—'}</dd></div>
-          <div><dt>Distance today</dt><dd>${km(sum.gpsDistance)} km</dd></div>
-          <div><dt>Active today</dt><dd>${hoursText(sum.hours.Active)}</dd></div>
+          <div${scope ? ` title="${esc(scope.label)}"` : ''}><dt>${scope ? 'Distance' : 'Distance today'}</dt><dd>${km(sum.gpsDistance)} km</dd></div>
+          <div${scope ? ` title="${esc(scope.label)}"` : ''}><dt>${scope ? 'Active' : 'Active today'}</dt><dd>${hoursText(sum.hours.Active)}</dd></div>
         </dl>
         <footer>
           <a href="#${APP_ID}:live:${esc(device.deviceId)}">Live</a>
@@ -477,23 +504,30 @@
       if (!device) return noForklifts('history')
       const h = ui.history
       if (!h.date) h.date = todayIso()
-      const a = h.applied || { date: h.date, from: h.from, to: h.to }
+      const a = h.applied || { date: h.date, from: h.from, to: h.to, shiftId: h.shiftId }
       const added = String(device.addDate).slice(0, 10)
-      const rows = ForkliftData.between(device, a.date, a.from, a.to)
+      // A chosen shift is the window, and it can run past midnight into the next day.
+      const win = a.shiftId ? AppShifts.windows(getApp(), a.date).find((w) => w.id === a.shiftId) : null
+      const rows = win ? windowRows(device, win.from, win.to) : ForkliftData.between(device, a.date, a.from, a.to)
       const sum = ForkliftData.summary(rows)
-      const from = ForkliftData.minuteOf(a.from)
-      const to = ForkliftData.minuteOf(a.to) + 1
+      const dayStart = AppShifts.atTime(a.date, '00:00')
+      const from = win ? Math.round((win.from - dayStart) / 60000) : ForkliftData.minuteOf(a.from)
+      const to = win ? Math.round((win.to - dayStart) / 60000) : ForkliftData.minuteOf(a.to) + 1
+      const timeRows = win ? rows.map((r) => (r.date === a.date ? r : Object.assign({}, r, { minute: r.minute + 1440 }))) : rows
+      const span = win ? `${win.name}, ${AppShifts.clock(win.from)} to ${AppShifts.clock(win.to)}${win.to > AppShifts.atTime(a.date, '00:00', 1) ? ' next day' : ''}` : `${a.from} to ${a.to}`
       const newest = rows.slice().reverse()
+      const shiftMenu = AppShifts.scheduleFor(getApp()) ? `<label class="rt-field"><span>Shift</span><select id="ft-shift" aria-label="Shift"><option value="">Custom times</option>${shiftOptions(h.date, h.shiftId)}</select></label>` : ''
       return `
         ${deviceBar(device, `
           <label class="rt-field"><span>Date</span><input type="date" id="ft-date" value="${esc(h.date)}" max="${todayIso()}" /></label>
+          ${shiftMenu}
           <label class="rt-field"><span>From</span><input type="time" id="ft-from" value="${esc(h.from)}" /></label>
           <label class="rt-field"><span>To</span><input type="time" id="ft-to" value="${esc(h.to)}" /></label>
           <button type="button" class="solid-action-button et-small-button ft-show" id="ft-show">Show</button>`)}
         <p class="et-error ft-form-error" id="ft-history-error" hidden></p>
         ${rows.length ? '' : `<div class="rt-banner rt-banner-warn" id="ft-history-empty">${a.date < added ? `This forklift was registered on ${esc(added)}, so there is nothing before then.` : 'This forklift reported nothing in this period.'}</div>`}
         <div class="rt-kpi-grid ft-kpi-grid">
-          ${tile('Readings', sum.rows, `${a.from} to ${a.to}, one a minute`)}
+          ${tile('Readings', sum.rows, `${span}, one a minute`)}
           ${tile('GPS distance', km(sum.gpsDistance) + ' km', 'Added up from the reports')}
           ${tile('Odometer distance', km(sum.extDistance) + ' km', "From the forklift's controller")}
           ${tile('Energy used', num(sum.wattHr, 0) + ' Wh', 'Watt-hours')}
@@ -504,8 +538,8 @@
           ${tile('Alert', hoursText(sum.hours.Alert), 'Moving with ignition off', sum.hours.Alert ? 'bad' : '')}
         </div>
         <div class="detail-card">
-          <h2><span class="section-icon">${iconSvg('clock')}</span>Status<span class="rt-card-note">${esc(a.date)} · ${esc(a.from)} to ${esc(a.to)}</span></h2>
-          ${timelineHtml(rows, from, to)}
+          <h2><span class="section-icon">${iconSvg('clock')}</span>Status<span class="rt-card-note">${esc(a.date)} · ${esc(span)}</span></h2>
+          ${timelineHtml(timeRows, from, to)}
         </div>
         <div class="ft-two">
           <div class="detail-card"><h2><span class="section-icon">${iconSvg('map-pin')}</span>Route</h2>${mapHtml(rows, 'Route of the forklift in this period')}</div>
@@ -525,16 +559,37 @@
       if (!device) return
       wireDeviceBar()
       const h = ui.history
-      const a = h.applied || { date: h.date, from: h.from, to: h.to }
-      pieChart('ft-chart-pie', ForkliftData.summary(ForkliftData.between(device, a.date, a.from, a.to)).hours)
+      const a = h.applied || { date: h.date, from: h.from, to: h.to, shiftId: h.shiftId }
+      const win = a.shiftId ? AppShifts.windows(getApp(), a.date).find((w) => w.id === a.shiftId) : null
+      pieChart('ft-chart-pie', ForkliftData.summary(win ? windowRows(device, win.from, win.to) : ForkliftData.between(device, a.date, a.from, a.to)).hours)
+      // Choosing a shift fills From and To with its times and locks them; Custom times gives them back.
+      const syncShift = () => {
+        const menu = $('ft-shift')
+        const picked = menu && menu.value ? AppShifts.windows(getApp(), $('ft-date').value).find((w) => w.id === menu.value) : null
+        $('ft-from').disabled = $('ft-to').disabled = Boolean(picked)
+        $('ft-from').value = picked ? picked.startTime : h.from
+        $('ft-to').value = picked ? picked.endTime : h.to
+      }
+      if ($('ft-shift')) {
+        syncShift()
+        $('ft-shift').addEventListener('change', syncShift)
+        $('ft-date').addEventListener('change', () => {
+          // The shifts of the new date; the one chosen stays only if that date has it.
+          $('ft-shift').innerHTML = `<option value="">Custom times</option>${shiftOptions($('ft-date').value || h.date, $('ft-shift').value)}`
+          syncShift()
+        })
+      }
       $('ft-show').addEventListener('click', () => {
         const date = $('ft-date').value
-        const from = $('ft-from').value || '00:00'
-        const to = $('ft-to').value || '23:59'
-        const problem = !date ? 'Choose a date.' : date > todayIso() ? 'Choose a date up to today.' : from > to ? 'From must be before To.' : ''
+        const shiftId = $('ft-shift') ? $('ft-shift').value : ''
+        const chosen = shiftId ? AppShifts.windows(getApp(), date).find((w) => w.id === shiftId) : null
+        const from = chosen ? chosen.startTime : $('ft-from').value || '00:00'
+        const to = chosen ? chosen.endTime : $('ft-to').value || '23:59'
+        const problem = !date ? 'Choose a date.' : date > todayIso() ? 'Choose a date up to today.' : !chosen && from > to ? 'From must be before To.' : ''
         showError('ft-history-error', problem)
         if (problem) return
-        Object.assign(h, { date, from, to, applied: { date, from, to }, gpsPage: 1, extPage: 1 })
+        // The times typed by hand are kept while a shift is chosen, to come back to.
+        Object.assign(h, { date, shiftId: chosen ? shiftId : '', applied: { date, from, to, shiftId: chosen ? shiftId : '' }, gpsPage: 1, extPage: 1 }, chosen ? {} : { from, to })
         renderView()
       })
       root.querySelectorAll('[data-page-of]').forEach((btn) =>
@@ -547,8 +602,25 @@
   }
 
   // ---- Reports
+  // A day's line for one shift only: the minutes inside it, counted as a whole day's are.
+  function shiftReport(device, a) {
+    const out = []
+    for (let iso = a.from; iso <= a.to; iso = ForkliftData.addDays(iso, 1)) {
+      const w = AppShifts.windows(getApp(), iso).find((x) => x.id === a.shiftId)
+      const rows = w ? windowRows(device, w.from, w.to) : []
+      if (!rows.length) continue
+      const s = ForkliftData.summary(rows)
+      out.push({ date: iso, gpsDistance: s.gpsDistance, extDistance: s.extDistance, wattHr: s.wattHr, hours: s.hours })
+    }
+    return out
+  }
+
+  function reportShift(a) {
+    return a.shiftId ? AppShifts.scheduleShifts(getApp()).find((s) => s.id === a.shiftId) || null : null
+  }
+
   function reportTable(device, a) {
-    const days = ForkliftData.report(device, a.from, a.to)
+    const days = a.shiftId ? shiftReport(device, a) : ForkliftData.report(device, a.from, a.to)
     const total = days.reduce((t, d) => ({ gps: t.gps + d.gpsDistance, ext: t.ext + d.extDistance, wh: t.wh + d.wattHr, Active: t.Active + d.hours.Active, Idle: t.Idle + d.hours.Idle, Inactive: t.Inactive + d.hours.Inactive, Alert: t.Alert + d.hours.Alert }), { gps: 0, ext: 0, wh: 0, Active: 0, Idle: 0, Inactive: 0, Alert: 0 })
     return { days, total }
   }
@@ -564,20 +636,23 @@
         r.to = todayIso()
         r.from = ForkliftData.addDays(r.to, -6)
       }
-      const applied = r.applied || { from: r.from, to: r.to }
+      const applied = r.applied || { from: r.from, to: r.to, shiftId: r.shiftId }
       const { days, total } = reportTable(device, applied)
+      const shift = reportShift(applied)
+      const shiftMenu = AppShifts.scheduleFor(getApp()) ? `<label class="rt-field"><span>Shift</span><select id="ft-rshift" aria-label="Shift"><option value="">Whole day</option>${AppShifts.scheduleShifts(getApp()).map((s) => `<option value="${esc(s.id)}"${r.shiftId === s.id ? ' selected' : ''}>${esc(s.name)} (${esc(s.startTime)}–${esc(s.endTime)})</option>`).join('')}</select></label>` : ''
       return `
         ${deviceBar(device, `
           <label class="rt-field"><span>From</span><input type="date" id="ft-rfrom" value="${esc(r.from)}" max="${todayIso()}" /></label>
           <label class="rt-field"><span>To</span><input type="date" id="ft-rto" value="${esc(r.to)}" max="${todayIso()}" /></label>
+          ${shiftMenu}
           <button type="button" class="solid-action-button et-small-button ft-show" id="ft-rsearch">Search</button>
           <button type="button" class="outline-action-button et-small-button ft-show" id="ft-rclear">Clear</button>`)}
         <p class="et-error ft-form-error" id="ft-report-error" hidden></p>
         <div class="detail-card">
-          <h2><span class="section-icon">${iconSvg('report')}</span>Report<span class="rt-card-note">${esc(device.vehicleName)} · ${esc(applied.from)} to ${esc(applied.to)}</span>
+          <h2><span class="section-icon">${iconSvg('report')}</span>Report<span class="rt-card-note">${esc(device.vehicleName)} · ${esc(applied.from)} to ${esc(applied.to)}${shift ? ` · ${esc(shift.name)}` : ''}</span>
             <span class="et-card-actions"><button type="button" class="outline-action-button et-small-button" id="ft-pdf">Download PDF</button><button type="button" class="outline-action-button et-small-button" id="ft-csv">Download CSV</button></span>
           </h2>
-          <p class="et-card-note">One line a day: how far the forklift went by GPS and by its own odometer, the energy it used, and the hours in each state.</p>
+          <p class="et-card-note">One line a day: how far the forklift went by GPS and by its own odometer, the energy it used, and the hours in each state.${shift ? ` Only the minutes inside the ${esc(shift.name)} (${esc(shift.startTime)} to ${esc(shift.endTime)}) are counted, and a day the schedule has no ${esc(shift.name)} is left out.` : ''}</p>
           <div class="table-scroll">
             <table class="data-table" id="ft-report-table">
               <thead><tr>${REPORT_HEAD.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
@@ -600,18 +675,20 @@
         const problem = !from || !to ? 'Choose both dates.' : from > to ? 'From must be on or before To.' : to > todayIso() ? 'Choose dates up to today.' : span + 1 > MAX_REPORT_DAYS ? `Choose a range of up to ${MAX_REPORT_DAYS} days.` : ''
         showError('ft-report-error', problem)
         if (problem) return
-        Object.assign(r, { from, to, applied: { from, to } })
+        const shiftId = $('ft-rshift') ? $('ft-rshift').value : ''
+        Object.assign(r, { from, to, shiftId, applied: { from, to, shiftId } })
         renderView()
       })
       $('ft-rclear').addEventListener('click', () => {
-        Object.assign(r, { from: '', to: '', applied: null })
+        Object.assign(r, { from: '', to: '', shiftId: '', applied: null })
         renderView()
       })
       const files = () => {
-        const applied = r.applied || { from: r.from, to: r.to }
+        const applied = r.applied || { from: r.from, to: r.to, shiftId: r.shiftId }
         const { days, total } = reportTable(device, applied)
-        const name = `forklift-report_${Downloads.fileSafe(device.vehicleId) || device.deviceId}_${applied.from}_to_${applied.to}`
-        return { days, total, applied, name }
+        const shift = reportShift(applied)
+        const name = `forklift-report_${Downloads.fileSafe(device.vehicleId) || device.deviceId}_${applied.from}_to_${applied.to}${shift ? '_' + Downloads.fileSafe(shift.name) : ''}`
+        return { days, total, applied, shift, name }
       }
       $('ft-csv').addEventListener('click', () => {
         const { days, name } = files()
@@ -621,9 +698,9 @@
         Downloads.downloadCsv(name + '.csv', head, body)
       })
       $('ft-pdf').addEventListener('click', () => {
-        const { days, applied, name } = files()
+        const { days, applied, shift, name } = files()
         if (!days.length) { UI.toast('There is nothing to download for these dates.'); return }
-        Downloads.downloadPdf(name + '.pdf', REPORT_HEAD, days.map(reportRow), { title: `Forklift report: ${device.vehicleName} (${device.deviceId}), ${applied.from} to ${applied.to}` })
+        Downloads.downloadPdf(name + '.pdf', REPORT_HEAD, days.map(reportRow), { title: `Forklift report: ${device.vehicleName} (${device.deviceId}), ${applied.from} to ${applied.to}${shift ? `, ${shift.name}` : ''}` })
       })
     },
   }
@@ -632,24 +709,13 @@
   // shift: the time its forklifts were Active and Idle, and the distance they
   // covered. Every minute row belongs to the shift its clock time falls in.
   function shiftFigures() {
-    const rowsBetween = (device, from, to) => {
-      const rows = []
-      for (let iso = ForkliftData.isoOf(new Date(from)); iso <= ForkliftData.isoOf(new Date(to - 1)); iso = ForkliftData.addDays(iso, 1)) {
-        const start = AppShifts.atTime(iso, '00:00')
-        ForkliftData.day(device, iso).forEach((row) => {
-          const at = start + row.minute * 60000
-          if (at >= from && at < to) rows.push(row)
-        })
-      }
-      return rows
-    }
     return {
       labels: ['Active', 'Idle', 'Distance'],
       measure(from, to) {
         let active = 0
         let idle = 0
         let distance = 0
-        devices().forEach((device) => rowsBetween(device, from, to).forEach((row) => {
+        devices().forEach((device) => windowRows(device, from, to).forEach((row) => {
           if (row.state === 3) active++
           else if (row.state === 2) idle++
           distance += row.distance

@@ -31,7 +31,8 @@ Tests.suite('shifts', 'Shifts tab on every application', async ({ page, BASE, ch
   const hm = (minutes) => `${Math.floor(minutes / 60)}h ${pad(minutes % 60)}m`
   const isoOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return isoOf(d) }
-  const lastSaturday = () => { const d = new Date(); while (d.getDay() !== 6) d.setDate(d.getDate() - 1); return isoOf(d) }
+  const lastDay = (weekday) => { const d = new Date(); while (d.getDay() !== weekday) d.setDate(d.getDate() - 1); return isoOf(d) }
+  const lastSaturday = () => lastDay(6)
 
   // Each card on the page: its title, table head and rows.
   const cards = () => page.$$eval('.detail-card', (els) => els.map((c) => ({
@@ -321,6 +322,285 @@ Tests.suite('shifts', 'Shifts tab on every application', async ({ page, BASE, ch
   await page.waitForTimeout(300)
   const todayRows = (await shiftTable()).rows.filter((r) => !r.total)
   check('a shift that has not started shows dashes, and one that has shows figures', todayRows.every((r) => (r.cells[3] === 'Upcoming') === (r.cells[4] === '—')), todayRows.map((r) => r.cells))
+
+  // ============================================ THE REST OF EMAIL TRACKING
+  // The window chosen for these checks is the shift with the most tickets in the
+  // data, so the counts are never zero by accident.
+  section('Email Tracking: the dashboard and the lists follow the schedule')
+  await fresh()
+  await store(() => Store.setApplicationShiftSchedule('app_email', 'ss3'))
+  await open('email-tracking.html#app_email', '#et-view .rt-kpi-grid')
+  const busiest = await store(() => {
+    const d = Store.get()
+    const app = d.applications.find((x) => x.id === 'app_email')
+    const at = (s) => new Date(s.replace(' ', 'T')).getTime()
+    const dates = Array.from(new Set(d.emailInbox.map((e) => e.receivedDate.slice(0, 10))))
+    let best = null
+    dates.forEach((date) => AppShifts.windows(app, date).forEach((w) => {
+      const inbox = d.emailInbox.filter((e) => at(e.receivedDate) >= w.from && at(e.receivedDate) < w.to).length
+      const tickets = d.emailTickets.filter((t) => at(t.receivedDate) >= w.from && at(t.receivedDate) < w.to).length
+      if (!best || tickets * 100 + inbox > best.tickets * 100 + best.inbox) best = { date, shiftId: w.id, name: w.name, inbox, tickets }
+    }))
+    return best
+  })
+  // What a window holds, worked out from the stored rows. `shiftId` 'all' is the whole schedule's day.
+  const mailIn = (arg) => store((a) => {
+    const app = Store.get().applications.find((x) => x.id === 'app_email')
+    const list = AppShifts.windows(app, a.date, { fullDay: true })
+    const picked = list.find((x) => x.id === a.shiftId)
+    const from = picked ? picked.from : list[0].from
+    const to = picked ? picked.to : list[list.length - 1].to
+    const at = (s) => new Date(s.replace(' ', 'T')).getTime()
+    const within = (rows, field) => rows.filter((r) => at(r[field]) >= from && at(r[field]) < to)
+    const d = Store.get()
+    return { inbox: within(d.emailInbox, 'receivedDate').length, tickets: within(d.emailTickets, 'receivedDate').length, reports: within(d.emailReports, 'sentDate').length, notifications: within(d.emailNotifications, 'sentDate').length, sms: within(d.emailSms, 'sentDate').length }
+  }, arg)
+  const mailTotals = async () => {
+    const t = await tiles()
+    return { inbox: Number(t.find((x) => x.label === 'Total inbox').value), tickets: Number(t.find((x) => x.label === 'Total tickets').value) }
+  }
+  const listCount = async (key) => {
+    await page.click(`[data-et-tab="${key}"]`)
+    await page.waitForSelector(`[data-list="${key}"] [data-showing]`)
+    await page.waitForTimeout(100)
+    const m = /of (\d+) entr/.exec(await page.textContent(`[data-list="${key}"] [data-showing]`))
+    return m ? Number(m[1]) : 0
+  }
+  check('there is mail in the data to cut down', busiest && busiest.inbox > 0 && busiest.tickets > 0, busiest)
+
+  await open('email-tracking.html#app_email', '#et-view .rt-kpi-grid')
+  const bar = {}
+  for (const tab of ['dashboard', 'inbox', 'departments', 'tickets', 'reports', 'notifications', 'sms', 'users', 'shifts', 'settings']) {
+    await page.click(`[data-et-tab="${tab}"]`)
+    await page.waitForTimeout(100)
+    bar[tab] = (await count('[data-scope-bar]')) === 1
+  }
+  check('the Date and Shift bar is on the tabs that go by time, and on no other', same(Object.keys(bar).filter((t) => bar[t]), ['dashboard', 'inbox', 'tickets', 'reports', 'notifications', 'sms']), bar)
+  await page.click('[data-et-tab="dashboard"]')
+  await page.waitForSelector('#et-view .rt-kpi-grid')
+  const everything = await store(() => ({ inbox: Store.get().emailInbox.length, tickets: Store.get().emailTickets.length }))
+  check('with no date, everything is counted and shown, as before', same(await mailTotals(), everything) && /All dates/.test(await page.innerText('[data-scope-note]')), await mailTotals())
+  check('the Shift menu waits until there is a date', await page.locator('[data-scope="shift"]').isDisabled())
+  await page.fill('[data-scope="date"]', busiest.date)
+  await page.waitForTimeout(200)
+  check('a date lets a shift be chosen, from the shifts that date has', !(await page.locator('[data-scope="shift"]').isDisabled()) && same(await page.$$eval('[data-scope="shift"] option', (els) => els.map((o) => o.value)), ['all', 'sh1', 'sh2', 'sh3']))
+  await page.selectOption('[data-scope="shift"]', busiest.shiftId)
+  await page.waitForTimeout(200)
+  const mail = await mailIn({ date: busiest.date, shiftId: busiest.shiftId })
+  check('the dashboard counts only that shift\'s emails and tickets', same(await mailTotals(), { inbox: mail.inbox, tickets: mail.tickets }) && mail.inbox < everything.inbox, { shown: await mailTotals(), mail, everything })
+  check('and says which shift it is', (await page.innerText('[data-scope-note]')).includes(busiest.name) && (await page.innerText('.rt-card-note')).includes(busiest.name), await page.innerText('[data-scope-note]'))
+  for (const key of ['inbox', 'tickets', 'reports', 'notifications', 'sms']) {
+    const shown = await listCount(key)
+    check(`${key}: the list holds that shift's rows only, and the bar stays as it was`, shown === mail[key] && (await page.inputValue('[data-scope="date"]')) === busiest.date && (await page.inputValue('[data-scope="shift"]')) === busiest.shiftId, { shown, expected: mail[key] })
+  }
+  await page.click('[data-et-tab="inbox"]')
+  await page.waitForSelector('[data-list="inbox"]')
+  await page.fill('[data-list="inbox"] [data-search]', 'priority')
+  await page.waitForTimeout(150)
+  const searched = await store((a) => {
+    const app = Store.get().applications.find((x) => x.id === 'app_email')
+    const w = AppShifts.windows(app, a.date).find((x) => x.id === a.shiftId)
+    const at = (s) => new Date(s.replace(' ', 'T')).getTime()
+    return Store.get().emailInbox.filter((e) => at(e.receivedDate) >= w.from && at(e.receivedDate) < w.to && [e.subject, e.message, e.fromEmail, e.receivedDate].join(' ').toLowerCase().includes('priority')).length
+  }, busiest)
+  check('a search works on what the shift leaves', (await page.textContent('[data-list="inbox"] [data-showing]')).includes(searched ? `of ${searched} entr` : 'Showing 0 entries'), await page.textContent('[data-list="inbox"] [data-showing]'))
+  await page.fill('[data-list="inbox"] [data-search]', '')
+  await page.click('[data-et-tab="tickets"]')
+  await page.waitForSelector('[data-list="tickets"]')
+  const [ticketCsv] = await Promise.all([page.waitForEvent('download'), page.click('[data-list="tickets"] [data-act="csv"]')])
+  const csvRows = (await ticketCsv.text()).trim().split('\n').length - 1
+  check('a download holds what the shift leaves', csvRows === mail.tickets, { csvRows, expected: mail.tickets })
+  await page.fill('[data-scope="date"]', daysAgo(40))
+  await page.waitForTimeout(200)
+  check('a day with no mail says nothing matches', (await page.textContent('[data-list="tickets"] .empty-table-note')) === 'No matching tickets found.' && (await page.textContent('[data-list="tickets"] [data-showing]')) === 'Showing 0 entries')
+  check('and changing the date drops a shift that day does not have, or keeps one it does', (await page.inputValue('[data-scope="shift"]')) === busiest.shiftId)
+  await page.click('[data-scope-clear]')
+  await page.waitForTimeout(200)
+  check('Clear shows everything again, with no shift chosen', (await listCount('tickets')) === everything.tickets && (await page.inputValue('[data-scope="date"]')) === '' && (await page.locator('[data-scope="shift"]').isDisabled()))
+  await page.click('[data-scope-today]')
+  await page.waitForTimeout(200)
+  check('Today puts today in', (await page.inputValue('[data-scope="date"]')) === daysAgo(0))
+
+  await fresh()
+  await open('email-tracking.html#app_email', '#et-view .rt-kpi-grid')
+  check('with no schedule there is no Shift menu, and a way to choose one', (await count('[data-scope="shift"]')) === 0 && (await page.getAttribute('[data-scope-note] a', 'href')) === '#app_email:shifts')
+  await page.fill('[data-scope="date"]', busiest.date)
+  await page.waitForTimeout(200)
+  const calendarDay = await store((date) => {
+    const from = AppShifts.atTime(date, '00:00')
+    const to = AppShifts.atTime(date, '00:00', 1)
+    const at = (s) => new Date(s.replace(' ', 'T')).getTime()
+    const within = (rows) => rows.filter((r) => at(r.receivedDate) >= from && at(r.receivedDate) < to).length
+    return { inbox: within(Store.get().emailInbox), tickets: within(Store.get().emailTickets) }
+  }, busiest.date)
+  check('a date alone is that calendar day', same(await mailTotals(), calendarDay) && /Full day/.test(await page.innerText('[data-scope-note]')), { shown: await mailTotals(), calendarDay })
+
+  // ====================================================== FORKLIFT TRACKING
+  section('Forklift Tracking: Fleet, History and Reports follow the schedule')
+  await fresh()
+  await store(() => Store.setApplicationShiftSchedule('app_forklift', 'ss3'))
+  const yesterday = daysAgo(1)
+  // A window's minute rows, read through ForkliftData.between rather than the page's own helper.
+  const forkIn = (a) => store((arg) => {
+    const parts = { sh1: [[arg.date, '06:00', '13:59']], sh2: [[arg.date, '14:00', '21:59']], sh3: [[arg.date, '22:00', '23:59'], [ForkliftData.addDays(arg.date, 1), '00:00', '05:59']] }[arg.shiftId]
+    const round2 = (v) => Math.round(v * 100) / 100
+    return Store.get().forkliftDevices.map((d) => {
+      let distance = 0
+      let readings = 0
+      let active = 0
+      parts.forEach(([date, from, to]) => ForkliftData.between(d, date, from, to).forEach((r) => { distance += r.distance; readings++; if (r.state === 3) active++ }))
+      return { name: d.vehicleName, distance: round2(distance), readings, active }
+    })
+  }, a)
+  await open('forklift-tracking.html#app_forklift', '#ft-view .rt-kpi-grid')
+  let distanceTile = (await tiles()).find((t) => t.label.startsWith('Distance'))
+  check('Fleet: with no date it is today so far, labelled as before', distanceTile.label === 'Distance today' && /Today so far/.test(await page.innerText('[data-scope-note]')) && (await page.$$eval('.ft-card dt', (els) => els.map((e) => e.textContent))).includes('Active today'), distanceTile)
+  await page.fill('[data-scope="date"]', yesterday)
+  await page.waitForTimeout(200)
+  await page.selectOption('[data-scope="shift"]', 'sh3')
+  await page.waitForTimeout(250)
+  const night = await forkIn({ date: yesterday, shiftId: 'sh3' })
+  distanceTile = (await tiles()).find((t) => t.label.startsWith('Distance'))
+  const fleetTotal = night.reduce((a, f) => a + f.distance, 0)
+  check('Fleet: the Night shift of yesterday gives the fleet\'s distance in it, and the label drops "today"', distanceTile.label === 'Distance' && distanceTile.value === `${fleetTotal.toFixed(2)} km`, { distanceTile, fleetTotal })
+  const cardDistance = await page.$$eval('.ft-card', (els) => els.map((c) => [c.querySelector('h3').textContent, Array.from(c.querySelectorAll('dl > div')).find((d) => d.querySelector('dt').textContent === 'Distance').querySelector('dd').textContent]))
+  check('Fleet: and so does each forklift\'s card', same(cardDistance, night.map((f) => [f.name, `${f.distance.toFixed(2)} km`])), { cardDistance, night })
+  check('Fleet: the bar names the window, across midnight', /Night shift 22:00–06:00 \(next day\)/.test(await page.innerText('[data-scope-note]')))
+  await page.click('[data-scope-clear]')
+  await page.waitForTimeout(200)
+  check('Fleet: Clear is today so far again', (await tiles()).find((t) => t.label.startsWith('Distance')).label === 'Distance today')
+
+  await page.click('[data-ft-tab="history"]')
+  await page.waitForSelector('#ft-show')
+  check('History: the Shift menu lists the date\'s shifts after Custom times', same(await page.$$eval('#ft-shift option', (els) => els.map((o) => o.value)), ['', 'sh1', 'sh2', 'sh3']))
+  await page.fill('#ft-date', yesterday)
+  await page.waitForTimeout(150)
+  await page.selectOption('#ft-shift', 'sh3')
+  await page.waitForTimeout(150)
+  check('History: choosing a shift fills From and To with its times and locks them', (await page.inputValue('#ft-from')) === '22:00' && (await page.inputValue('#ft-to')) === '06:00' && (await page.locator('#ft-from').isDisabled()) && (await page.locator('#ft-to').isDisabled()))
+  await page.click('#ft-show')
+  await page.waitForTimeout(400)
+  const firstForklift = night[0]
+  const historyTiles = await tiles()
+  check('History: the Night shift is eight hours of readings, from yesterday into today', historyTiles.find((t) => t.label === 'Readings').value === String(firstForklift.readings) && firstForklift.readings === 480, historyTiles.slice(0, 3))
+  check('History: and its distance and Active time are those minutes\'', historyTiles.find((t) => t.label === 'GPS distance').value === `${firstForklift.distance.toFixed(2)} km`, { shown: historyTiles.find((t) => t.label === 'GPS distance'), firstForklift })
+  const statusNote = await page.innerText('.rt-card-note')
+  const statusAxis = await page.$$eval('.ft-ticks span', (els) => els.map((e) => e.textContent))
+  check('History: the Status card names the shift, and its time axis runs past midnight', /Night shift, 22:00 to 06:00 next day/.test(await page.innerText('.rt-kpi-sub')) && statusAxis.includes('00:00') && statusAxis.includes('03:00') && !statusAxis.some((t) => /^2[4-9]/.test(t)), { statusNote, statusAxis })
+  await page.selectOption('#ft-shift', '')
+  await page.waitForTimeout(150)
+  check('History: Custom times gives From and To back, as they were', (await page.inputValue('#ft-from')) === '00:00' && (await page.inputValue('#ft-to')) === '23:59' && !(await page.locator('#ft-from').isDisabled()))
+  await page.click('#ft-show')
+  await page.waitForTimeout(400)
+  check('History: and shows the whole day again', (await tiles()).find((t) => t.label === 'Readings').value === '1440')
+  await store(() => Store.setApplicationShiftSchedule('app_forklift', 'ss2'))
+  await open('forklift-tracking.html#app_forklift:history', '#ft-show')
+  await page.fill('#ft-date', lastSaturday())
+  await page.waitForTimeout(150)
+  check('History: a date the schedule has off offers no shift', same(await page.$$eval('#ft-shift option', (els) => els.map((o) => o.value)), ['']))
+
+  await page.click('[data-ft-tab="reports"]')
+  await page.waitForSelector('#ft-rsearch')
+  check('Reports: the Shift menu lists the schedule\'s shifts after Whole day', same(await page.$$eval('#ft-rshift option', (els) => els.map((o) => o.textContent.trim())), ['Whole day', 'Evening shift (14:00–22:00)', 'Night shift (22:00–06:00)']))
+  const wholeRows = async () => page.$$eval('#ft-report-table tbody tr:not(.total-row)', (trs) => trs.map((tr) => [tr.children[0].textContent, tr.children[1].textContent]))
+  await page.fill('#ft-rfrom', daysAgo(14))
+  await page.fill('#ft-rto', daysAgo(1))
+  await page.click('#ft-rsearch')
+  await page.waitForTimeout(300)
+  const wholeDay = await wholeRows()
+  await page.selectOption('#ft-rshift', 'sh2')
+  await page.click('#ft-rsearch')
+  await page.waitForTimeout(300)
+  const eveningLines = await wholeRows()
+  const expectedLines = await store((range) => {
+    const d = Store.get().forkliftDevices[0]
+    const out = []
+    for (let iso = range.from; iso <= range.to; iso = ForkliftData.addDays(iso, 1)) {
+      const weekday = ForkliftData.dateOf(iso).getDay()
+      if (weekday === 0 || weekday === 6) continue
+      const rows = ForkliftData.between(d, iso, '14:00', '21:59')
+      if (!rows.length) continue
+      out.push([iso, (Math.round(rows.reduce((a, r) => a + r.distance, 0) * 100) / 100).toFixed(2)])
+    }
+    return out
+  }, { from: daysAgo(14), to: daysAgo(1) })
+  check('Reports: one shift gives a line for each day the schedule runs it, with that shift\'s distance', same(eveningLines, expectedLines) && eveningLines.length > 0 && eveningLines.length < wholeDay.length, { eveningLines, expectedLines, whole: wholeDay.length })
+  check('Reports: the card says which shift, and what is counted', /Evening shift/.test(await page.innerText('.rt-card-note')) && /Only the minutes inside the Evening shift/.test(await page.innerText('.et-card-note')))
+  const [shiftCsv] = await Promise.all([page.waitForEvent('download'), page.click('#ft-csv')])
+  check('Reports: a download is named for the shift, and holds its lines', /_Evening-shift\.csv$/.test(shiftCsv.suggestedFilename()) && (await shiftCsv.text()).trim().split('\n').length === expectedLines.length + 1, shiftCsv.suggestedFilename())
+  await page.click('#ft-rclear')
+  await page.waitForTimeout(250)
+  check('Reports: Clear goes back to whole days', (await page.inputValue('#ft-rshift')) === '')
+
+  // ================================================================== CMS
+  section('CMS: the Shifts tab adds up the cranes, and a crane\'s page can show one shift')
+  await fresh()
+  await store(() => Store.setApplicationShiftSchedule('app_cms', 'ss3'))
+  const minutesOf = (text) => { const m = /(\d+)h (\d\d)m/.exec(text); return m ? Number(m[1]) * 60 + Number(m[2]) : 0 }
+  await open('application-detail.html#app_cms:shifts', '[data-shifts="schedule"]')
+  await page.fill('[data-shifts="date"]', daysAgo(2))
+  await page.waitForTimeout(300)
+  const cmsTable = await shiftTable()
+  const cranes = await store(() => Store.get().cmsMachines.length)
+  check('CMS: the figures are the four states, after the shift\'s time, length and status', same(cmsTable.head, ['Shift', 'Time', 'Length', 'Status', 'Working', 'Idle', 'Stop', 'Overload']), cmsTable.head)
+  const cmsShifts = cmsTable.rows.filter((r) => !r.total)
+  check('CMS: in a shift every crane is in some state the whole time, so the four add up to the cranes times eight hours', cmsShifts.length === 3 && cmsShifts.every((r) => [4, 5, 6, 7].reduce((a, c) => a + minutesOf(r.cells[c]), 0) === cranes * 480), cmsShifts.map((r) => r.cells))
+  check('CMS: and the whole day to the cranes times twenty-four', [4, 5, 6, 7].reduce((a, c) => a + minutesOf(cmsTable.rows.find((r) => r.total).cells[c]), 0) === cranes * 1440)
+  const morningExpected = await store((date) => {
+    // The raw timeline of each crane, clipped to 06:00-14:00 here by hand.
+    const totals = { working: 0, idle: 0, off: 0, overload: 0 }
+    Store.get().cmsMachines.forEach((m) => CmsData.dayTimeline(m, date).forEach((seg) => {
+      const s = Math.max(seg.startMin, 360)
+      const e = Math.min(seg.endMin, 840)
+      if (e > s) totals[seg.state] += e - s
+    }))
+    return [totals.working, totals.idle, totals.off, totals.overload]
+  }, daysAgo(2))
+  check('CMS: the Morning shift\'s figures are the cranes\' own timeline between 06:00 and 14:00', same([4, 5, 6, 7].map((c) => minutesOf(cmsShifts[0].cells[c])), morningExpected), { shown: cmsShifts[0].cells, morningExpected })
+
+  const crane = await store(() => Store.get().cmsMachines[0].id)
+  await open('cms-machine-dashboard.html#' + crane, '#cms-date-input')
+  check('CMS crane: it opens on the whole day, with a Shift menu', (await page.textContent('.cms-timeline-total')) === 'Total: 24h 00m' && (await page.textContent('.cms-panel-header-row h2')) === 'Operating States' && same(await page.$$eval('#cms-shift-select option', (els) => els.map((o) => o.value)), ['all', 'sh1', 'sh2', 'sh3']))
+  await page.fill('#cms-date-input', daysAgo(2))
+  await page.waitForTimeout(200)
+  await page.selectOption('#cms-shift-select', 'sh2')
+  await page.waitForTimeout(250)
+  const legend = await page.$$eval('.cms-timeline-legend span:not(.cms-timeline-total)', (els) => els.map((e) => e.textContent.trim()))
+  const eveningExpected = await store(([id, date]) => {
+    const m = Store.get().cmsMachines.find((x) => x.id === id)
+    const sec = { working: 0, idle: 0, off: 0, overload: 0 }
+    CmsData.dayTimeline(m, date).forEach((seg) => {
+      const s = Math.max(seg.startMin, 840)
+      const e = Math.min(seg.endMin, 1320)
+      if (e > s) sec[seg.state] += (e - s) * 60
+    })
+    const short = (s) => (s < 60 ? s + 's' : Math.floor(s / 3600) > 0 ? `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m` : `${Math.floor(s / 60)}m`)
+    return [`Working: ${short(sec.working)}`, `Idle: ${short(sec.idle)}`, `Stop: ${short(sec.off)}`, `Overload: ${short(sec.overload)}`]
+  }, [crane, daysAgo(2)])
+  check('CMS crane: one shift narrows the bar to it, named, eight hours long', (await page.textContent('.cms-panel-header-row h2')) === 'Operating States · Evening shift' && (await page.textContent('.cms-timeline-total')) === 'Total: 8h 00m', await page.textContent('.cms-timeline-total'))
+  check('CMS crane: the times in each state are that shift\'s, from the crane\'s own timeline', same(legend, eveningExpected), { legend, eveningExpected })
+  check('CMS crane: the time axis runs from the shift\'s start to its end', same(await page.$$eval('.cms-timeline-axis span', (els) => els.map((e) => e.textContent)), ['14:00', '16:00', '18:00', '20:00', '22:00']))
+  const widths = await page.$$eval('.cms-timeline-block', (els) => els.map((e) => parseFloat(e.style.flexBasis || e.style.flex.split(' ')[2])))
+  check('CMS crane: its blocks fill the bar exactly', Math.abs(widths.reduce((a, b) => a + b, 0) - 100) < 0.01, widths.reduce((a, b) => a + b, 0))
+  await page.selectOption('#cms-shift-select', 'sh3')
+  await page.waitForTimeout(250)
+  check('CMS crane: the Night shift crosses midnight, still eight hours', (await page.textContent('.cms-timeline-total')) === 'Total: 8h 00m' && same(await page.$$eval('.cms-timeline-axis span', (els) => els.map((e) => e.textContent)), ['22:00', '00:00', '02:00', '04:00', '06:00']))
+  await page.selectOption('#cms-shift-select', 'all')
+  await page.waitForTimeout(250)
+  check('CMS crane: Whole day goes back to twenty-four hours', (await page.textContent('.cms-timeline-total')) === 'Total: 24h 00m' && (await page.textContent('.cms-panel-header-row h2')) === 'Operating States')
+  await store(() => Store.setApplicationShiftSchedule('app_cms', 'ss2'))
+  await open('cms-machine-dashboard.html#' + crane, '#cms-date-input')
+  await page.fill('#cms-date-input', lastDay(3))
+  await page.waitForTimeout(200)
+  await page.selectOption('#cms-shift-select', 'sh2')
+  await page.waitForTimeout(200)
+  check('CMS crane: the weekday schedule has the Evening shift on a Wednesday', (await page.textContent('.cms-timeline-total')) === 'Total: 8h 00m' && (await page.textContent('.cms-panel-header-row h2')) === 'Operating States · Evening shift')
+  await page.fill('#cms-date-input', lastDay(6))
+  await page.waitForTimeout(250)
+  check('CMS crane: on a Saturday, which it has off, the chosen shift is dropped, there is no Shift menu, and the whole day shows', (await count('#cms-shift-select')) === 0 && (await page.textContent('.cms-timeline-total')) === 'Total: 24h 00m' && (await page.textContent('.cms-panel-header-row h2')) === 'Operating States')
+  await store(() => Store.setApplicationShiftSchedule('app_cms', ''))
+  await open('cms-machine-dashboard.html#' + crane, '#cms-date-input')
+  check('CMS crane: with no schedule there is no Shift menu', (await count('#cms-shift-select')) === 0)
 
   check('no JavaScript errors on any of these pages', errors.length === 0, errors.slice(0, 5))
 })

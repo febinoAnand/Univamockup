@@ -850,6 +850,7 @@
   <script src="shared/app-templates.js"></script>
   <script src="shared/app-entries.js"></script>
   <script src="shared/app-shifts.js"></script>
+  <script src="shared/cms-data.js"></script>
   <script src="shared/app-runtime.js"></script>
   <script>
     // The application id travels in the URL hash — see device-detail.html
@@ -2070,6 +2071,23 @@
       })
     }
 
+    // What the cranes did in each shift (shared/cms-data.js), all cranes added up.
+    // A shift still going counts up to now, and one not started shows dashes.
+    function cmsShiftFigures() {
+      const hm = (min) => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`
+      return {
+        labels: ['Working', 'Idle', 'Stop', 'Overload'],
+        measure(from, to) {
+          const totals = { working: 0, idle: 0, off: 0, overload: 0 }
+          Store.get().cmsMachines.forEach((m) => {
+            const t = CmsData.stateMinutes(m, from, Math.min(to, Date.now()))
+            Object.keys(totals).forEach((k) => { totals[k] += t[k] })
+          })
+          return [hm(totals.working), hm(totals.idle), hm(totals.off), hm(totals.overload)]
+        },
+      }
+    }
+
     function renderCmsBody() {
       const panel = cmsActiveTab === 'machine' ? renderCmsMachinePanel() : cmsActiveTab === 'shifts' ? '<div id="app-shifts-host"></div>' : renderCmsDashboardPanel()
       return `
@@ -2087,7 +2105,7 @@
         }),
       )
       if (cmsActiveTab === 'machine') wireCmsMachinePanel()
-      else if (cmsActiveTab === 'shifts') AppShifts.mount(document.getElementById('app-shifts-host'), getApp())
+      else if (cmsActiveTab === 'shifts') AppShifts.mount(document.getElementById('app-shifts-host'), getApp(), { figures: cmsShiftFigures })
       else wireCmsDashboardPanel()
     }
 
