@@ -175,6 +175,15 @@
       cursor: not-allowed;
       opacity: 0.5;
     }
+    .cms-date-nav select {
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-family: inherit;
+      color: var(--text-secondary);
+      background: var(--surface);
+    }
     .cms-date-nav input[type='date'] {
       padding: 0.4rem 0.6rem;
       border-radius: 8px;
@@ -497,6 +506,8 @@
   <script src="shared/store.js"></script>
   <script src="shared/layout.js"></script>
   <script src="shared/ui.js"></script>
+  <script src="shared/app-shifts.js"></script>
+  <script src="shared/cms-data.js"></script>
   <script>
     const machineId = window.location.hash.slice(1)
     const machine = (Store.get().cmsMachines || []).find((m) => m.id === machineId)
@@ -513,24 +524,9 @@
       ],
     })
 
-    function hashString(value) {
-      let hash = 0x811c9dc5
-      for (let i = 0; i < value.length; i++) {
-        hash ^= value.charCodeAt(i)
-        hash = Math.imul(hash, 0x01000193)
-      }
-      return hash >>> 0
-    }
-    function mulberry32(seed) {
-      let t = seed
-      return function random() {
-        t |= 0
-        t = (t + 0x6d2b79f5) | 0
-        let r = Math.imul(t ^ (t >>> 15), 1 | t)
-        r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r
-        return ((r ^ (r >>> 14)) >>> 0) / 4294967296
-      }
-    }
+    // The random numbers, and a day's operating states, are made in
+    // shared/cms-data.js, which the CMS application's Shifts tab adds up too.
+    const { hashString, mulberry32 } = CmsData
     function seededSeries(seedKey, baseline, amplitude, points) {
       return Array.from({ length: points }, (_, i) => {
         const rng = mulberry32(hashString(seedKey + ':' + i))
@@ -577,6 +573,8 @@
     const TIMELINE_STATE_COLORS = { working: '#16a34a', idle: '#d97706', off: '#78716c', overload: '#dc2626' }
     const TIMELINE_STATE_LABELS = { working: 'Working', idle: 'Idle', off: 'Stop', overload: 'Overload' }
     let cmsSelectedDate = localDateIso(new Date())
+    // 'all' shows the whole day; otherwise the id of one of the CMS schedule's shifts on that day.
+    let cmsSelectedShift = 'all'
     const cmsChartInstances = {}
 
     function renderChart(elId, options) {
@@ -594,22 +592,7 @@
     // same pattern instead of reshuffling on every re-render, mirroring the
     // seededSeries() approach used for the charts above.
     function generateDayTimeline(machine, dateIso) {
-      const rng = mulberry32(hashString(machine.id + ':' + dateIso))
-      const segments = []
-      let t = 0
-      while (t < 1440) {
-        const dur = Math.min(1440 - t, 20 + Math.floor(rng() * 160))
-        const r = rng()
-        let state
-        if (!machine.connected) {
-          state = r < 0.8 ? 'off' : r < 0.94 ? 'idle' : 'working'
-        } else {
-          state = r < 0.5 ? 'working' : r < 0.8 ? 'idle' : r < 0.93 ? 'off' : 'overload'
-        }
-        segments.push({ startMin: t, endMin: t + dur, state })
-        t += dur
-      }
-      return segments
+      return CmsData.dayTimeline(machine, dateIso)
     }
 
     function formatDurationShort(totalSeconds) {
@@ -676,7 +659,21 @@
       const hourTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24].map((h) => (h === 24 ? '00:00' : pad2(h) + ':00'))
 
       const isToday = cmsSelectedDate === todayIso
-      const timelineSegments = generateDayTimeline(machine, cmsSelectedDate)
+      // The window the timeline shows: the whole day, or one shift of the CMS
+      // application's schedule, which can run past midnight.
+      const cmsApp = Store.get().applications.find((a) => a.id === 'app_cms')
+      const dayShifts = AppShifts.windows(cmsApp, cmsSelectedDate)
+      const shiftWin = cmsSelectedShift === 'all' ? null : dayShifts.find((w) => w.id === cmsSelectedShift) || null
+      if (!shiftWin) cmsSelectedShift = 'all'
+      const dayStartMs = AppShifts.atTime(cmsSelectedDate, '00:00')
+      const viewFrom = shiftWin ? shiftWin.from : dayStartMs
+      const viewTo = shiftWin ? shiftWin.to : AppShifts.atTime(cmsSelectedDate, '00:00', 1)
+      const viewMin = shiftWin ? Math.round((viewTo - viewFrom) / 60000) : 1440
+      const viewStartMin = Math.round((viewFrom - dayStartMs) / 60000)
+      const timelineSegments = shiftWin ? CmsData.windowSegments(machine, viewFrom, viewTo) : generateDayTimeline(machine, cmsSelectedDate)
+      const nowPct = shiftWin ? ((Date.now() - viewFrom) / (viewTo - viewFrom)) * 100 : elapsedPct
+      const showNow = shiftWin ? nowPct >= 0 && nowPct <= 100 : isToday
+      const axisTicks = shiftWin ? Array.from({ length: Math.floor(viewMin / 120) + 1 }, (_, i) => minutesToClock(viewStartMin + i * 120)) : hourTicks
       const timelineTotals = { working: 0, idle: 0, off: 0, overload: 0 }
       timelineSegments.forEach((seg) => {
         timelineTotals[seg.state] += (seg.endMin - seg.startMin) * 60
@@ -701,34 +698,35 @@
 
         <div class="detail-card">
           <div class="cms-panel-header-row">
-            <h2>Operating States</h2>
+            <h2>Operating States${shiftWin ? ` · ${UI.esc(shiftWin.name)}` : ''}</h2>
             <div class="cms-date-nav">
               <button type="button" class="cms-date-nav-btn" id="cms-date-prev" aria-label="Previous day" title="Previous day">&larr;</button>
               <input type="date" id="cms-date-input" value="${cmsSelectedDate}" max="${todayIso}" />
               <button type="button" class="cms-date-nav-btn" id="cms-date-next" aria-label="Next day" title="Next day" ${isToday ? 'disabled' : ''}>&rarr;</button>
+              ${dayShifts.length ? `<select id="cms-shift-select" aria-label="Shift"><option value="all">Whole day</option>${dayShifts.map((w) => `<option value="${UI.esc(w.id)}"${w.id === cmsSelectedShift ? ' selected' : ''}>${UI.esc(w.name)} (${AppShifts.clock(w.from)}–${AppShifts.clock(w.to)})</option>`).join('')}</select>` : ''}
             </div>
           </div>
           <div class="cms-timeline-track">
             ${timelineSegments
               .map(
                 (seg) => `
-            <div class="cms-timeline-block" style="flex:0 0 ${((seg.endMin - seg.startMin) / 1440) * 100}%;background:${TIMELINE_STATE_COLORS[seg.state]};">
+            <div class="cms-timeline-block" style="flex:0 0 ${((seg.endMin - seg.startMin) / viewMin) * 100}%;background:${TIMELINE_STATE_COLORS[seg.state]};">
               <div class="cms-timeline-tooltip">
                 <div class="cms-timeline-tooltip-status"><span class="cms-timeline-tooltip-dot" style="background:${TIMELINE_STATE_COLORS[seg.state]};"></span>${TIMELINE_STATE_LABELS[seg.state]}</div>
-                <div class="cms-timeline-tooltip-range">${minutesToClock(seg.startMin)} – ${minutesToClock(seg.endMin)}</div>
+                <div class="cms-timeline-tooltip-range">${minutesToClock(seg.startMin + viewStartMin)} – ${minutesToClock(seg.endMin + viewStartMin)}</div>
               </div>
             </div>`,
               )
               .join('')}
-            ${isToday ? `<div class="cms-timeline-now" style="left:${elapsedPct}%;"></div><div class="cms-timeline-now-marker" style="left:${elapsedPct}%;"></div>` : ''}
+            ${showNow ? `<div class="cms-timeline-now" style="left:${nowPct}%;"></div><div class="cms-timeline-now-marker" style="left:${nowPct}%;"></div>` : ''}
           </div>
-          <div class="cms-timeline-axis">${hourTicks.map((t) => `<span>${t}</span>`).join('')}</div>
+          <div class="cms-timeline-axis">${axisTicks.map((t) => `<span>${t}</span>`).join('')}</div>
           <div class="cms-timeline-legend">
             <span><i style="background:#16a34a;"></i>Working: ${formatDurationShort(timelineTotals.working)}</span>
             <span><i style="background:#d97706;"></i>Idle: ${formatDurationShort(timelineTotals.idle)}</span>
             <span><i style="background:#78716c;"></i>Stop: ${formatDurationShort(timelineTotals.off)}</span>
             <span><i style="background:#dc2626;"></i>Overload: ${formatDurationShort(timelineTotals.overload)}</span>
-            <span class="cms-timeline-total">Total: 24h 00m</span>
+            <span class="cms-timeline-total">Total: ${Math.floor(viewMin / 60)}h ${pad2(viewMin % 60)}m</span>
           </div>
         </div>
 
@@ -793,7 +791,7 @@
                       <div class="cms-activity-row">
                         <span class="cms-activity-dot" style="background:${TIMELINE_STATE_COLORS[seg.state]};" title="${TIMELINE_STATE_LABELS[seg.state]}"></span>
                         <span class="cms-activity-text">Switched to ${TIMELINE_STATE_LABELS[seg.state]}</span>
-                        <span class="cms-activity-time">${minutesToClock(seg.startMin)}</span>
+                        <span class="cms-activity-time">${minutesToClock(seg.startMin + viewStartMin)}</span>
                       </div>`,
                         )
                         .join('')}
@@ -891,6 +889,10 @@
       document.getElementById('cms-date-input').addEventListener('change', (event) => {
         if (!event.target.value) return
         cmsSelectedDate = event.target.value > todayIso ? todayIso : event.target.value
+        renderMachineDashboard()
+      })
+      document.getElementById('cms-shift-select')?.addEventListener('change', (event) => {
+        cmsSelectedShift = event.target.value
         renderMachineDashboard()
       })
       document.getElementById('cms-date-range-select').addEventListener('change', (event) => {

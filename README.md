@@ -43,6 +43,7 @@ shared/*.css      one stylesheet per area; colours are the variables in app.css
 shared/backup.js  Settings > Backup (owners and admins only)
 email-tracking.html + shared/email-tracking.js   the built-in Email Tracking application
 forklift-tracking.html + shared/forklift-*.js   the built-in Forklift Tracking application
+shared/app-shifts.js  the Shifts tab every application has, and the shifts of a date
 shared/downloads.js   CSV and PDF downloads
 docs/             the data model
 tests/            the test page (see below)

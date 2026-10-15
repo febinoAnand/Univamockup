@@ -47,13 +47,19 @@
   let root = null
   let view = null
   let chart = null
-  const ui = { page: {}, search: {}, selected: {} }
+  // `scope` is the Date and Shift the Dashboard and the lists of emails, tickets and
+  // messages are cut down to (shared/app-shifts.js); no date means all of them.
+  const ui = { page: {}, search: {}, selected: {}, scope: { date: '', shiftId: 'all' } }
+  // The tabs whose figures or rows are by time.
+  const SCOPED_TABS = ['dashboard', 'inbox', 'tickets', 'reports', 'notifications', 'sms']
 
   // ------------------------------------------------------------- helpers
   const esc = (value) => UI.esc(value)
   const data = () => Store.get()
   const plural = (n, one, many) => (n === 1 ? one : many || one + 's')
   const getApp = () => data().applications.find((a) => a.id === APP_ID)
+  const stampMs = (stamp) => new Date(String(stamp).replace(' ', 'T')).getTime()
+  const currentScope = () => AppShifts.scope(getApp(), ui.scope)
   const splitStamp = (stamp) => String(stamp || '').split(' ')
   const oneLine = (text) => String(text == null ? '' : text).replace(/\s+/g, ' ').trim()
   const findUser = (id) => data().emailUsers.find((u) => u.id === id)
@@ -108,7 +114,10 @@
   function visibleRows(cfg) {
     const q = (ui.search[cfg.key] || '').trim().toLowerCase()
     const all = cfg.rows()
-    return { all, rows: q ? all.filter((row) => cfg.text(row).toLowerCase().includes(q)) : all, searching: Boolean(q) }
+    // A list with a `when` is cut down to the chosen shift first; the search works on what is left.
+    const scope = cfg.when ? currentScope() : null
+    const inside = scope ? all.filter((row) => scope.contains(cfg.when(row))) : all
+    return { all, rows: q ? inside.filter((row) => cfg.text(row).toLowerCase().includes(q)) : inside, searching: Boolean(q) || Boolean(scope) }
   }
 
   function rowMenuHtml(items, id) {
@@ -258,6 +267,7 @@
       buttons: [{ act: 'receive', label: 'Receive test email' }, { act: 'delete', label: 'Delete selected' }],
       searchLabel: 'Search by subject, message, sender or date-time',
       rows: () => newestFirst(data().emailInbox, 'receivedDate'),
+      when: (e) => stampMs(e.receivedDate),
       text: (e) => [e.subject, e.message, e.fromEmail, e.receivedDate].join(' '),
       selectable: true,
       columns: () => [
@@ -317,6 +327,7 @@
       buttons: [{ act: 'delete', label: 'Delete selected' }, { act: 'pdf', label: 'Download as PDF' }, { act: 'csv', label: 'Download as CSV' }],
       searchLabel: 'Search by ticket name, department, field or date',
       rows: () => newestFirst(data().emailTickets, 'receivedDate'),
+      when: (t) => stampMs(t.receivedDate),
       text: (t) => [t.ticketName, t.department, t.receivedDate].concat(Object.keys(t.fields || {}).map((k) => t.fields[k])).join(' '),
       selectable: true,
       columns: (all) => [
@@ -353,6 +364,7 @@
       buttons: [{ act: 'delete', label: 'Delete selected' }, { act: 'pdf', label: 'Download as PDF' }, { act: 'csv', label: 'Download as CSV' }],
       searchLabel: 'Search by date, time, message, department or user',
       rows: () => newestFirst(data().emailReports, 'sentDate'),
+      when: (r) => stampMs(r.sentDate),
       text: (r) => [r.sentDate, r.message, r.department].concat(r.sendToUsers || []).join(' '),
       selectable: true,
       columns: () => [
@@ -388,6 +400,7 @@
       buttons: [{ act: 'delete', label: 'Delete selected' }],
       searchLabel: 'Search by title, message, user or status',
       rows: () => newestFirst(data().emailNotifications, 'sentDate'),
+      when: (n) => stampMs(n.sentDate),
       text: (n) => [n.sentDate, n.title, n.message, n.sendToUser, n.deliveryStatus].join(' '),
       selectable: true,
       columns: () => [
@@ -412,6 +425,7 @@
       buttons: [{ act: 'delete', label: 'Delete selected' }],
       searchLabel: 'Search by number, message or status',
       rows: () => newestFirst(data().emailSms, 'sentDate'),
+      when: (s) => stampMs(s.sentDate),
       text: (s) => [s.sentDate, s.toNumber, s.fromNumber, s.message, s.delivered ? 'delivered' : 'failed'].join(' '),
       selectable: true,
       columns: () => [
@@ -493,11 +507,17 @@
     return `<div class="rt-kpi-tile${tone ? ' rt-tone-' + tone : ''}"><span class="rt-kpi-label">${esc(label)}</span><span class="rt-kpi-value">${esc(value)}</span>${sub ? `<span class="rt-kpi-sub">${esc(sub)}</span>` : ''}</div>`
   }
 
+  // The emails and tickets inside the chosen shift, or all of them.
+  function inScope(rows, field) {
+    const scope = currentScope()
+    return scope ? rows.filter((row) => scope.contains(stampMs(row[field]))) : rows
+  }
+
   function ticketsPerDepartment() {
     const d = data()
     const counts = new Map()
     d.emailDepartments.forEach((dep) => counts.set(dep.department, 0))
-    d.emailTickets.forEach((t) => counts.set(t.department, (counts.get(t.department) || 0) + 1))
+    inScope(d.emailTickets, 'receivedDate').forEach((t) => counts.set(t.department, (counts.get(t.department) || 0) + 1))
     return Array.from(counts.entries()).map(([department, count]) => ({ department, count }))
   }
 
@@ -506,17 +526,18 @@
       const d = data()
       const active = d.emailUsers.filter((u) => u.active).length
       const inactive = d.emailUsers.length - active
+      const scope = currentScope()
       return `
         <div class="rt-kpi-grid et-kpi-grid">
           ${tile('Total users', d.emailUsers.length, 'People who are told about tickets')}
           ${tile('Active users', active, 'Notified when a ticket arrives', 'good')}
           ${tile('Inactive users', inactive, 'Skipped when a ticket arrives', inactive ? 'bad' : '')}
           ${tile('Departments', d.emailDepartments.length, 'Where tickets are sent')}
-          ${tile('Total inbox', d.emailInbox.length, 'Emails received')}
-          ${tile('Total tickets', d.emailTickets.length, 'Made from those emails')}
+          ${tile('Total inbox', inScope(d.emailInbox, 'receivedDate').length, scope ? scope.label : 'Emails received')}
+          ${tile('Total tickets', inScope(d.emailTickets, 'receivedDate').length, scope ? scope.label : 'Made from those emails')}
         </div>
         <div class="detail-card">
-          <h2><span class="section-icon">${iconSvg('chart-bar')}</span>Ticket analysis<span class="rt-card-note">Tickets per department</span></h2>
+          <h2><span class="section-icon">${iconSvg('chart-bar')}</span>Ticket analysis<span class="rt-card-note">Tickets per department${scope ? ' · ' + esc(scope.label) : ''}</span></h2>
           <div id="et-chart" class="et-chart"></div>
         </div>
         <div class="detail-card">
@@ -928,8 +949,12 @@
       try { chart.destroy() } catch (err) { /* already gone */ }
       chart = null
     }
-    view = VIEWS[currentTab()]
-    $('et-view').innerHTML = view.render()
+    const tab = currentTab()
+    view = VIEWS[tab]
+    // The Date and Shift bar is the first thing on the tabs that go by time.
+    const bar = SCOPED_TABS.includes(tab) ? AppShifts.scopeBarHtml(getApp(), ui.scope, { allowAll: true, shiftsHref: `#${APP_ID}:shifts` }) : ''
+    $('et-view').innerHTML = bar + view.render()
+    if (bar) AppShifts.wireScopeBar($('et-view'), getApp(), ui.scope, renderView, { allowAll: true })
     view.wire()
   }
 

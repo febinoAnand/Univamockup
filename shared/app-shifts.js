@@ -24,6 +24,10 @@
          dayOffNote is plain text added when the date has no shift
      AppShifts.windows(app, dateIso, { fullDay })
          the shifts of a date as time windows
+     AppShifts.scope(app, state), scopeBarHtml(...), wireScopeBar(...)
+         how the rest of an application follows the schedule: a Date and a
+         Shift pick a window of time, and the application cuts its figures
+         and lists down to it
    ========================================================================== */
 (function () {
   const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -91,6 +95,82 @@
       end = Math.max(end, w.to)
     })
     return total
+  }
+
+  // The shifts the application's schedule uses at some point in the week,
+  // earliest start first, for a menu that is not about one date.
+  function scheduleShifts(app) {
+    const schedule = scheduleFor(app)
+    if (!schedule) return []
+    const ids = []
+    WEEK_DAYS.forEach((d) => (schedule.assignments[d] || []).forEach((id) => { if (!ids.includes(id)) ids.push(id) }))
+    return ids.map((id) => Store.get().shifts.find((s) => s.id === id)).filter(Boolean).sort((a, b) => a.startTime.localeCompare(b.startTime))
+  }
+
+  // ------------------------------------------------------------- scope
+  // How the rest of an application follows the schedule: a Date and a Shift
+  // pick a window of time, and the application's figures and lists are cut
+  // down to it. `state` is { date: '', shiftId: 'all' } and belongs to the
+  // page; an empty date means no window at all. With All shifts the window
+  // runs from the day's first shift to its last, as the template
+  // applications' "All shifts" does; with no schedule it is the calendar day.
+  function scope(app, state) {
+    if (!state || !state.date) return null
+    const list = windows(app, state.date, { fullDay: true })
+    const real = list.filter((w) => w.id !== 'day')
+    const picked = state.shiftId && state.shiftId !== 'all' ? real.find((w) => w.id === state.shiftId) || null : null
+    const from = picked ? picked.from : list[0].from
+    const to = picked ? picked.to : list[list.length - 1].to
+    const name = picked ? picked.name : real.length ? 'All shifts' : 'Full day'
+    return {
+      date: state.date,
+      from,
+      to,
+      name,
+      shift: picked,
+      label: `${state.date} · ${name} ${clock(from)}–${clock(to)}${to > atTime(state.date, '00:00', 1) ? ' (next day)' : ''}`,
+      contains: (ms) => ms >= from && ms < to,
+    }
+  }
+
+  // The bar that picks it. `allowAll` lets the date be empty (no window);
+  // `allLabel` says what that shows; `shiftsHref` is where to go to give an
+  // application without a schedule one.
+  function scopeBarHtml(app, state, opts) {
+    const o = opts || {}
+    const schedule = scheduleFor(app)
+    const real = state.date ? windows(app, state.date) : []
+    const picked = scope(app, state)
+    return `
+      <div class="rt-toolbar" data-scope-bar>
+        <label class="rt-field"><span>Date</span><input type="date" data-scope="date" value="${esc(state.date)}" max="${localIso(new Date())}" /></label>
+        ${schedule ? `<label class="rt-field"><span>Shift</span><select data-scope="shift"${state.date ? '' : ' disabled title="Choose a date first"'}>
+          <option value="all">All shifts</option>
+          ${real.map((w) => `<option value="${esc(w.id)}"${state.shiftId === w.id ? ' selected' : ''}>${esc(w.name)} (${clock(w.from)}–${clock(w.to)})</option>`).join('')}
+        </select></label>` : ''}
+        <span class="rt-toolbar-spacer"></span>
+        <span class="rt-muted" data-scope-note>${esc(picked ? picked.label : o.allLabel || 'All dates')}${!schedule && o.shiftsHref ? ` · <a href="${esc(o.shiftsHref)}">Choose a shift schedule</a> to pick a shift` : ''}</span>
+        <button type="button" class="modal-button secondary rt-today-btn" data-scope-today title="Jump to today">Today</button>
+        ${o.allowAll ? `<button type="button" class="modal-button secondary rt-today-btn" data-scope-clear${state.date ? '' : ' disabled'}>Clear</button>` : ''}
+      </div>`
+  }
+
+  function wireScopeBar(host, app, state, onChange, opts) {
+    const bar = host.querySelector('[data-scope-bar]')
+    const dateEl = bar.querySelector('[data-scope="date"]')
+    const keepShift = () => {
+      if (!state.date || !windows(app, state.date).some((w) => w.id === state.shiftId)) state.shiftId = 'all'
+    }
+    dateEl.addEventListener('change', () => {
+      state.date = dateEl.value || (opts && opts.allowAll ? '' : localIso(new Date()))
+      keepShift()
+      onChange()
+    })
+    const shiftEl = bar.querySelector('[data-scope="shift"]')
+    if (shiftEl) shiftEl.addEventListener('change', () => { state.shiftId = shiftEl.value; onChange() })
+    bar.querySelector('[data-scope-today]').addEventListener('click', () => { state.date = localIso(new Date()); keepShift(); onChange() })
+    const clear = bar.querySelector('[data-scope-clear]')
+    if (clear) clear.addEventListener('click', () => { state.date = ''; state.shiftId = 'all'; onChange() })
   }
 
   // ------------------------------------------------------------- panel
@@ -210,5 +290,5 @@
     return { refresh: paint }
   }
 
-  window.AppShifts = { mount, panelHtml, windows, scheduleFor, localIso, atTime, clock, WEEK_DAYS }
+  window.AppShifts = { mount, panelHtml, windows, scheduleFor, scheduleShifts, scope, scopeBarHtml, wireScopeBar, localIso, atTime, clock, spanText, WEEK_DAYS }
 })()
